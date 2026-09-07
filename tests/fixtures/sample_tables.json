@@ -1,0 +1,52 @@
+[
+  {
+    "description": "Abbreviation table with CDU, VDU, ATF entries",
+    "table_id": "test_abbr_table",
+    "page": 9,
+    "cells": [
+      {"row": 0, "col": 0, "content": "Abbreviation", "is_header": true},
+      {"row": 0, "col": 1, "content": "Full Form", "is_header": true},
+      {"row": 1, "col": 0, "content": "CDU", "is_header": false},
+      {"row": 1, "col": 1, "content": "Crude Distillation Unit", "is_header": false},
+      {"row": 2, "col": 0, "content": "VDU", "is_header": false},
+      {"row": 2, "col": 1, "content": "Vacuum Distillation Unit", "is_header": false},
+      {"row": 3, "col": 0, "content": "ATF", "is_header": false},
+      {"row": 3, "col": 1, "content": "Aviation Turbine Fuel", "is_header": false}
+    ]
+  },
+  {
+    "description": "Material balance table (should NOT generate FEEDS relationships from co-occurrence)",
+    "table_id": "test_matbal_table",
+    "page": 25,
+    "cells": [
+      {"row": 0, "col": 0, "content": "Stream", "is_header": true},
+      {"row": 0, "col": 1, "content": "kg/h", "is_header": true},
+      {"row": 0, "col": 2, "content": "m3/h", "is_header": true},
+      {"row": 1, "col": 0, "content": "Crude Feed", "is_header": false},
+      {"row": 1, "col": 1, "content": "1500000", "is_header": false},
+      {"row": 1, "col": 2, "content": "1875", "is_header": false},
+      {"row": 2, "col": 0, "content": "ATF", "is_header": false},
+      {"row": 2, "col": 1, "content": "125000", "is_header": false},
+      {"row": 2, "col": 2, "content": "168", "is_header": false},
+      {"row": 3, "col": 0, "content": "HSD", "is_header": false},
+      {"row": 3, "col": 1, "content": "350000", "is_header": false},
+      {"row": 3, "col": 2, "content": "421", "is_header": false}
+    ]
+  },
+  {
+    "description": "Operating limits table with pressure and temperature",
+    "table_id": "test_limits_table",
+    "page": 42,
+    "cells": [
+      {"row": 0, "col": 0, "content": "Equipment", "is_header": true},
+      {"row": 0, "col": 1, "content": "Design Pressure (barg)", "is_header": true},
+      {"row": 0, "col": 2, "content": "Design Temperature (°C)", "is_header": true},
+      {"row": 1, "col": 0, "content": "C-101", "is_header": false},
+      {"row": 1, "col": 1, "content": "4.5", "is_header": false},
+      {"row": 1, "col": 2, "content": "400", "is_header": false},
+      {"row": 2, "col": 0, "content": "V-101", "is_header": false},
+      {"row": 2, "col": 1, "content": "12.0", "is_header": false},
+      {"row": 2, "col": 2, "content": "180", "is_header": false}
+    ]
+  }
+]

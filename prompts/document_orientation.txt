@@ -1,0 +1,31 @@
+You are analyzing the first pages of a refinery engineering document to build a document profile.
+
+TASK: Identify the document's identity, structure, terminology, and conventions.
+
+SOURCE TEXT (first pages of the document):
+---
+{chunk_text}
+---
+
+Extract a JSON document profile with this structure:
+```json
+{{
+  "title": "...",
+  "document_type": "operating_manual|sop|standing_instruction|safety_manual|equipment_manual|vendor_manual|maintenance_manual|process_description|unknown",
+  "document_number": "...",
+  "revision": "...",
+  "status": "...",
+  "refinery": "...",
+  "plant": "...",
+  "unit": "...",
+  "key_concepts": ["..."],
+  "process_terminology": ["..."],
+  "safety_terminology": ["..."],
+  "confidence": 0.8
+}}
+```
+
+Rules:
+- Only extract what is explicitly stated in the text.
+- If a field is not found, use an empty string.
+- Do NOT guess or infer information not present in the document.

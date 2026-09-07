@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data artifacts (keep structure, ignore content)
+data/raw/*.pdf
+data/parsed/*.json
+data/normalized/*.json
+data/knowledge/*.json
+data/checkpoints/*.json
+data/reports/**/*.md
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Neo4j local data
+neo4j-data/

@@ -1,0 +1,2 @@
+# Safety extraction is integrated into entity_extraction.txt prompt.
+# This file is reserved for a future dedicated safety-extraction pass.

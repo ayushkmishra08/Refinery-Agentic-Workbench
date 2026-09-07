@@ -1,0 +1,2 @@
+# Placeholder — glossary extraction is handled deterministically in glossary_builder.py
+# This prompt is reserved for LLM-assisted glossary enrichment (Phase 2 enhancement).

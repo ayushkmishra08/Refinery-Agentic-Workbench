@@ -1,0 +1,33 @@
+You are cross-checking an extraction result against the source document.
+
+ORIGINAL EXTRACTION:
+{extraction_json}
+
+SOURCE TEXT:
+{chunk_text}
+
+EXISTING GRAPH KNOWLEDGE:
+{graph_context}
+
+TASK:
+1. Verify each extracted entity has accurate evidence from the source text.
+2. Verify each relationship is explicitly stated, not merely inferred from co-occurrence.
+3. Verify each claim value and unit match what appears in the source.
+4. Flag any extraction that appears to be hallucinated or unsupported.
+
+CRITICAL: Do NOT "correct" extractions using your general knowledge.
+Only correct based on what the source text actually says.
+If a correction is not supported by the source, mark it as uncertain.
+
+Return a JSON object:
+```json
+{{
+  "verified_entities": ["entity_id_1", "entity_id_2"],
+  "rejected_entities": [{{"entity_id": "...", "reason": "..."}}],
+  "verified_relationships": ["relationship_id_1"],
+  "rejected_relationships": [{{"relationship_id": "...", "reason": "..."}}],
+  "verified_claims": ["claim_id_1"],
+  "rejected_claims": [{{"claim_id": "...", "reason": "..."}}],
+  "corrections": [{{"item_id": "...", "field": "...", "old_value": "...", "new_value": "...", "evidence": "..."}}]
+}}
+```

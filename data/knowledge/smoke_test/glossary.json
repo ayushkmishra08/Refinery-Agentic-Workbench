@@ -1,0 +1,42 @@
+{
+  "document_id": "smoke_test",
+  "source_filename": "smoke_test.pdf",
+  "entries": [
+    {
+      "term": "CDU",
+      "canonical_meaning": "Crude Distillation Unit",
+      "aliases": [],
+      "abbreviation": "CDU",
+      "full_form": "Crude Distillation Unit",
+      "evidence": "CDU = Crude Distillation Unit",
+      "page": 2,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "smoke_test"
+    },
+    {
+      "term": "ATF",
+      "canonical_meaning": "Aviation Turbine Fuel",
+      "aliases": [],
+      "abbreviation": "ATF",
+      "full_form": "Aviation Turbine Fuel",
+      "evidence": "ATF = Aviation Turbine Fuel",
+      "page": 2,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "smoke_test"
+    }
+  ],
+  "total_entries": 2,
+  "abbreviation_map": {
+    "CDU": "Crude Distillation Unit",
+    "ATF": "Aviation Turbine Fuel"
+  },
+  "term_map": {
+    "CDU": "Crude Distillation Unit",
+    "ATF": "Aviation Turbine Fuel"
+  },
+  "build_timestamp": "2026-09-07T01:02:22.514391+00:00"
+}

@@ -1,0 +1,27 @@
+{
+  "document_id": "test",
+  "source_filename": "test.pdf",
+  "entries": [
+    {
+      "term": "CDU",
+      "canonical_meaning": "Crude Distillation Unit",
+      "aliases": [],
+      "abbreviation": "CDU",
+      "full_form": "Crude Distillation Unit",
+      "evidence": "CDU = Crude Distillation Unit",
+      "page": 9,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "test"
+    }
+  ],
+  "total_entries": 1,
+  "abbreviation_map": {
+    "CDU": "Crude Distillation Unit"
+  },
+  "term_map": {
+    "CDU": "Crude Distillation Unit"
+  },
+  "build_timestamp": "2026-09-07T17:07:21.279294+00:00"
+}
