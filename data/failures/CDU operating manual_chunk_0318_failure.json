@@ -1,0 +1,6 @@
+{
+  "chunk_id": "CDU operating manual_chunk_0318",
+  "timestamp": "2026-09-08T18:42:11.050293+00:00",
+  "error": "float() argument must be a string or a real number, not 'NoneType'",
+  "raw_response": "{ \"entities\": [ { \"name\": \"Pump\", \"canonical_name\": \"Pump\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"CDU\", \"canonical_name\": \"CDU\", \"entity_type\": \"compressor\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ], \"relationships\": [ { \"subject\": \"Pump\", \"predicate\": \"SUCTION_FROM\", \"object\": \"CDU\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"subject\": \"CDU\", \"predicate\": \"DRIVEN_BY\", \"object\": \"Motor\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ], \"claims\": [ { \"subject\": \"Pump\", \"predicate\": \"design_pressure\", \"value\": \"15\", \"unit\": \"barg\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"subject\": \"CDU\", \"predicate\": \"maximum_pressure\", \"value\": \"15\", \"unit\": \"barg\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ] }"
+}

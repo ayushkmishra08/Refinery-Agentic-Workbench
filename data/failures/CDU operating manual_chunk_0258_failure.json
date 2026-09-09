@@ -1,0 +1,6 @@
+{
+  "chunk_id": "CDU operating manual_chunk_0258",
+  "timestamp": "2026-09-08T17:41:08.294825+00:00",
+  "error": "float() argument must be a string or a real number, not 'NoneType'",
+  "raw_response": "{ \"entities\": [ { \"name\": \"Pump\", \"canonical_name\": \"Pump\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"Valve\", \"canonical_name\": \"Valve\", \"entity_type\": \"valve\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"Pump\", \"canonical_name\": \"Pump\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"Valve\", \"canonical_name\": \"Valve\", \"entity_type\": \"valve\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ], \"relationships\": [ { \"subject\": \"Pump\", \"predicate\": \"Suction_from\", \"object\": \"Valve\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"subject\": \"Valve\", \"predicate\": \"Discharges_to\", \"object\": \"Pump\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ] }"
+}

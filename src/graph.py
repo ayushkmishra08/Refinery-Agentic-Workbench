@@ -17,9 +17,14 @@ from src.memory import Neo4jMemory
 logger = logging.getLogger(__name__)
 
 
-def _make_entity_uid(name: str, entity_type: str, document_id: str) -> str:
-    """Create a deterministic UID for an entity."""
-    key = f"{name.strip().lower()}|{entity_type}|{document_id}"
+def _make_entity_uid(name: str, document_id: str) -> str:
+    """Create a deterministic UID for an entity.
+
+    Uses name + document_id ONLY. The entity_type is deliberately excluded
+    so that claims and relationships (which reference entities by name) produce
+    the same UID as the entity itself.
+    """
+    key = f"{name.strip().lower()}|{document_id}"
     return hashlib.md5(key.encode()).hexdigest()[:16]
 
 
@@ -65,14 +70,16 @@ class GraphInserter:
             if issue.severity.value == "error"
         }
 
-        # Insert entities
+        # Build a lookup of entity names → UIDs for this extraction batch
+        entity_uid_map: dict[str, str] = {}
+
+        # Insert entities FIRST (so claims and relationships can link to them)
         for entity in extraction.entities:
             if entity.entity_id in rejected_ids:
                 continue
             try:
-                uid = _make_entity_uid(
-                    entity.name, entity.entity_type.value, extraction.document_id,
-                )
+                uid = _make_entity_uid(entity.name, extraction.document_id)
+                entity_uid_map[entity.name.strip().lower()] = uid
                 self.memory.upsert_entity({
                     "uid": uid,
                     "name": entity.name,
@@ -81,21 +88,23 @@ class GraphInserter:
                     "domain": entity.domain.value,
                     "document_id": extraction.document_id,
                     "page": entity.page,
+                    "section": extraction.section,
                     "evidence": entity.evidence,
                     "confidence": entity.confidence,
+                    "chunk_id": extraction.chunk_id,
                 })
                 counts["entities"] += 1
             except Exception as e:
                 logger.error(f"Failed to insert entity {entity.name}: {e}")
                 counts["errors"] += 1
 
-        # Insert claims
+        # Insert claims (AFTER entities, so HAS_CLAIM can link)
         for claim in extraction.claims:
             if claim.claim_id in rejected_ids:
                 continue
             try:
                 subject_uid = _make_entity_uid(
-                    claim.subject, "", extraction.document_id,
+                    claim.subject, extraction.document_id,
                 )
                 claim_uid = _make_claim_uid(
                     claim.subject, claim.predicate.value,
@@ -113,22 +122,23 @@ class GraphInserter:
                     "evidence": claim.evidence,
                     "confidence": claim.confidence,
                     "source_text": claim.evidence[:500],
+                    "chunk_id": extraction.chunk_id,
                 })
                 counts["claims"] += 1
             except Exception as e:
                 logger.error(f"Failed to insert claim: {e}")
                 counts["errors"] += 1
 
-        # Insert relationships
+        # Insert relationships (AFTER entities, so MATCH can find them)
         for rel in extraction.relationships:
             if rel.relationship_id in rejected_ids:
                 continue
             try:
                 subject_uid = _make_entity_uid(
-                    rel.subject, "", extraction.document_id,
+                    rel.subject, extraction.document_id,
                 )
                 object_uid = _make_entity_uid(
-                    rel.object, "", extraction.document_id,
+                    rel.object, extraction.document_id,
                 )
                 self.memory.upsert_relationship({
                     "subject_uid": subject_uid,
@@ -138,6 +148,7 @@ class GraphInserter:
                     "page": rel.page,
                     "document_id": extraction.document_id,
                     "confidence": rel.confidence,
+                    "chunk_id": extraction.chunk_id,
                 })
                 counts["relationships"] += 1
             except Exception as e:

@@ -20,8 +20,10 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 
 import httpx
@@ -36,6 +38,47 @@ from src.retriever import RetrievalContext
 logger = logging.getLogger(__name__)
 
 
+class ExtractionStatus(str, Enum):
+    """Status of a chunk extraction attempt."""
+    SUCCESS = "success"              # Parsed JSON, found entities/claims/rels
+    EMPTY = "empty"                  # Parsed JSON successfully but nothing extractable
+    RETRY_SUCCEEDED = "retry_succeeded"  # Failed first attempt, succeeded on retry
+    JSON_FAILED = "json_failed"      # All retries exhausted, could not parse JSON
+    ERROR = "error"                  # Non-JSON error (network, timeout, etc.)
+
+
+class ExtractionResult:
+    """Wraps a ChunkExtraction with status metadata."""
+    def __init__(
+        self,
+        extraction: ChunkExtraction,
+        status: ExtractionStatus,
+        raw_response: str = "",
+        failure_reason: str = "",
+        attempts: int = 1,
+    ):
+        self.extraction = extraction
+        self.status = status
+        self.raw_response = raw_response
+        self.failure_reason = failure_reason
+        self.attempts = attempts
+
+    @property
+    def is_success(self) -> bool:
+        return self.status in (
+            ExtractionStatus.SUCCESS,
+            ExtractionStatus.EMPTY,
+            ExtractionStatus.RETRY_SUCCEEDED,
+        )
+
+    @property
+    def is_failure(self) -> bool:
+        return self.status in (
+            ExtractionStatus.JSON_FAILED,
+            ExtractionStatus.ERROR,
+        )
+
+
 class OllamaExtractor:
     """Extracts structured engineering knowledge using DeepSeek-R1 via Ollama."""
 
@@ -46,6 +89,8 @@ class OllamaExtractor:
             timeout=config.ollama.timeout_seconds,
         )
         self._prompts_dir = config.paths.prompts_dir
+        self._failures_dir = config.paths.data_dir / "failures"
+        self._failures_dir.mkdir(parents=True, exist_ok=True)
 
     def close(self) -> None:
         """Close the HTTP client."""
@@ -78,7 +123,7 @@ class OllamaExtractor:
         context: RetrievalContext,
         profile: DocumentProfile,
         glossary: DocumentGlossary | None = None,
-    ) -> ChunkExtraction:
+    ) -> ExtractionResult:
         """Extract engineering knowledge from a single chunk.
 
         Args:
@@ -88,32 +133,110 @@ class OllamaExtractor:
             glossary: Document glossary.
 
         Returns:
-            Structured extraction output.
+            ExtractionResult with extraction data and status metadata.
         """
         start_time = time.time()
 
         # Build the extraction prompt
         prompt = self._build_extraction_prompt(chunk, context, profile, glossary)
 
-        # Call Ollama
-        extraction_text = self._call_ollama(prompt)
+        max_attempts = 2
+        last_raw_response = ""
+        last_error = ""
 
-        # Parse the structured output
-        extraction = self._parse_extraction(
-            extraction_text, chunk, profile.document_id,
+        for attempt in range(max_attempts):
+            try:
+                # Call Ollama
+                extraction_text = self._call_ollama(prompt)
+                last_raw_response = extraction_text
+
+                # Parse the structured output
+                extraction = self._parse_extraction(
+                    extraction_text, chunk, profile.document_id,
+                )
+
+                extraction.extraction_timestamp = datetime.now(timezone.utc).isoformat()
+                extraction.extraction_duration_seconds = time.time() - start_time
+
+                has_content = (
+                    len(extraction.entities) > 0
+                    or len(extraction.claims) > 0
+                    or len(extraction.relationships) > 0
+                )
+
+                if attempt > 0:
+                    status = ExtractionStatus.RETRY_SUCCEEDED
+                elif has_content:
+                    status = ExtractionStatus.SUCCESS
+                else:
+                    status = ExtractionStatus.EMPTY
+
+                return ExtractionResult(
+                    extraction=extraction,
+                    status=status,
+                    raw_response=extraction_text,
+                    attempts=attempt + 1,
+                )
+
+            except json.JSONDecodeError as e:
+                last_error = str(e)
+                logger.warning(
+                    f"JSON parse error on attempt {attempt + 1}/{max_attempts} "
+                    f"for {chunk.chunk_id}: {e}"
+                )
+                if attempt < max_attempts - 1:
+                    continue  # Retry
+
+            except Exception as e:
+                last_error = str(e)
+                logger.error(
+                    f"Extraction error on attempt {attempt + 1}/{max_attempts} "
+                    f"for {chunk.chunk_id}: {e}"
+                )
+                if attempt < max_attempts - 1:
+                    continue
+
+        # All retries exhausted — record failure
+        logger.error(
+            f"FAILED extraction for {chunk.chunk_id} after {max_attempts} attempts: "
+            f"{last_error}"
         )
 
-        extraction.extraction_timestamp = datetime.now(timezone.utc).isoformat()
-        extraction.extraction_duration_seconds = time.time() - start_time
+        # Save raw response for inspection
+        self._save_failure(chunk.chunk_id, last_raw_response, last_error)
 
-        logger.debug(
-            f"Extracted from {chunk.chunk_id}: "
-            f"{len(extraction.entities)} entities, "
-            f"{len(extraction.relationships)} relationships, "
-            f"{len(extraction.claims)} claims"
+        empty_extraction = ChunkExtraction(
+            chunk_id=chunk.chunk_id,
+            document_id=profile.document_id,
+            page_start=chunk.page_start,
+            page_end=chunk.page_end,
+            section=chunk.section_path,
+            model_name=self.config.ollama.model,
+        )
+        empty_extraction.extraction_timestamp = datetime.now(timezone.utc).isoformat()
+        empty_extraction.extraction_duration_seconds = time.time() - start_time
+
+        return ExtractionResult(
+            extraction=empty_extraction,
+            status=ExtractionStatus.JSON_FAILED,
+            raw_response=last_raw_response,
+            failure_reason=last_error,
+            attempts=max_attempts,
         )
 
-        return extraction
+    def _save_failure(self, chunk_id: str, raw_response: str, error: str) -> None:
+        """Preserve raw LLM output on failure for later inspection."""
+        try:
+            failure_data = {
+                "chunk_id": chunk_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "error": error,
+                "raw_response": raw_response,
+            }
+            path = self._failures_dir / f"{chunk_id}_failure.json"
+            path.write_text(json.dumps(failure_data, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.debug(f"Could not save failure data: {e}")
 
     def _build_extraction_prompt(
         self,
@@ -164,6 +287,7 @@ class OllamaExtractor:
             "model": self.config.ollama.model,
             "prompt": prompt,
             "stream": False,
+            "format": "json",  # Enforce strict JSON output
             "options": {
                 "num_ctx": self.config.ollama.num_ctx,
                 "temperature": self.config.ollama.temperature,
@@ -195,8 +319,8 @@ class OllamaExtractor:
     ) -> ChunkExtraction:
         """Parse LLM output into structured extraction.
 
-        Attempts to find JSON in the model's response. Falls back to
-        empty extraction if parsing fails.
+        Attempts to find and repair JSON in the model's response.
+        Raises json.JSONDecodeError if parsing fails (triggers retry).
         """
         extraction = ChunkExtraction(
             chunk_id=chunk.chunk_id,
@@ -207,95 +331,98 @@ class OllamaExtractor:
             model_name=self.config.ollama.model,
         )
 
-        if not text:
+        if not text or not text.strip():
             return extraction
 
         # Try to extract JSON from the response
         json_str = self._find_json_in_response(text)
         if not json_str:
-            logger.warning(f"No JSON found in extraction for {chunk.chunk_id}")
-            return extraction
+            raise json.JSONDecodeError("No JSON found in response", text, 0)
 
+        # Attempt to parse, with repair on failure
         try:
             data = json.loads(json_str)
+        except json.JSONDecodeError:
+            # Attempt deterministic repair
+            repaired = self._repair_json(json_str)
+            if repaired:
+                data = json.loads(repaired)  # Let this raise if repair also fails
+            else:
+                raise
 
-            # Parse entities
-            for e in data.get("entities", []):
-                from schemas.knowledge import ExtractedEntity, EntityType, EntityDomain
-                try:
-                    entity = ExtractedEntity(
-                        entity_id=f"{chunk.chunk_id}_e{len(extraction.entities)}",
-                        name=e.get("name", ""),
-                        canonical_name=e.get("canonical_name", e.get("name", "")),
-                        entity_type=EntityType(e.get("entity_type", "generic")),
-                        domain=EntityDomain(e.get("domain", "unknown")),
-                        aliases=e.get("aliases", []),
-                        description=e.get("description", ""),
-                        evidence=e.get("evidence", ""),
-                        page=e.get("page", chunk.page_start),
-                        section=chunk.section_path,
-                        document_id=document_id,
-                        chunk_id=chunk.chunk_id,
-                        confidence=float(e.get("confidence", 0.5)),
-                    )
-                    extraction.entities.append(entity)
-                except (ValueError, KeyError) as ve:
-                    logger.debug(f"Skipping invalid entity: {ve}")
+        # Parse entities
+        for e in data.get("entities", []):
+            from schemas.knowledge import ExtractedEntity, EntityType, EntityDomain
+            try:
+                entity = ExtractedEntity(
+                    entity_id=f"{chunk.chunk_id}_e{len(extraction.entities)}",
+                    name=e.get("name", ""),
+                    canonical_name=e.get("canonical_name", e.get("name", "")),
+                    entity_type=EntityType(e.get("entity_type", "generic")),
+                    domain=EntityDomain(e.get("domain", "unknown")),
+                    aliases=e.get("aliases", []),
+                    description=e.get("description", ""),
+                    evidence=e.get("evidence", ""),
+                    page=e.get("page", chunk.page_start),
+                    section=chunk.section_path,
+                    document_id=document_id,
+                    chunk_id=chunk.chunk_id,
+                    confidence=float(e.get("confidence", 0.5)),
+                )
+                extraction.entities.append(entity)
+            except (ValueError, KeyError) as ve:
+                logger.debug(f"Skipping invalid entity: {ve}")
 
-            # Parse relationships
-            for r in data.get("relationships", []):
-                from schemas.knowledge import ExtractedRelationship, RelationshipType
-                try:
-                    rel = ExtractedRelationship(
-                        relationship_id=f"{chunk.chunk_id}_r{len(extraction.relationships)}",
-                        subject=r.get("subject", ""),
-                        predicate=RelationshipType(r.get("predicate", "ASSOCIATED_WITH")),
-                        object=r.get("object", ""),
-                        evidence=r.get("evidence", ""),
-                        page=r.get("page", chunk.page_start),
-                        section=chunk.section_path,
-                        document_id=document_id,
-                        chunk_id=chunk.chunk_id,
-                        confidence=float(r.get("confidence", 0.5)),
-                    )
-                    extraction.relationships.append(rel)
-                except (ValueError, KeyError) as ve:
-                    logger.debug(f"Skipping invalid relationship: {ve}")
+        # Parse relationships
+        for r in data.get("relationships", []):
+            from schemas.knowledge import ExtractedRelationship, RelationshipType
+            try:
+                rel = ExtractedRelationship(
+                    relationship_id=f"{chunk.chunk_id}_r{len(extraction.relationships)}",
+                    subject=r.get("subject", ""),
+                    predicate=RelationshipType(r.get("predicate", "ASSOCIATED_WITH")),
+                    object=r.get("object", ""),
+                    evidence=r.get("evidence", ""),
+                    page=r.get("page", chunk.page_start),
+                    section=chunk.section_path,
+                    document_id=document_id,
+                    chunk_id=chunk.chunk_id,
+                    confidence=float(r.get("confidence", 0.5)),
+                )
+                extraction.relationships.append(rel)
+            except (ValueError, KeyError) as ve:
+                logger.debug(f"Skipping invalid relationship: {ve}")
 
-            # Parse claims
-            for c in data.get("claims", []):
-                from schemas.claims import EngineeringClaim, ClaimCategory
-                try:
-                    claim = EngineeringClaim(
-                        claim_id=f"{chunk.chunk_id}_c{len(extraction.claims)}",
-                        subject=c.get("subject", ""),
-                        predicate=ClaimCategory(c.get("predicate", "generic_property")),
-                        value=str(c.get("value", "")),
-                        unit=c.get("unit", ""),
-                        evidence=c.get("evidence", ""),
-                        page=c.get("page", chunk.page_start),
-                        section=chunk.section_path,
-                        document_id=document_id,
-                        chunk_id=chunk.chunk_id,
-                        confidence=float(c.get("confidence", 0.5)),
-                        is_from_table=c.get("is_from_table", False),
-                    )
-                    extraction.claims.append(claim)
-                except (ValueError, KeyError) as ve:
-                    logger.debug(f"Skipping invalid claim: {ve}")
+        # Parse claims
+        for c in data.get("claims", []):
+            from schemas.claims import EngineeringClaim, ClaimCategory
+            try:
+                claim = EngineeringClaim(
+                    claim_id=f"{chunk.chunk_id}_c{len(extraction.claims)}",
+                    subject=c.get("subject", ""),
+                    predicate=ClaimCategory(c.get("predicate", "generic_property")),
+                    value=str(c.get("value", "")),
+                    unit=c.get("unit", ""),
+                    evidence=c.get("evidence", ""),
+                    page=c.get("page", chunk.page_start),
+                    section=chunk.section_path,
+                    document_id=document_id,
+                    chunk_id=chunk.chunk_id,
+                    confidence=float(c.get("confidence", 0.5)),
+                    is_from_table=c.get("is_from_table", False),
+                )
+                extraction.claims.append(claim)
+            except (ValueError, KeyError) as ve:
+                logger.debug(f"Skipping invalid claim: {ve}")
 
-            # Parse references
-            extraction.references = data.get("references", [])
-
-        except json.JSONDecodeError as e:
-            logger.warning(f"JSON parse error for {chunk.chunk_id}: {e}")
+        # Parse references
+        extraction.references = data.get("references", [])
 
         return extraction
 
     def _find_json_in_response(self, text: str) -> str | None:
         """Extract JSON block from model response (handles ```json blocks)."""
         # Try to find ```json ... ``` block
-        import re
         json_match = re.search(r"```json\s*\n(.*?)\n\s*```", text, re.DOTALL)
         if json_match:
             return json_match.group(1)
@@ -305,6 +432,115 @@ class OllamaExtractor:
         if json_match:
             return json_match.group(0)
 
+        return None
+
+    def _repair_json(self, json_str: str) -> str | None:
+        """Attempt deterministic JSON repair.
+
+        Handles two failure modes:
+        1. Trailing commas before } or ] (common DeepSeek-R1 issue)
+        2. Truncated output (model hit num_predict limit mid-JSON)
+        
+        For truncation, we close any open strings/arrays/objects to salvage
+        whatever complete entities/claims/relationships were already emitted.
+        
+        Returns repaired string or None if repair is not possible.
+        """
+        try:
+            repaired = json_str
+
+            # Remove trailing commas before closing brackets
+            repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+
+            # Remove any control characters except newlines and tabs
+            repaired = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", repaired)
+
+            # Try to parse after basic fixes
+            try:
+                json.loads(repaired)
+                return repaired
+            except json.JSONDecodeError:
+                pass
+
+            # Truncation repair: close open brackets/braces
+            # Find the last complete JSON value by tracking bracket depth
+            # Remove any trailing incomplete value after the last comma
+            # Then close remaining open brackets
+            
+            # Strip any trailing incomplete string value
+            # Pattern: remove text after the last complete key-value pair
+            # Find last complete object or array element
+            last_good = self._find_last_complete_element(repaired)
+            if last_good:
+                repaired = last_good
+                try:
+                    json.loads(repaired)
+                    logger.info("JSON repair: recovered truncated output")
+                    return repaired
+                except json.JSONDecodeError:
+                    pass
+
+            return None
+        except Exception:
+            return None
+
+    def _find_last_complete_element(self, json_str: str) -> str | None:
+        """Find the last position where JSON can be validly closed.
+        
+        Walks through the string tracking bracket/brace depth and
+        tries closing from the last complete value.
+        """
+        # Strategy: progressively trim from the end and try to close
+        # Find positions of all commas that could be element separators
+        
+        # First, remove any trailing partial string (after last unmatched quote)
+        trimmed = json_str.rstrip()
+        
+        # Try progressively shorter prefixes, looking for one we can close
+        for end_pos in range(len(trimmed), max(len(trimmed) - 500, 0), -1):
+            candidate = trimmed[:end_pos].rstrip().rstrip(',').rstrip()
+            
+            # Count open brackets/braces
+            open_braces = 0
+            open_brackets = 0
+            in_string = False
+            escape_next = False
+            
+            for ch in candidate:
+                if escape_next:
+                    escape_next = False
+                    continue
+                if ch == '\\' and in_string:
+                    escape_next = True
+                    continue
+                if ch == '"' and not escape_next:
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if ch == '{':
+                    open_braces += 1
+                elif ch == '}':
+                    open_braces -= 1
+                elif ch == '[':
+                    open_brackets += 1
+                elif ch == ']':
+                    open_brackets -= 1
+            
+            # If we're inside a string, skip this position
+            if in_string:
+                continue
+            
+            # Close remaining open brackets/braces
+            if open_braces >= 0 and open_brackets >= 0:
+                closing = ']' * open_brackets + '}' * open_braces
+                try:
+                    result = candidate + closing
+                    json.loads(result)
+                    return result
+                except json.JSONDecodeError:
+                    continue
+        
         return None
 
     def _default_extraction_prompt(self) -> str:

@@ -1,0 +1,6 @@
+{
+  "chunk_id": "CDU operating manual_chunk_0306",
+  "timestamp": "2026-09-08T18:29:21.112662+00:00",
+  "error": "float() argument must be a string or a real number, not 'NoneType'",
+  "raw_response": "{ \"entities\": [ { \"name\": \"Pump\", \"canonical_name\": \"Pump\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"Turbine\", \"canonical_name\": \"Turbine\", \"entity_type\": \"turbine\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null } ] }"
+}

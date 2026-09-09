@@ -1,0 +1,6 @@
+{
+  "chunk_id": "CDU operating manual_chunk_0315",
+  "timestamp": "2026-09-08T18:41:21.621362+00:00",
+  "error": "float() argument must be a string or a real number, not 'NoneType'",
+  "raw_response": "{ \"entities\": [ { \"name\": \"Pump\", \"canonical_name\": \"Pump\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [], \"description\": \"\", \"evidence\": \"\", \"page\": null, \"confidence\": null }, { \"name\": \"P-101\", \"canonical_name\": \"P-101\", \"entity_type\": \"pump\", \"domain\": \"equipment\", \"aliases\": [\"P-101A\"], \"description\": \"Crude oil charge pump\", \"evidence\": \"P-101 Crude Charge Pump handles...\", \"page\": 15, \"confidence\": 0.9 } ] }"
+}

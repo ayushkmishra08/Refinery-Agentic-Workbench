@@ -87,8 +87,8 @@ class OllamaSettings(BaseModel):
         description="Near-deterministic for factual extraction.",
     )
     num_predict: int = Field(
-        default=2048,
-        description="Maximum output tokens.",
+        default=4096,
+        description="Maximum output tokens. Must be large enough for full JSON extraction.",
     )
     timeout_seconds: int = Field(default=300, description="Request timeout")
     max_retries: int = Field(default=2)

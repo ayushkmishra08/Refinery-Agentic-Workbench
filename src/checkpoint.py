@@ -2,6 +2,9 @@
 
 Checkpoints at each pipeline phase so interrupted processing can resume
 exactly where it stopped. No expensive work is redone.
+
+Tracks both completed AND failed chunks separately so failed chunks
+can be retried on restart without reprocessing successful chunks.
 """
 
 from __future__ import annotations
@@ -58,6 +61,7 @@ class PipelineCheckpoint:
             "current_phase": PipelinePhase.PARSING.value,
             "completed_phases": [],
             "completed_chunks": [],
+            "failed_chunks": [],
             "last_updated": "",
             "source_hash": "",
         }
@@ -85,16 +89,55 @@ class PipelineCheckpoint:
         logger.info(f"Checkpoint: {self.document_id} phase {phase.value} complete")
 
     def is_chunk_complete(self, chunk_id: str) -> bool:
-        """Check if a specific chunk has been processed."""
+        """Check if a specific chunk has been successfully processed."""
         return chunk_id in self._state.get("completed_chunks", [])
 
+    def is_chunk_failed(self, chunk_id: str) -> bool:
+        """Check if a specific chunk failed in a previous run."""
+        failed = self._state.get("failed_chunks", [])
+        return any(
+            (f["chunk_id"] if isinstance(f, dict) else f) == chunk_id
+            for f in failed
+        )
+
     def mark_chunk_complete(self, chunk_id: str) -> None:
-        """Mark a chunk as processed."""
+        """Mark a chunk as successfully processed.
+        
+        Also removes it from failed_chunks if it was previously failed
+        (i.e., it was retried and succeeded).
+        """
         if chunk_id not in self._state.get("completed_chunks", []):
             self._state.setdefault("completed_chunks", []).append(chunk_id)
+        
+        # Remove from failed list if it was there (retry succeeded)
+        failed = self._state.get("failed_chunks", [])
+        self._state["failed_chunks"] = [
+            f for f in failed
+            if (f["chunk_id"] if isinstance(f, dict) else f) != chunk_id
+        ]
+        
         # Save periodically (every 10 chunks) to avoid too many disk writes
         if len(self._state["completed_chunks"]) % 10 == 0:
             self._save()
+
+    def mark_chunk_failed(self, chunk_id: str, reason: str = "") -> None:
+        """Mark a chunk as failed.
+        
+        Failed chunks are NOT in completed_chunks. They will be retried
+        on the next pipeline run.
+        """
+        failed = self._state.setdefault("failed_chunks", [])
+        # Remove existing entry for this chunk (to update reason)
+        self._state["failed_chunks"] = [
+            f for f in failed
+            if (f["chunk_id"] if isinstance(f, dict) else f) != chunk_id
+        ]
+        self._state["failed_chunks"].append({
+            "chunk_id": chunk_id,
+            "reason": reason,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+        self._save()  # Always save failures immediately
 
     def set_source_hash(self, source_hash: str) -> None:
         """Record the source file hash for integrity."""
@@ -109,12 +152,38 @@ class PipelineCheckpoint:
                 "current_phase": PipelinePhase.PARSING.value,
                 "completed_phases": [],
                 "completed_chunks": [],
+                "failed_chunks": [],
                 "last_updated": "",
                 "source_hash": source_hash,
             }
         else:
             self._state["source_hash"] = source_hash
         self._save()
+
+    def reset_extraction_phase(self) -> None:
+        """Reset only the extraction phase for a clean re-run.
+        
+        Preserves parsing/normalizing/chunking checkpoints but clears
+        extraction progress so all chunks are reprocessed.
+        """
+        self._state["completed_chunks"] = []
+        self._state["failed_chunks"] = []
+        # Remove extraction-related phases from completed
+        extraction_phases = {
+            PipelinePhase.NEO4J_SETUP.value,
+            PipelinePhase.EXTRACTION.value,
+            PipelinePhase.VALIDATION.value,
+            PipelinePhase.GRAPH_INSERTION.value,
+            PipelinePhase.REPORTING.value,
+            PipelinePhase.COMPLETE.value,
+        }
+        self._state["completed_phases"] = [
+            p for p in self._state.get("completed_phases", [])
+            if p not in extraction_phases
+        ]
+        self._state["current_phase"] = PipelinePhase.NEO4J_SETUP.value
+        self._save()
+        logger.info(f"Checkpoint: extraction phase reset for {self.document_id}")
 
     def flush(self) -> None:
         """Force save current state."""
@@ -124,12 +193,18 @@ class PipelineCheckpoint:
         """Get list of completed chunk IDs."""
         return self._state.get("completed_chunks", [])
 
+    def get_failed_chunks(self) -> list[dict]:
+        """Get list of failed chunk entries."""
+        return self._state.get("failed_chunks", [])
+
     def get_status(self) -> dict:
         """Get current checkpoint status."""
+        failed = self._state.get("failed_chunks", [])
         return {
             "document_id": self.document_id,
             "current_phase": self._state.get("current_phase", "unknown"),
             "completed_phases": self._state.get("completed_phases", []),
             "completed_chunks_count": len(self._state.get("completed_chunks", [])),
+            "failed_chunks_count": len(failed),
             "last_updated": self._state.get("last_updated", ""),
         }

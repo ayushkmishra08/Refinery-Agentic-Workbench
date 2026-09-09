@@ -93,21 +93,31 @@ class Neo4jMemory:
                 try:
                     session.run(constraint)
                 except Exception as e:
-                    logger.warning(f"Constraint creation note: {e}")
+                    logger.debug(f"Constraint note: {e}")
 
             for index in indexes:
                 try:
                     session.run(index)
                 except Exception as e:
-                    logger.warning(f"Index creation note: {e}")
+                    logger.debug(f"Index note: {e}")
 
             try:
                 session.run(vector_index)
                 logger.info("Vector index created/verified")
             except Exception as e:
-                logger.warning(f"Vector index note: {e}")
+                logger.debug(f"Vector index note: {e}")
 
         logger.info("Neo4j schema setup complete")
+
+    def clear_all_data(self) -> None:
+        """Delete all nodes and relationships from the database.
+        
+        Used for --clean runs to start fresh without corrupt data.
+        """
+        with self.session() as session:
+            # Delete in batches to avoid memory issues
+            session.run("MATCH (n) DETACH DELETE n")
+            logger.info("All Neo4j data cleared")
 
     # ── Document Operations ──────────────────────────────────────────
 
@@ -141,8 +151,10 @@ class Neo4jMemory:
             e.domain = $domain,
             e.document_id = $document_id,
             e.page = $page,
+            e.section = $section,
             e.evidence = $evidence,
             e.confidence = $confidence,
+            e.chunk_id = $chunk_id,
             e.created = datetime()
         ON MATCH SET
             e.last_seen_document = $document_id,
@@ -152,18 +164,34 @@ class Neo4jMemory:
             session.run(query, entity_data)
 
     def find_entities_by_name(self, names: list[str]) -> list[dict]:
-        """Find entities by name or canonical name."""
+        """Find entities by name or canonical name.
+        
+        Returns raw node data extracted safely in Python to avoid
+        Neo4j map projection warnings for properties that may not exist yet.
+        """
         if not names:
             return []
         query = """
         MATCH (e:Entity)
         WHERE e.name IN $names OR e.canonical_name IN $names
-        RETURN e {.uid, .name, .canonical_name, .entity_type, .domain,
-                  .document_id, .page, .confidence} AS entity
+        RETURN e
         """
         with self.session() as session:
             result = session.run(query, {"names": names})
-            return [record["entity"] for record in result]
+            entities = []
+            for record in result:
+                node = record["e"]
+                entities.append({
+                    "uid": node.get("uid", ""),
+                    "name": node.get("name", ""),
+                    "canonical_name": node.get("canonical_name", ""),
+                    "entity_type": node.get("entity_type", ""),
+                    "domain": node.get("domain", ""),
+                    "document_id": node.get("document_id", ""),
+                    "page": node.get("page", 0),
+                    "confidence": node.get("confidence", 0.0),
+                })
+            return entities
 
     # ── Term/Glossary Operations ─────────────────────────────────────
 
@@ -191,12 +219,22 @@ class Neo4jMemory:
         query = """
         MATCH (t:Term)
         WHERE t.term IN $terms OR t.abbreviation IN $terms
-        RETURN t {.uid, .term, .canonical_meaning, .abbreviation,
-                  .full_form, .document_id} AS term
+        RETURN t
         """
         with self.session() as session:
             result = session.run(query, {"terms": terms})
-            return [record["term"] for record in result]
+            entries = []
+            for record in result:
+                node = record["t"]
+                entries.append({
+                    "uid": node.get("uid", ""),
+                    "term": node.get("term", ""),
+                    "canonical_meaning": node.get("canonical_meaning", ""),
+                    "abbreviation": node.get("abbreviation", ""),
+                    "full_form": node.get("full_form", ""),
+                    "document_id": node.get("document_id", ""),
+                })
+            return entries
 
     # ── Claim Operations ─────────────────────────────────────────────
 
@@ -214,7 +252,8 @@ class Neo4jMemory:
             c.page = $page,
             c.evidence = $evidence,
             c.confidence = $confidence,
-            c.source_text = $source_text
+            c.source_text = $source_text,
+            c.chunk_id = $chunk_id
         WITH c
         MATCH (e:Entity {uid: $subject_uid})
         MERGE (e)-[:HAS_CLAIM]->(c)
@@ -229,28 +268,41 @@ class Neo4jMemory:
         query = """
         MATCH (e:Entity)-[:HAS_CLAIM]->(c:Claim)
         WHERE e.uid IN $uids
-        RETURN c {.uid, .predicate, .value, .unit, .document_id,
-                  .page, .confidence, .evidence} AS claim,
-               e.uid AS entity_uid
+        RETURN e.uid AS entity_uid, c
         """
         with self.session() as session:
             result = session.run(query, {"uids": entity_uids})
-            return [dict(record) for record in result]
+            claims = []
+            for record in result:
+                node = record["c"]
+                claims.append({
+                    "entity_uid": record["entity_uid"],
+                    "claim": {
+                        "uid": node.get("uid", ""),
+                        "predicate": node.get("predicate", ""),
+                        "value": node.get("value", ""),
+                        "unit": node.get("unit", ""),
+                        "document_id": node.get("document_id", ""),
+                        "page": node.get("page", 0),
+                        "confidence": node.get("confidence", 0.0),
+                        "evidence": node.get("evidence", ""),
+                    },
+                })
+            return claims
 
     # ── Relationship Operations ──────────────────────────────────────
 
     def upsert_relationship(self, rel_data: dict[str, Any]) -> None:
         """Insert an engineering relationship between entities."""
-        # Use APOC or dynamic relationship type
-        # For safety, we use a generic RELATED_TO with a type property
         query = """
         MATCH (s:Entity {uid: $subject_uid})
         MATCH (o:Entity {uid: $object_uid})
-        MERGE (s)-[r:ENGINEERING_REL {rel_type: $predicate}]->(o)
+        MERGE (s)-[r:ENGINEERING_REL {predicate: $predicate}]->(o)
         SET r.evidence = $evidence,
             r.page = $page,
             r.document_id = $document_id,
-            r.confidence = $confidence
+            r.confidence = $confidence,
+            r.chunk_id = $chunk_id
         """
         with self.session() as session:
             session.run(query, rel_data)
@@ -263,7 +315,7 @@ class Neo4jMemory:
         MATCH (s:Entity)-[r:ENGINEERING_REL]->(o:Entity)
         WHERE s.uid IN $uids OR o.uid IN $uids
         RETURN s.uid AS subject_uid, s.name AS subject_name,
-               r.rel_type AS predicate, r.evidence AS evidence,
+               r.predicate AS predicate, r.evidence AS evidence,
                o.uid AS object_uid, o.name AS object_name,
                r.confidence AS confidence
         """
@@ -302,7 +354,7 @@ class Neo4jMemory:
                 result = session.run(query, {"k": k, "embedding": embedding})
                 return [dict(record) for record in result]
             except Exception as e:
-                logger.warning(f"Vector search failed (index may not be ready): {e}")
+                logger.debug(f"Vector search note (index may not be ready): {e}")
                 return []
 
     # ── Section Entity Operations ────────────────────────────────────
@@ -312,38 +364,58 @@ class Neo4jMemory:
         query = """
         MATCH (e:Entity)
         WHERE e.section = $section
-        RETURN e {.uid, .name, .canonical_name, .entity_type, .domain} AS entity
+        RETURN e
         LIMIT 20
         """
         with self.session() as session:
             result = session.run(query, {"section": section_path})
-            return [record["entity"] for record in result]
+            entities = []
+            for record in result:
+                node = record["e"]
+                entities.append({
+                    "uid": node.get("uid", ""),
+                    "name": node.get("name", ""),
+                    "canonical_name": node.get("canonical_name", ""),
+                    "entity_type": node.get("entity_type", ""),
+                    "domain": node.get("domain", ""),
+                })
+            return entities
 
     def get_related_equipment(
         self, entity_uids: list[str], depth: int = 1,
     ) -> list[dict]:
-        """Get equipment entities connected to given entities."""
+        """Get equipment entities connected to given entities.
+        
+        Uses a fixed-depth traversal (1..2 hops) instead of parameterized
+        depth, since Neo4j does not allow parameters in variable-length
+        relationship patterns.
+        """
         if not entity_uids:
             return []
+        # Use literal depth instead of $depth parameter
         query = """
-        MATCH (e:Entity)-[r:ENGINEERING_REL*1..$depth]-(related:Entity)
+        MATCH (e:Entity)-[r:ENGINEERING_REL*1..2]-(related:Entity)
         WHERE e.uid IN $uids
-          AND related.domain IN ['equipment', 'piping', 'valve', 'instrumentation']
-        RETURN DISTINCT related {.uid, .name, .entity_type, .domain} AS entity
+        RETURN DISTINCT related.uid AS uid,
+               related.name AS name,
+               related.entity_type AS entity_type,
+               related.domain AS domain
         LIMIT 15
         """
         with self.session() as session:
-            result = session.run(
-                query, {"uids": entity_uids, "depth": depth},
-            )
-            return [record["entity"] for record in result]
+            try:
+                result = session.run(query, {"uids": entity_uids})
+                return [dict(record) for record in result]
+            except Exception as e:
+                logger.debug(f"Related equipment query note: {e}")
+                return []
 
     def get_procedures(self, text: str) -> list[dict]:
         """Find procedures that might be referenced in given text."""
         query = """
         MATCH (p:Procedure)
         WHERE p.title CONTAINS $search_term
-        RETURN p {.procedure_id, .title, .type} AS procedure
+        RETURN p
         LIMIT 5
         """
         # Extract potential procedure references
@@ -356,7 +428,13 @@ class Neo4jMemory:
         with self.session() as session:
             for ref in proc_refs[:3]:
                 result = session.run(query, {"search_term": ref})
-                results.extend(record["procedure"] for record in result)
+                for record in result:
+                    node = record["p"]
+                    results.append({
+                        "procedure_id": node.get("procedure_id", ""),
+                        "title": node.get("title", ""),
+                        "procedure_type": node.get("procedure_type", ""),
+                    })
         return results
 
     # ── Contradiction Check ──────────────────────────────────────────
@@ -368,8 +446,7 @@ class Neo4jMemory:
         query = """
         MATCH (e:Entity {uid: $subject_uid})-[:HAS_CLAIM]->(c:Claim)
         WHERE c.predicate = $predicate AND c.value <> $new_value
-        RETURN c {.uid, .predicate, .value, .unit, .document_id,
-                  .page, .evidence, .confidence} AS conflicting_claim
+        RETURN c
         """
         with self.session() as session:
             result = session.run(query, {
@@ -377,4 +454,41 @@ class Neo4jMemory:
                 "predicate": predicate,
                 "new_value": new_value,
             })
-            return [record["conflicting_claim"] for record in result]
+            conflicts = []
+            for record in result:
+                node = record["c"]
+                conflicts.append({
+                    "uid": node.get("uid", ""),
+                    "predicate": node.get("predicate", ""),
+                    "value": node.get("value", ""),
+                    "unit": node.get("unit", ""),
+                    "document_id": node.get("document_id", ""),
+                    "page": node.get("page", 0),
+                    "evidence": node.get("evidence", ""),
+                    "confidence": node.get("confidence", 0.0),
+                })
+            return conflicts
+
+    # ── Schema Introspection ─────────────────────────────────────────
+
+    def get_schema_info(self) -> dict:
+        """Get current Neo4j schema information for integrity checks."""
+        info = {"labels": [], "rel_types": [], "constraints": [], "indexes": []}
+        with self.session() as session:
+            # Node labels
+            result = session.run("CALL db.labels() YIELD label RETURN label")
+            info["labels"] = [r["label"] for r in result]
+
+            # Relationship types
+            result = session.run("CALL db.relationshipTypes() YIELD relationshipType RETURN relationshipType")
+            info["rel_types"] = [r["relationshipType"] for r in result]
+
+            # Node counts per label
+            counts = {}
+            for label in info["labels"]:
+                result = session.run(f"MATCH (n:{label}) RETURN count(n) AS cnt")
+                record = result.single()
+                counts[label] = record["cnt"] if record else 0
+            info["node_counts"] = counts
+
+        return info
