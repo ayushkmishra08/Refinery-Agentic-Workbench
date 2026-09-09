@@ -93,6 +93,9 @@ class DocumentProfiler:
         # Pass 1b: Build chapter/section hierarchy
         self._extract_structure(normalized_doc, profile)
 
+        # Pass 1b2: Title/plant from the repeating page-header box, if present
+        self._title_from_header_tables(table_results, profile)
+
         # Pass 1c: Extract abbreviations from abbreviation tables
         self._extract_abbreviations(table_results, profile)
 
@@ -223,6 +226,60 @@ class DocumentProfiler:
                     page=elem.page,
                     parent_chapter=parent,
                 ))
+
+    def _title_from_header_tables(
+        self, table_results: TableNormalizationResult, profile: DocumentProfile,
+    ) -> None:
+        """Use the page-header box (repeated on every page) for title and plant/unit.
+
+        The most frequent cell text across header tables is the document title
+        (e.g. "OPERATING MANUAL"); cells following "PLANT NO"/"PLANT NAME" labels
+        give the plant/unit.
+        """
+        from collections import Counter
+        header_tables = [
+            t for t in table_results.classified_tables
+            if t.classification == TableClassification.HEADER_TABLE
+        ]
+        if len(header_tables) < 3:
+            return
+
+        counts: Counter[str] = Counter()
+        label_values: Counter[str] = Counter()
+        for t in header_tables:
+            seen: set[str] = set()
+            row_cells: dict[int, list] = {}
+            for c in t.cells:
+                row_cells.setdefault(c.row, []).append(c)
+            for c in t.cells:
+                txt = re.sub(r"\s+", " ", c.content.strip())
+                if len(txt) < 3 or re.search(r"\d", txt) or txt in seen:
+                    continue
+                if re.search(r"\b(page|rev|chapter|plant|doc|document)\b", txt, re.IGNORECASE):
+                    continue  # field labels, not the title
+                seen.add(txt)
+                # The title sits in the top row and usually spans the full width
+                counts[txt] += 3 if c.row == 0 else 1
+            for r, cells in row_cells.items():
+                cells.sort(key=lambda x: x.col)
+                for i, c in enumerate(cells[:-1]):
+                    if re.search(r"plant\s*(no|name)|unit\s*(no|name)?", c.content, re.IGNORECASE):
+                        val = re.sub(r"\s+", " ", cells[i + 1].content.strip())
+                        if val and val.lower() != c.content.strip().lower():
+                            label_values[val] += 1
+
+        if counts:
+            title, n = counts.most_common(1)[0]
+            if n >= 0.5 * len(header_tables) and (
+                not profile.title or profile.title.upper().startswith(("SECTION", "CHAPTER"))
+            ):
+                profile.title = title.title() if title.isupper() else title
+        if label_values:
+            plant, _ = label_values.most_common(1)[0]
+            if not profile.unit:
+                profile.unit = plant[:100]
+            if not profile.plant or len(profile.plant) > 60:
+                profile.plant = plant[:100]
 
     def _extract_abbreviations(
         self, table_results: TableNormalizationResult, profile: DocumentProfile,

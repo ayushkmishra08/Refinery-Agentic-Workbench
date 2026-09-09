@@ -20,8 +20,17 @@ build/
 # Data artifacts (keep structure, ignore content)
 data/raw/*.pdf
 data/parsed/*.json
+data/parsed/*.log
+data/parsed/*.pid
+# Bulky per-window raw Docling dumps and figure crops; the merged
+# parsed_document.json / tables.json / metadata.json / parse_report.md
+# in data/parsed/<doc>/ are the committed representation.
+data/parsed/**/windows/
+data/parsed/**/images/
+data/parsed/**/parse_log.txt
 data/normalized/*.json
 data/knowledge/*.json
+data/knowledge/**/chunk_embeddings.json
 data/checkpoints/*.json
 data/reports/**/*.md
 

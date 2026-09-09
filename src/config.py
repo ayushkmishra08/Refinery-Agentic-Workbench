@@ -41,12 +41,39 @@ class ParserSettings(BaseModel):
     """Docling parser configuration."""
     ocr_enabled: bool = True
     ocr_engine: str = Field(default="rapidocr", description="rapidocr, easyocr, or tesseract")
+    ocr_languages: list[str] = Field(default_factory=lambda: ["english"])
+    ocr_force_full_page: bool = Field(
+        default=False,
+        description="Force OCR of whole pages (only needed for scanned PDFs). "
+                    "False = OCR only bitmap regions, keep the PDF text layer.",
+    )
     table_structure_mode: str = Field(default="accurate", description="accurate or fast")
+    table_cell_matching: bool = Field(
+        default=True,
+        description="Match TableFormer cells back to PDF text cells (better text fidelity)",
+    )
     page_window_size: int = Field(
         default=15,
-        description="Pages per parsing window for memory safety",
+        description="Pages per parsing window for memory safety (GTX 1650 4GB / ~12GB RAM)",
     )
     max_pages: int | None = Field(default=None, description="Limit pages for testing; None = all")
+    device: str = Field(
+        default="auto",
+        description="Accelerator for layout/TableFormer models: auto, cuda, cpu",
+    )
+    num_threads: int = Field(default=8, description="CPU threads for model inference")
+    generate_picture_images: bool = Field(
+        default=True, description="Export figure crops to data/parsed/<doc>/images/",
+    )
+    images_scale: float = Field(default=2.0, description="Render scale for exported figure images (1.0 = 72 dpi)")
+    formula_enrichment: bool = Field(
+        default=False,
+        description="Run the CodeFormula VLM on formula regions (heavy; off for 4GB VRAM)",
+    )
+    save_raw_docling_json: bool = Field(
+        default=True,
+        description="Persist Docling's native export_to_dict() per window (complete representation)",
+    )
 
 
 class NormalizerSettings(BaseModel):
@@ -79,18 +106,34 @@ class OllamaSettings(BaseModel):
     base_url: str = Field(default="http://localhost:11434")
     model: str = Field(default="deepseek-r1:7b")
     num_ctx: int = Field(
-        default=4096,
-        description="Context window size. Conservative for 6GB VRAM.",
+        default=8192,
+        description="Context window size. Must hold prompt (~3k tokens) + JSON output; "
+                    "KV cache for 8k on the 7B model is ~0.5 GB (GTX 1650 4GB offloads partially).",
     )
     temperature: float = Field(
         default=0.1,
         description="Near-deterministic for factual extraction.",
     )
     num_predict: int = Field(
-        default=4096,
-        description="Maximum output tokens. Must be large enough for full JSON extraction.",
+        default=2048,
+        description="Maximum output tokens for the JSON extraction of one chunk.",
     )
-    timeout_seconds: int = Field(default=300, description="Request timeout")
+    think: bool = Field(
+        default=False,
+        description="Enable DeepSeek-R1 chain-of-thought. Off: JSON grammar is applied directly "
+                    "(much faster on a 4GB GPU).",
+    )
+    timeout_seconds: int = Field(default=900, description="Request timeout (CPU/GPU split inference is slow)")
+    relationship_pass: bool = Field(
+        default=True,
+        description="Run a second, relationship-only LLM pass when a chunk yielded >= 2 entities "
+                    "but the model proposed no relationships",
+    )
+    relationship_pass_min_entities: int = Field(default=2)
+    rule_relations: bool = Field(
+        default=True,
+        description="Deterministic routing/composition rules (exact-line evidence) before the LLM passes",
+    )
     max_retries: int = Field(default=2)
 
 
@@ -145,6 +188,29 @@ class ValidationSettings(BaseModel):
     )
 
 
+class IdentitySettings(BaseModel):
+    """Global entity identity / cross-document linking."""
+    unit_scoping: bool = Field(
+        default=True,
+        description="Prefix tags that have no plant-number prefix with the document's unit slug",
+    )
+    tag_patterns: list[str] = Field(
+        default_factory=lambda: [
+            r"^(?:(?P<plant>\d{1,3})-)?(?P<prefix>[A-Z]{1,4})-(?P<number>\d{1,5})(?P<suffix>[A-Z](?:/[A-Z])*)?$",
+        ],
+        description="Regexes (named groups plant/prefix/number/suffix) that define a canonical tag",
+    )
+    same_as_threshold: float = Field(
+        default=0.8,
+        description="Minimum confidence for creating a SAME_AS link between untagged entities",
+    )
+    name_match_confidence: float = Field(default=0.85, description="Score for an exact name/canonical_name match")
+    glossary_match_confidence: float = Field(default=0.9, description="Score for a glossary term/abbreviation match")
+    vector_candidates: int = Field(default=5, description="Similar chunks to inspect for candidate entities")
+    ontology_promote_min_documents: int = Field(default=2)
+    ontology_promote_min_chunks: int = Field(default=5)
+
+
 class PipelineConfig(BaseModel):
     """Complete pipeline configuration."""
     paths: PathConfig = Field(default_factory=PathConfig)
@@ -155,6 +221,7 @@ class PipelineConfig(BaseModel):
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     chunker: ChunkerSettings = Field(default_factory=ChunkerSettings)
     validation: ValidationSettings = Field(default_factory=ValidationSettings)
+    identity: IdentitySettings = Field(default_factory=IdentitySettings)
 
     # Global
     log_level: str = Field(default="INFO")

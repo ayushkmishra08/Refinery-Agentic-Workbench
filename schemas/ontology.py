@@ -67,6 +67,16 @@ class RefineryOntology(BaseModel):
     total_relationships_seen: int = Field(default=0)
     total_claims_seen: int = Field(default=0)
 
+    # Open vocabulary governance
+    raw_label_stats: list[dict] = Field(
+        default_factory=list,
+        description="Frequency of labels outside the preferred enums: label, kind, documents, chunks",
+    )
+    promoted_labels: list[dict] = Field(
+        default_factory=list,
+        description="Raw labels promoted into the extraction prompt (label, kind, documents, chunk_count)",
+    )
+
     # Gaps and ambiguities
     unclassified_entity_types: list[str] = Field(default_factory=list)
     ambiguous_terms: list[str] = Field(default_factory=list)

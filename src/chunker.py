@@ -98,7 +98,11 @@ class DocumentChunker:
         prev_overlap = ""
         sequence = 0
 
-        for elem in normalized_doc.elements:
+        # Large tables are split into row batches (header row repeated) so a
+        # single table never exceeds the model context on its own.
+        elements = self._split_large_tables(normalized_doc.elements)
+
+        for elem in elements:
             elem_tokens = _estimate_tokens(elem.content)
 
             # Check if we should start a new chunk
@@ -198,6 +202,56 @@ class DocumentChunker:
             token_estimate=_estimate_tokens(full_text),
             overlap_text=overlap,
         )
+
+    def _split_large_tables(
+        self, elements: list[NormalizedElement],
+    ) -> list[NormalizedElement]:
+        """Split table elements whose text exceeds ``max_tokens`` into row batches.
+
+        The table text produced by the parser is one pipe-separated line per
+        row, first line = header row.  Each batch repeats the header row and
+        is annotated with its row range so provenance stays explicit.
+        """
+        out: list[NormalizedElement] = []
+        for elem in elements:
+            if elem.content_type != ContentType.TABLE or _estimate_tokens(elem.content) <= self.max_tokens:
+                out.append(elem)
+                continue
+
+            lines = [ln for ln in elem.content.split("\n") if ln.strip()]
+            if len(lines) < 4:
+                out.append(elem)
+                continue
+
+            header, body = lines[0], lines[1:]
+            header_tokens = _estimate_tokens(header)
+            budget = max(self.target_tokens - header_tokens - 20, 100)
+            batches: list[list[str]] = []
+            current: list[str] = []
+            current_tokens = 0
+            for row in body:
+                rt = _estimate_tokens(row)
+                if current and current_tokens + rt > budget:
+                    batches.append(current)
+                    current, current_tokens = [], 0
+                current.append(row)
+                current_tokens += rt
+            if current:
+                batches.append(current)
+
+            total_rows = len(body)
+            row_cursor = 0
+            for i, batch in enumerate(batches):
+                first = row_cursor + 1
+                last = row_cursor + len(batch)
+                row_cursor = last
+                note = f"[Table {elem.table_id or ''} part {i + 1}/{len(batches)}: rows {first}-{last} of {total_rows}]"
+                out.append(elem.model_copy(update={
+                    "element_id": f"{elem.element_id}_part{i + 1}",
+                    "content": "\n".join([note, header, *batch]),
+                }))
+            logger.debug(f"Split table {elem.table_id} into {len(batches)} parts")
+        return out
 
     def _in_atomic_block(self, elements: list[NormalizedElement]) -> bool:
         """Check if the last element is part of an atomic block (table/procedure)."""

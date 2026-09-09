@@ -68,27 +68,184 @@ SUSPICIOUS_RELATIONSHIPS: set[tuple[str, str]] = {
 }
 
 
+# Spellings the LLM / OCR commonly produce for the same unit
+_UNIT_ALIASES: dict[str, str] = {
+    "degc": "°C", "deg c": "°C", "deg. c": "°C", "deg.c": "°C", "ºc": "°C", "℃": "°C", "oc": "°C",
+    "° c": "°C", "degree c": "°C", "degrees c": "°C", "degree celsius": "°C", "celsius": "°C",
+    "degf": "°F", "deg f": "°F", "ºf": "°F", "℉": "°F", "degree f": "°F", "fahrenheit": "°F",
+    "kelvin": "K",
+    "kg/cm2g": "kg/cm2", "kg/cm2 g": "kg/cm2", "kg/cm2(g)": "kg/cm2", "kg/cm2a": "kg/cm2",
+    "kg/cm²g": "kg/cm²", "kg/cm² g": "kg/cm²", "kg/cm2 (g)": "kg/cm2", "kgf/cm2": "kg/cm2",
+    "kg/sq.cm": "kg/cm2", "kg/sqcm": "kg/cm2", "ksc": "kg/cm2", "kscg": "kg/cm2", "ksca": "kg/cm2",
+    "bar g": "barg", "bar(g)": "barg", "bar a": "bara", "bar(a)": "bara",
+    "m3/hr": "m3/h", "m³/hr": "m³/h", "cum/hr": "m3/h", "cu.m/hr": "m3/h", "nm3/hr": "Nm3/h",
+    "kg/hr": "kg/h", "t/hr": "t/h", "tph": "t/h", "mt/hr": "MT/h", "mtph": "MT/h", "tpd": "t/d",
+    "percent": "%", "pct": "%", "wt%": "%", "vol%": "%", "% wt": "%", "% vol": "%",
+}
+
+
+def normalize_unit(unit: str) -> str:
+    """Canonicalise unit spelling (degC -> °C, kg/cm2g -> kg/cm2, ...)."""
+    if not unit:
+        return ""
+    u = re.sub(r"\s+", " ", unit.strip())
+    key = u.lower()
+    if key in _UNIT_ALIASES:
+        return _UNIT_ALIASES[key]
+    # Case-insensitive match against the known unit spellings (except 1-letter units)
+    for valid_set in VALID_UNITS.values():
+        for v in valid_set:
+            if len(v) > 1 and v.lower() == key:
+                return v
+    return u
+
+
 def _classify_unit(unit: str) -> UnitFamily:
     """Determine which unit family a unit string belongs to."""
     if not unit or unit.strip() == "":
         return UnitFamily.TEXT
-    unit_clean = unit.strip()
+    unit_clean = normalize_unit(unit)
     for family, valid_set in VALID_UNITS.items():
         if unit_clean in valid_set:
             return family
     return UnitFamily.UNKNOWN
 
 
+_TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9.\-/°%]*")
+
+
+def _norm_text(text: str) -> str:
+    text = text.lower().replace(" ", " ")
+    text = re.sub(r"[“”\"'`]", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 def _fuzzy_match(needle: str, haystack: str, threshold: float = 0.8) -> bool:
-    """Check if needle appears in haystack with fuzzy matching."""
+    """Check that an evidence quote is supported by the source chunk.
+
+    1. whitespace/quote-normalised substring match, else
+    2. token containment: the fraction of the evidence's tokens (len > 1) that
+       occur in the chunk must reach ``threshold``.  This tolerates the LLM
+       collapsing table separators or re-punctuating, while still rejecting
+       evidence that was invented.
+    """
     if not needle or not haystack:
         return False
-    # First try exact substring
-    if needle.lower() in haystack.lower():
+    n, h = _norm_text(needle), _norm_text(haystack)
+    if n in h:
         return True
-    # Fall back to sequence matching
-    ratio = SequenceMatcher(None, needle.lower(), haystack.lower()).ratio()
+    n_tokens = [t for t in _TOKEN_RE.findall(n) if len(t) > 1]
+    if not n_tokens:
+        return False
+    h_tokens = set(_TOKEN_RE.findall(h))
+    hits = sum(1 for t in n_tokens if t in h_tokens)
+    if hits / len(n_tokens) >= threshold:
+        return True
+    ratio = SequenceMatcher(None, n, h).ratio()
     return ratio >= threshold
+
+
+# --------------------------------------------------------------------------- #
+# Sentence-level grounding
+# --------------------------------------------------------------------------- #
+_SENT_SPLIT_RE = re.compile(r"(?<=[.!?;])\s+(?=[A-Z(\[])|\n+")
+WEAK_CONFIDENCE_CAP = 0.5
+
+
+def split_sentences(text: str) -> list[str]:
+    """Split chunk text into sentences; table rows / list items are one line each."""
+    out: list[str] = []
+    for part in _SENT_SPLIT_RE.split(text or ""):
+        part = part.strip()
+        if len(part) >= 3 and not part.startswith("[Context from previous section"):
+            out.append(part)
+    return out
+
+
+def _name_keys(name: str) -> list[str]:
+    """Match keys for a name: canonical tag (if any) + normalised text + content tokens."""
+    from src.entity_identity import parse_tag
+    keys: list[str] = []
+    n = _norm_text(name or "")
+    if not n:
+        return keys
+    ident = parse_tag(name)
+    if ident:
+        keys.append(("tag", ident.canonical))
+    keys.append(("text", n))
+    return keys
+
+
+def _name_in_text(name: str, text: str, tokens_threshold: float = 0.8) -> bool:
+    """Case-insensitive, tag-normalised, fuzzy containment of a name in a text."""
+    from src.entity_identity import find_tags, parse_tag
+    if not name or not text:
+        return False
+    n, t = _norm_text(name), _norm_text(text)
+    if n in t:
+        return True
+    ident = parse_tag(name)
+    if ident and ident.canonical.split("/")[-1] in find_tags(text):
+        return True
+    n_tokens = [x for x in _TOKEN_RE.findall(n) if len(x) > 1]
+    if not n_tokens:
+        return False
+    t_tokens = set(_TOKEN_RE.findall(t))
+    hits = sum(1 for x in n_tokens if x in t_tokens)
+    return hits / len(n_tokens) >= tokens_threshold
+
+
+def _value_in_text(value: str, text: str) -> bool:
+    """Numeric-aware containment for claim values ("14.0" matches "14.0 kg/cm2g", "14" matches "14.0")."""
+    if not value:
+        return True
+    v = _norm_text(value)
+    t = _norm_text(text)
+    if v in t:
+        return True
+    nums = re.findall(r"\d+(?:\.\d+)?", v)
+    if nums:
+        t_nums = {float(x) for x in re.findall(r"\d+(?:\.\d+)?", t)}
+        try:
+            return all(float(x) in t_nums for x in nums)
+        except ValueError:
+            return False
+    return _name_in_text(value, text, 0.8)
+
+
+def ground_pair(
+    subject: str, other: str, chunk_text: str, other_is_value: bool = False,
+) -> tuple[str, str | None, int | None]:
+    """Locate the sentence that grounds (subject, other).
+
+    Returns (level, sentence, sentence_index) where level is
+      "strong" - one sentence/row contains both,
+      "weak"   - both appear in the chunk but never together,
+      "none"   - subject or other never appears in the chunk.
+    """
+    sentences = split_sentences(chunk_text)
+    other_hit = _value_in_text if other_is_value else _name_in_text
+    subj_any = other_any = False
+    first_subject_sentence: tuple[int, str] | None = None
+    for i, sent in enumerate(sentences):
+        s_in = _name_in_text(subject, sent)
+        o_in = other_hit(other, sent)
+        if s_in and first_subject_sentence is None:
+            first_subject_sentence = (i, sent)
+        subj_any |= s_in
+        other_any |= o_in
+        if s_in and o_in:
+            return "strong", sent, i
+    if not subj_any or not other_any:
+        # last resort: whole-chunk containment (names split across line breaks)
+        subj_any = subj_any or _name_in_text(subject, chunk_text)
+        other_any = other_any or other_hit(other, chunk_text)
+        if not subj_any or not other_any:
+            return "none", None, None
+    if first_subject_sentence:
+        return "weak", first_subject_sentence[1], first_subject_sentence[0]
+    return "weak", None, None
 
 
 class ExtractionValidator:
@@ -125,6 +282,31 @@ class ExtractionValidator:
         for entity in extraction.entities:
             total_checks += 1
             entity_issues = self._validate_entity_schema(entity)
+            if entity.evidence and not entity_issues:
+                if not _fuzzy_match(entity.evidence, chunk.text, self.config.validation.evidence_similarity_threshold):
+                    # Paraphrased quote: accept if the entity itself appears in the chunk,
+                    # and re-anchor the evidence to the sentence that names it.
+                    level, sent, idx = ground_pair(entity.name, entity.name, chunk.text)
+                    if level == "none" and entity.canonical_name:
+                        level, sent, idx = ground_pair(entity.canonical_name, entity.canonical_name, chunk.text)
+                    if level == "none":
+                        entity_issues.append(ValidationIssue(
+                            issue_id=str(uuid.uuid4())[:8],
+                            category=ValidationCategory.EVIDENCE,
+                            severity=ValidationSeverity.ERROR,
+                            message=f"Entity '{entity.name}' does not appear in the source chunk",
+                            item_type="entity", item_id=entity.entity_id,
+                        ))
+                    else:
+                        entity.evidence = sent or entity.evidence
+                        entity.sentence_index = idx
+                        issues.append(ValidationIssue(
+                            issue_id=str(uuid.uuid4())[:8],
+                            category=ValidationCategory.EVIDENCE,
+                            severity=ValidationSeverity.WARNING,
+                            message=f"Entity '{entity.name}': quote paraphrased; evidence re-anchored to source sentence",
+                            item_type="entity", item_id=entity.entity_id,
+                        ))
             if entity_issues:
                 issues.extend(entity_issues)
                 rejected_entities += 1
@@ -136,10 +318,9 @@ class ExtractionValidator:
             total_checks += 1
             claim_issues = []
 
-            # Evidence check
-            evidence_issue = self._validate_evidence(claim.evidence, chunk.text, "claim", claim.claim_id)
-            if evidence_issue:
-                claim_issues.append(evidence_issue)
+            # Sentence-level grounding (subject + value in one sentence/row)
+            claim_issues.extend(self._ground_item(claim, claim.subject, claim.value, chunk.text, "claim",
+                                                  claim.claim_id, other_is_value=True))
 
             # Unit validation
             unit_issues = self._validate_claim_units(claim)
@@ -156,12 +337,9 @@ class ExtractionValidator:
             total_checks += 1
             rel_issues = []
 
-            # Evidence check
-            evidence_issue = self._validate_evidence(
-                rel.evidence, chunk.text, "relationship", rel.relationship_id,
-            )
-            if evidence_issue:
-                rel_issues.append(evidence_issue)
+            # Sentence-level grounding (subject + object in one sentence/row)
+            rel_issues.extend(self._ground_item(rel, rel.subject, rel.object, chunk.text, "relationship",
+                                                rel.relationship_id))
 
             # Domain checks
             domain_issues = self._validate_relationship_domain(rel)
@@ -258,6 +436,58 @@ class ExtractionValidator:
             ))
         return issues
 
+    def _ground_item(
+        self, item, subject: str, other: str, chunk_text: str, item_type: str, item_id: str,
+        other_is_value: bool = False,
+    ) -> list[ValidationIssue]:
+        """Sentence-level grounding for relationships and claims.
+
+        strong: a sentence/row names both -> evidence := that sentence.
+        weak:   both appear in the chunk but apart -> WARNING, grounding='weak',
+                confidence capped at WEAK_CONFIDENCE_CAP (still inserted).
+        none:   subject or object/value absent from the chunk -> ERROR (rejected).
+        Missing evidence on the item is tolerated when grounding succeeds.
+        """
+        # Evidence-first: if the item's own evidence is supported by the chunk and
+        # names both sides (routing lists span two lines; table rows carry the value
+        # while the subject sits in the header row), it is strongly grounded.
+        other_hit = _value_in_text if other_is_value else _name_in_text
+        if item.evidence and _fuzzy_match(item.evidence, chunk_text, self.config.validation.evidence_similarity_threshold):
+            subj_ok = _name_in_text(subject, item.evidence) or (
+                getattr(item, "is_from_table", False) and _name_in_text(subject, chunk_text)
+            )
+            if subj_ok and other_hit(other, item.evidence):
+                item.grounding = "strong"
+                return []
+        level, sent, idx = ground_pair(subject, other, chunk_text, other_is_value=other_is_value)
+        if level == "none":
+            missing = subject if not _name_in_text(subject, chunk_text) else other
+            return [ValidationIssue(
+                issue_id=str(uuid.uuid4())[:8],
+                category=ValidationCategory.EVIDENCE,
+                severity=ValidationSeverity.ERROR,
+                message=f"{item_type}: '{missing}' does not appear in the source chunk",
+                item_type=item_type, item_id=item_id,
+                details={"subject": subject, "other": str(other)},
+            )]
+        item.grounding = level
+        item.sentence_index = idx
+        if level == "strong":
+            item.evidence = sent or item.evidence
+            return []
+        # weak
+        if not item.evidence or not _fuzzy_match(item.evidence, chunk_text, 0.6):
+            item.evidence = sent or item.evidence
+        item.confidence = min(item.confidence, WEAK_CONFIDENCE_CAP)
+        return [ValidationIssue(
+            issue_id=str(uuid.uuid4())[:8],
+            category=ValidationCategory.EVIDENCE,
+            severity=ValidationSeverity.WARNING,
+            message=f"{item_type}: '{subject}' and '{other}' appear in the chunk but not in one sentence (weak grounding)",
+            item_type=item_type, item_id=item_id,
+            details={"grounding": "weak"},
+        )]
+
     def _validate_evidence(
         self, evidence: str, source_text: str, item_type: str, item_id: str,
     ) -> ValidationIssue | None:
@@ -274,10 +504,12 @@ class ExtractionValidator:
 
         threshold = self.config.validation.evidence_similarity_threshold
         if not _fuzzy_match(evidence, source_text, threshold):
+            # Source grounding is the core principle: an unsupported quote means
+            # the item cannot be traced to the document, so it is rejected.
             return ValidationIssue(
                 issue_id=str(uuid.uuid4())[:8],
                 category=ValidationCategory.EVIDENCE,
-                severity=ValidationSeverity.WARNING,
+                severity=ValidationSeverity.ERROR,
                 message=f"Evidence text not found in source chunk (similarity < {threshold})",
                 item_type=item_type,
                 item_id=item_id,
@@ -295,6 +527,21 @@ class ExtractionValidator:
 
         valid_families = CLAIM_UNIT_RULES[claim.predicate]
         actual_family = _classify_unit(claim.unit)
+
+        if actual_family == UnitFamily.TEXT and not (claim.unit or "").strip():
+            # A missing unit is not an impossible unit: dimensionless quantities
+            # (specific gravity, ratios) legitimately have none; others get a warning.
+            if UnitFamily.DIMENSIONLESS in valid_families or UnitFamily.TEXT in valid_families:
+                return issues
+            issues.append(ValidationIssue(
+                issue_id=str(uuid.uuid4())[:8],
+                category=ValidationCategory.NUMERICAL_UNIT,
+                severity=ValidationSeverity.WARNING,
+                message=f"Missing unit for {claim.predicate.value}",
+                item_type="claim",
+                item_id=claim.claim_id,
+            ))
+            return issues
 
         if actual_family == UnitFamily.UNKNOWN and claim.unit:
             issues.append(ValidationIssue(

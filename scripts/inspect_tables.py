@@ -2,7 +2,7 @@
 import json, sys
 sys.path.insert(0, ".")
 
-with open("data/parsed/CDU operating manual_parsed.json", "r", encoding="utf-8") as f:
+with open("data/parsed/CDU operating manual/parsed_document.json", "r", encoding="utf-8") as f:
     d = json.load(f)
 
 # Show actual table cell content for first few tables

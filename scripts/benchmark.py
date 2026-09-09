@@ -85,7 +85,7 @@ def main():
 
             # Relationship counts
             print()
-            for rel_type in ["HAS_CLAIM", "ENGINEERING_REL"]:
+            for rel_type in ["HAS_CLAIM", "HAS_ENTITY", "HAS_CHUNK", "MENTIONS", "SUPPORTS"]:
                 result = session.run(
                     f"MATCH ()-[r:{rel_type}]->() RETURN count(r) AS cnt"
                 )
@@ -129,7 +129,7 @@ def main():
             # Relationship predicate distribution
             print("\n  Relationship predicate distribution:")
             result = session.run("""
-                MATCH ()-[r:ENGINEERING_REL]->()
+                MATCH ()-[r]->()
                 RETURN r.predicate AS predicate, count(r) AS cnt
                 ORDER BY cnt DESC
                 LIMIT 15
@@ -165,7 +165,7 @@ def main():
             # Sample relationships
             print("\n  Sample relationships:")
             result = session.run("""
-                MATCH (s:Entity)-[r:ENGINEERING_REL]->(o:Entity)
+                MATCH (s:Entity)-[r]->(o:Entity)
                 RETURN s.name AS subject, r.predicate AS predicate, o.name AS object
                 LIMIT 10
             """)

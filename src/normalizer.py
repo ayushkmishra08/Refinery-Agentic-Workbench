@@ -37,6 +37,45 @@ def _content_hash(text: str) -> str:
     return hashlib.md5(normalized.encode()).hexdigest()[:16]
 
 
+_NUMBERED_HEADING = re.compile(r"^\s*(\d+(?:\.\d+)*)\.?\s+\S")
+_CHAPTER_HEADING = re.compile(r"^\s*(?:CHAPTER|SECTION|PART|APPENDIX|ANNEXURE)\b[\s\-:]*[A-Z0-9IVX]*", re.IGNORECASE)
+
+
+def infer_heading_level(content: str, parser_level: int | None) -> int:
+    """Infer a heading level from numbering ("3.2.1 Title" -> 3, "CHAPTER 5" -> 1).
+
+    Docling's layout model reports every section header at the same level, so
+    the section hierarchy is reconstructed deterministically from the heading
+    text.  Falls back to the parser level (or 2) when no numbering is present.
+    """
+    text = content.strip()
+    m = _NUMBERED_HEADING.match(text)
+    if m:
+        depth = m.group(1).count(".") + 1
+        return min(max(depth, 1), 6)
+    if _CHAPTER_HEADING.match(text):
+        return 1
+    if parser_level is not None:
+        return parser_level
+    return 2
+
+
+_CHAPTER_NO = re.compile(r"chapter\s*no\.?\s*:?\s*(\d+)", re.IGNORECASE)
+
+
+def chapter_by_page(parsed_doc: ParsedDocument, template_table_ids: set[str]) -> dict[int, int]:
+    """Map page number -> chapter number using the repeating page-header box."""
+    result: dict[int, int] = {}
+    for table in parsed_doc.tables:
+        if table.table_id not in template_table_ids:
+            continue
+        text = " ".join(c.content for c in table.cells)
+        m = _CHAPTER_NO.search(text)
+        if m:
+            result.setdefault(table.page, int(m.group(1)))
+    return result
+
+
 def _map_content_type(element_type: ElementType, content: str) -> ContentType:
     """Map parsed element type to normalized content type."""
     mapping = {
@@ -90,6 +129,17 @@ class DocumentNormalizer:
         # Step 1: Detect repeated elements (headers/footers)
         repeated_hashes = self._detect_repeated_elements(parsed_doc)
 
+        # Step 1b: Detect repeating page-template tables (header/footer boxes)
+        from src.table_classifier import detect_page_template_tables
+        template_table_ids = detect_page_template_tables(parsed_doc)
+        if template_table_ids:
+            logger.info(f"Found {len(template_table_ids)} page-template tables (header/footer boxes)")
+        page_chapter = chapter_by_page(parsed_doc, template_table_ids)
+        if page_chapter:
+            logger.info(f"Chapter numbers recovered for {len(page_chapter)} pages "
+                        f"({len(set(page_chapter.values()))} chapters)")
+        last_chapter_with_heading: int | None = None
+
         # Step 2: Detect approval/signature blocks
         approval_pattern = re.compile(
             r"(approved|authorized|signature|signed|prepared|checked|reviewed|verified)\s*(by)?",
@@ -117,12 +167,19 @@ class DocumentNormalizer:
                 # Determine filter decision
                 decision = self._classify_element(
                     element, repeated_hashes, approval_pattern, toc_pattern,
+                    template_table_ids,
                 )
 
                 if decision == FilterDecision.KEEP:
                     # Update section tracking for headings
+                    heading_level = element.heading_level
                     if element.element_type == ElementType.HEADING:
-                        level = element.heading_level or 2
+                        level = infer_heading_level(element.content, element.heading_level)
+                        chapter_no = page_chapter.get(element.page)
+                        if chapter_no is not None and chapter_no != last_chapter_with_heading:
+                            level = 1  # first heading inside a new chapter = chapter title
+                            last_chapter_with_heading = chapter_no
+                        heading_level = level
                         current_heading = element.content.strip()
                         section_id = f"s_{doc_id}_{element.page}_{element.position_in_page}"
 
@@ -157,7 +214,7 @@ class DocumentNormalizer:
                         page=element.page,
                         position_in_page=element.position_in_page,
                         section_path=current_section_path,
-                        heading_level=element.heading_level,
+                        heading_level=heading_level,
                         parent_heading=current_heading if element.element_type != ElementType.HEADING else None,
                         filter_decision=FilterDecision.KEEP,
                         table_id=element.table.table_id if element.table else None,
@@ -251,6 +308,7 @@ class DocumentNormalizer:
         repeated_hashes: set[str],
         approval_pattern: re.Pattern,
         toc_pattern: re.Pattern,
+        template_table_ids: set[str] | None = None,
     ) -> FilterDecision:
         """Classify a single element as keep or filtered."""
         content = element.content.strip() if element.content else ""
@@ -258,6 +316,14 @@ class DocumentNormalizer:
         # Empty content
         if len(content) < self.config.normalizer.min_content_length:
             return FilterDecision.EMPTY
+
+        # Repeating page-template tables (header/footer boxes on every page)
+        if element.table is not None and template_table_ids and element.table.table_id in template_table_ids:
+            return FilterDecision.REPEATED_HEADER
+
+        # Parser-labelled furniture (Docling furniture layer)
+        if element.content_layer == "furniture" and element.element_type != ElementType.TABLE:
+            return FilterDecision.REPEATED_HEADER
 
         # Page headers/footers from parser
         if element.element_type == ElementType.PAGE_HEADER:

@@ -87,6 +87,65 @@ def _structural_hash(table: ParsedTable) -> str:
     return hashlib.md5("|".join(parts).encode()).hexdigest()[:16]
 
 
+def _template_token(text: str) -> str:
+    """Digit-insensitive, whitespace-normalized cell text used for page-template detection."""
+    t = re.sub(r"\d+", "#", text.strip().lower())
+    return re.sub(r"\s+", " ", t)
+
+
+def detect_page_template_tables(
+    parsed_doc: ParsedDocument,
+    page_fraction: float = 0.5,
+    cell_fraction: float = 0.6,
+) -> set[str]:
+    """Find tables that are page furniture (header/footer boxes repeated on most pages).
+
+    A cell text (digits replaced by '#') that occurs on at least ``page_fraction``
+    of all pages is a *template token*.  A table whose non-empty cells are mostly
+    (>= ``cell_fraction``) template tokens is a page-template table.  This is
+    robust to the chapter title / page number / revision cells changing.
+    """
+    total_pages = max(parsed_doc.total_pages, len(parsed_doc.pages), 1)
+    if total_pages < 4 or not parsed_doc.tables:
+        return set()
+
+    token_pages: dict[str, set[int]] = {}
+    for table in parsed_doc.tables:
+        for cell in table.cells:
+            tok = _template_token(cell.content)
+            if len(tok) < 2:
+                continue
+            token_pages.setdefault(tok, set()).add(table.page)
+
+    template_tokens = {
+        tok for tok, pages in token_pages.items()
+        if len(pages) / total_pages >= page_fraction and len(pages) >= 3
+    }
+    if not template_tokens:
+        return set()
+
+    # Longer template tokens are also matched as substrings: TableFormer sometimes
+    # merges two header-box cells ("PLANT NO: PLANT NAME: Page No"), which would
+    # otherwise look like a rare cell text.
+    long_templates = [t for t in template_tokens if len(t) >= 6]
+
+    def is_template_cell(tok: str) -> bool:
+        if tok in template_tokens:
+            return True
+        return any(lt in tok for lt in long_templates)
+
+    template_ids: set[str] = set()
+    for table in parsed_doc.tables:
+        toks = [_template_token(c.content) for c in table.cells if c.content.strip()]
+        toks = [t for t in toks if len(t) >= 2]
+        if not toks:
+            continue
+        hits = sum(1 for t in toks if is_template_cell(t))
+        if hits / len(toks) >= cell_fraction and table.num_rows <= 8:
+            template_ids.add(table.table_id)
+    return template_ids
+
+
 class TableClassifier:
     """Classifies and normalizes tables from parsed documents."""
 
@@ -117,6 +176,11 @@ class TableClassifier:
                 hash_pages[h] = set()
             hash_pages[h].add(table.page)
 
+        # Step 1b: Page-template (header/footer box) detection
+        template_ids = detect_page_template_tables(parsed_doc)
+        if template_ids:
+            logger.info(f"{len(template_ids)} tables detected as repeating page-template boxes")
+
         # Step 2: Classify each table
         classified_tables: list[ClassifiedTable] = []
         classification_summary: Counter[str] = Counter()
@@ -128,6 +192,7 @@ class TableClassifier:
         for table in parsed_doc.tables:
             classified = self._classify_table(
                 table, doc_id, total_pages, hash_counts, hash_pages,
+                is_template=table.table_id in template_ids,
             )
 
             # Check for duplicates
@@ -171,6 +236,7 @@ class TableClassifier:
         total_pages: int,
         hash_counts: Counter,
         hash_pages: dict[str, set[int]],
+        is_template: bool = False,
     ) -> ClassifiedTable:
         """Classify a single table."""
         s_hash = _structural_hash(table)
@@ -178,6 +244,8 @@ class TableClassifier:
 
         # Extract headers and content
         headers = [c.content for c in table.cells if c.is_header]
+        if not headers and table.grid:
+            headers = list(table.grid[0])
         all_content = " ".join(c.content for c in table.cells)
         header_text = " ".join(headers).lower()
 
@@ -189,9 +257,11 @@ class TableClassifier:
                 cols_by_index[cell.col] = []
             cols_by_index[cell.col].append(cell.content)
 
+        header_row = [c for c in table.cells if c.is_header]
+        header_by_col = {c.col: c.content for c in header_row}
         for col_idx in sorted(cols_by_index.keys()):
             values = cols_by_index[col_idx]
-            header = values[0] if values else ""
+            header = header_by_col.get(col_idx) or (values[0] if values else "")
             col_info = ColumnInfo(
                 index=col_idx,
                 header=header,
@@ -220,7 +290,9 @@ class TableClassifier:
         # Compute page frequency
         pages = hash_pages.get(s_hash, set())
         frequency = len(pages) / total_pages if total_pages > 0 else 0
-        is_repeated = frequency >= 0.5 and len(pages) > 2
+        is_repeated = (frequency >= 0.5 and len(pages) > 2) or is_template
+        if is_template and frequency < 0.5:
+            reasons.append("Cells match the repeating page header/footer template")
 
         # Classification logic
         classification = TableClassification.UNKNOWN_TABLE

@@ -1,2 +1,58 @@
-# Relationship extraction is integrated into entity_extraction.txt prompt.
-# This file is reserved for a future dedicated relationship-extraction pass.
+You are extracting ENGINEERING RELATIONSHIPS and NUMERIC CLAIMS from one passage of a refinery operating manual.
+
+DOCUMENT INFORMATION:
+{document_info}
+Section: {section_path}
+{page_range}
+
+ENTITIES ALREADY IDENTIFIED IN THIS PASSAGE (use these exact names as subject/object):
+{entity_list}
+
+KNOWN IDENTITIES FROM THE GRAPH (reuse exact tags/names, do not invent variants):
+{graph_context}
+
+RULES
+1. Extract ONLY relationships that the passage states explicitly. Co-occurrence is NOT a relationship.
+2. Every relationship MUST carry "evidence": the exact words from the passage (copy them verbatim, do not paraphrase).
+3. Routing lists like "Kerosene to / Storage / Diesel Header" mean Kerosene ROUTES_TO Storage and Kerosene ROUTES_TO Diesel Header.
+4. "X comprises A and B" means A PART_OF X and B PART_OF X.
+5. "P-101 takes suction from T-101" means P-101 SUCTION_FROM T-101. "driven by" -> DRIVEN_BY. "controlled by" -> CONTROLLED_BY.
+6. "upstream of" / "downstream of" -> UPSTREAM_OF / DOWNSTREAM_OF between the two named items.
+7. Also extract CLAIMS: every numeric value the passage states about one of the entities
+   (pressure, temperature, flow, capacity, specific gravity, yield, ...). Use the row/column headers
+   for table rows. Value is the number as written, unit as written.
+8. Report a confidence between 0 and 1; use lower confidence rather than omitting a stated fact.
+
+RELATIONSHIP TYPES (use these exact values):
+  PART_OF, LOCATED_IN, UPSTREAM_OF, DOWNSTREAM_OF, CONNECTED_TO,
+  FEEDS, RECEIVES_FROM, DISCHARGES_TO, ROUTES_TO, SUCTION_FROM, RETURN_TO, RECYCLES_TO,
+  DRIVEN_BY, HEATED_BY, COOLED_BY, CONDENSED_BY, CONTROLLED_BY, MEASURED_BY,
+  MONITORED_BY, INDICATED_BY, ALARMED_BY, TRIPPED_BY, INTERLOCKED_WITH,
+  PROTECTED_BY, RELIEVED_BY, HAS_FEED, HAS_PRODUCT, USES_UTILITY,
+  APPLIES_TO, REQUIRES, REFERENCES, ASSOCIATED_WITH
+
+PASSAGE:
+═══════════════════════════════════════════════════════════
+{chunk_text}
+═══════════════════════════════════════════════════════════
+
+CLAIM PREDICATES (use these exact values):
+  design_pressure, normal_pressure, maximum_pressure, minimum_pressure, operating_pressure,
+  design_temperature, normal_temperature, maximum_temperature, minimum_temperature, operating_temperature,
+  flow_rate, mass_flow_rate, volumetric_flow_rate, capacity, power, speed, diameter, material,
+  specific_gravity, density, viscosity, yield, cut_range, pour_point, flash_point,
+  setpoint, alarm_limit, trip_limit, operating_condition, generic_property
+
+Return ONLY a JSON object of this exact shape:
+{{
+  "relationships": [
+    {{"subject": "Kerosene", "predicate": "FEEDS", "object": "Diesel Header",
+      "evidence": "Kerosene to Diesel Header", "sentence_index": 12, "page": {page_hint}, "confidence": 0.85}}
+  ],
+  "claims": [
+    {{"subject": "LPG", "predicate": "operating_pressure", "value": "8.0", "unit": "Kg/cm2 A",
+      "evidence": "LPG | C3-C4 | 40 | 8.0", "sentence_index": 30, "page": {page_hint}, "confidence": 0.8,
+      "is_from_table": true}}
+  ]
+}}
+If the passage states no relationship or numeric claim, return {{"relationships": [], "claims": []}}.

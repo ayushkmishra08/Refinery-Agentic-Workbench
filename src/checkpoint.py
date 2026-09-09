@@ -29,6 +29,7 @@ class PipelinePhase(str, Enum):
     GLOSSARY = "glossary"
     NEO4J_SETUP = "neo4j_setup"
     CHUNKING = "chunking"
+    EMBEDDING = "embedding"
     EXTRACTION = "extraction"
     VALIDATION = "validation"
     GRAPH_INSERTION = "graph_insertion"
@@ -87,6 +88,13 @@ class PipelineCheckpoint:
         self._state["current_phase"] = phase.value
         self._save()
         logger.info(f"Checkpoint: {self.document_id} phase {phase.value} complete")
+
+    def unmark_phase(self, phase: PipelinePhase) -> None:
+        """Remove a phase from the completed list so it runs again."""
+        if phase.value in self._state.get("completed_phases", []):
+            self._state["completed_phases"].remove(phase.value)
+            self._save()
+            logger.info(f"Checkpoint: {self.document_id} phase {phase.value} re-opened")
 
     def is_chunk_complete(self, chunk_id: str) -> bool:
         """Check if a specific chunk has been successfully processed."""
@@ -171,6 +179,7 @@ class PipelineCheckpoint:
         # Remove extraction-related phases from completed
         extraction_phases = {
             PipelinePhase.NEO4J_SETUP.value,
+            PipelinePhase.EMBEDDING.value,
             PipelinePhase.EXTRACTION.value,
             PipelinePhase.VALIDATION.value,
             PipelinePhase.GRAPH_INSERTION.value,

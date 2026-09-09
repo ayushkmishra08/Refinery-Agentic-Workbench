@@ -158,6 +158,7 @@ class EntityType(str, Enum):
 
     # Generic
     GENERIC = "generic"
+    OTHER = "other"
 
 
 class RelationshipType(str, Enum):
@@ -221,9 +222,16 @@ class ExtractedEntity(BaseModel):
     name: str = Field(description="Entity name as it appears in the source")
     canonical_name: str = Field(default="", description="Normalized/canonical name")
     entity_type: EntityType
+    entity_type_raw: str = Field(default="", description="Type label exactly as the model produced it")
     domain: EntityDomain = EntityDomain.UNKNOWN
     aliases: list[str] = Field(default_factory=list)
     description: str = Field(default="")
+    canonical_tag: str | None = Field(default=None, description="Canonical asset tag (global identity) if any")
+    uid: str = Field(default="", description="Graph UID assigned by the resolver")
+    resolution_method: str = Field(default="", description="tag | glossary | name_match | vector | document_scoped")
+    grounding: str = Field(default="strong", description="strong = evidence sentence found in chunk; weak = name only")
+    source: str = Field(default="llm_pass1", description="llm_pass1 | llm_pass2 | rule | table")
+    sentence_index: int | None = Field(default=None)
 
     # Provenance
     evidence: str = Field(description="Source text where this entity was identified")
@@ -240,8 +248,12 @@ class ExtractedRelationship(BaseModel):
     subject: str = Field(description="Subject entity name or ID")
     subject_type: EntityType | None = None
     predicate: RelationshipType
+    predicate_raw: str = Field(default="", description="Predicate label exactly as the model produced it")
     object: str = Field(description="Object entity name or ID")
     object_type: EntityType | None = None
+    grounding: str = Field(default="strong", description="strong = one sentence names subject and object; weak = both appear but apart")
+    source: str = Field(default="llm_pass1", description="llm_pass1 | llm_pass2 | rule | table")
+    sentence_index: int | None = Field(default=None)
 
     # Provenance (REQUIRED — no orphan relationships)
     evidence: str = Field(description="Source text explicitly establishing this relationship")

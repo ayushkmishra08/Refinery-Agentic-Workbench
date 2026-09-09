@@ -3,7 +3,7 @@
 Validates:
   - Every Entity node has required properties
   - Every Claim node is linked to an Entity via HAS_CLAIM
-  - Every ENGINEERING_REL connects two valid Entity nodes
+  - Every predicate-typed engineering connects two valid Entity nodes
   - No orphan Claim or relationship nodes
   - No duplicate UIDs
   - All retrieval queries execute without errors
@@ -48,6 +48,7 @@ class IntegrityChecker:
         self._check_retrieval_queries()
         self._check_orphan_claims()
         self._check_orphan_chunks()
+        self._check_identity_invariants()
 
         print(f"\n{'=' * 60}")
         print(f"Results: {self.passed} passed, {self.failed} failed, {self.warnings} warnings")
@@ -82,7 +83,7 @@ class IntegrityChecker:
     def _check_entity_properties(self) -> None:
         """Check that entities have required properties."""
         print("\n--- Entity Property Checks ---")
-        required_props = ["uid", "name", "entity_type", "evidence", "document_id"]
+        required_props = ["uid", "name", "entity_type", "evidence", "first_seen_document"]
 
         with self.memory.session() as session:
             for prop in required_props:
@@ -122,21 +123,21 @@ class IntegrityChecker:
                 self._fail(f"{orphan}/{total} claims are orphaned (not linked via HAS_CLAIM)")
 
     def _check_relationship_linkage(self) -> None:
-        """Check that all ENGINEERING_REL relationships connect valid entities."""
+        """Check that all predicate-typed engineering relationships connect valid entities."""
         print("\n--- Relationship Linkage ---")
         with self.memory.session() as session:
             result = session.run(
-                "MATCH (s:Entity)-[r:ENGINEERING_REL]->(o:Entity) RETURN count(r) AS cnt"
+                "MATCH (s:Entity)-[r]->(o:Entity) RETURN count(r) AS cnt"
             )
             count = result.single()["cnt"]
             if count > 0:
-                self._pass(f"{count} ENGINEERING_REL relationships exist")
+                self._pass(f"{count} predicate-typed engineering relationships exist")
             else:
-                self._warn("No ENGINEERING_REL relationships exist")
+                self._warn("No predicate-typed engineering relationships exist")
 
             # Check if rel has required properties
             result = session.run("""
-                MATCH (s:Entity)-[r:ENGINEERING_REL]->(o:Entity)
+                MATCH (s:Entity)-[r]->(o:Entity)
                 WHERE r.predicate IS NULL
                 RETURN count(r) AS cnt
             """)
@@ -145,6 +146,48 @@ class IntegrityChecker:
                 self._pass("All relationships have 'predicate' property")
             else:
                 self._fail(f"{missing} relationships missing 'predicate' property")
+
+    def _check_identity_invariants(self) -> None:
+        """Global-identity invariants (canonical tags, provenance, SAME_AS, claim linkage)."""
+        print("\n--- Identity Invariants ---")
+        from src.config import load_config
+        threshold = load_config().identity.same_as_threshold
+        with self.memory.session() as session:
+            n = session.run(
+                "MATCH (e:Entity) WHERE NOT (:Document)-[:HAS_ENTITY]->(e) RETURN count(e) AS n"
+            ).single()["n"]
+            (self._pass if n == 0 else self._fail)(f"{n} Entity nodes without a HAS_ENTITY link")
+
+            n = session.run(
+                "MATCH (e:Entity) WHERE e.canonical_tag IS NOT NULL "
+                "WITH e.canonical_tag AS t, count(*) AS c WHERE c > 1 RETURN count(*) AS n"
+            ).single()["n"]
+            (self._pass if n == 0 else self._fail)(f"{n} canonical_tag values shared by more than one Entity")
+
+            n = session.run(
+                "MATCH ()-[r:SAME_AS]->() WHERE r.confidence < $t RETURN count(r) AS n", {"t": threshold}
+            ).single()["n"]
+            (self._pass if n == 0 else self._fail)(f"{n} SAME_AS links below threshold {threshold}")
+
+            n = session.run(
+                "MATCH (c:Claim) WITH c, size([(e:Entity)-[:HAS_CLAIM]->(c) | e]) AS k "
+                "WHERE k <> 1 RETURN count(c) AS n"
+            ).single()["n"]
+            (self._pass if n == 0 else self._fail)(f"{n} Claim nodes not linked to exactly one Entity")
+
+            n = session.run(
+                "MATCH (e:Entity) WHERE e.document_ids IS NULL OR size(e.document_ids) = 0 RETURN count(e) AS n"
+            ).single()["n"]
+            (self._pass if n == 0 else self._fail)(f"{n} Entity nodes without document_ids")
+
+            rows = session.run(
+                "MATCH (e:Entity) WHERE size(coalesce(e.document_ids, [])) > 1 "
+                "RETURN e.canonical_tag AS tag, e.name AS name, size(e.document_ids) AS docs ORDER BY docs DESC LIMIT 5"
+            ).data()
+            if rows:
+                self._pass("Cross-document entities: " + ", ".join(f"{r['tag'] or r['name']}({r['docs']})" for r in rows))
+            else:
+                self._warn("No entity is linked to more than one document yet")
 
     def _check_duplicate_uids(self) -> None:
         """Check for duplicate UIDs."""

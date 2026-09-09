@@ -41,6 +41,7 @@ class RetrievalContext:
     existing_relationships: list[dict] = field(default_factory=list)
     referenced_procedures: list[dict] = field(default_factory=list)
     similar_chunks: list[dict] = field(default_factory=list)
+    known_identities: list[dict] = field(default_factory=list)
 
     def is_empty(self) -> bool:
         """Check if no relevant context was found."""
@@ -56,6 +57,18 @@ class RetrievalContext:
     def to_prompt_context(self) -> str:
         """Format retrieval context for inclusion in LLM prompt."""
         parts: list[str] = []
+
+        if self.known_identities:
+            parts.append("## Known Entity Identities (reuse these exact names/tags; do not invent variants)")
+            for e in self.known_identities[:15]:
+                tag = e.get("canonical_tag") or "-"
+                aliases = ", ".join(a for a in e.get("aliases", [])[:5])
+                docs = len(e.get("document_ids", []) or [])
+                parts.append(
+                    f"- tag {tag} | name: {e.get('name', '?')} | type: {e.get('entity_type', '?')}"
+                    + (f" | aliases: {aliases}" if aliases else "")
+                    + (f" | seen in {docs} document(s)" if docs else "")
+                )
 
         if self.mentioned_entities:
             parts.append("## Known Entities in This Context")
@@ -155,6 +168,12 @@ class MemoryRetriever:
             # 8. Glossary terms
             if self.glossary:
                 context.glossary_terms = self._match_glossary_terms(chunk.text)
+
+            # 8b. Identity resolution context: canonical tags found in the chunk
+            from src.entity_identity import find_tags
+            keys = find_tags(chunk.text) + potential_names
+            if keys:
+                context.known_identities = self.memory.get_entity_identities(keys[:40])
 
             # 9. Vector search for similar chunks (if embedding available)
             if chunk.embedding:

@@ -211,6 +211,7 @@ class EngineeringClaim(BaseModel):
     subject: str = Field(description="Entity this claim is about (e.g., 'P-101')")
     subject_uid: str = Field(default="", description="UID of the subject entity in the graph")
     predicate: ClaimCategory = Field(description="What property is being claimed")
+    predicate_raw: str = Field(default="", description="Predicate label exactly as the model produced it")
     value: str = Field(description="The claimed value (numeric or text)")
     unit: str = Field(default="", description="Engineering unit if applicable")
     unit_family: UnitFamily = Field(default=UnitFamily.UNKNOWN)
@@ -227,6 +228,11 @@ class EngineeringClaim(BaseModel):
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     is_from_table: bool = Field(default=False, description="Whether this was extracted from a table")
     table_id: str | None = Field(default=None)
+
+    # Grounding / source
+    grounding: str = Field(default="strong", description="strong = one sentence/row names subject and value; weak = apart")
+    source: str = Field(default="llm_pass1", description="llm_pass1 | llm_pass2 | rule | table")
+    sentence_index: int | None = Field(default=None)
 
     # Conflict tracking
     has_conflict: bool = Field(default=False)

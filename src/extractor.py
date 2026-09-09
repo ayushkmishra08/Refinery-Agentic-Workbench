@@ -38,6 +38,28 @@ from src.retriever import RetrievalContext
 logger = logging.getLogger(__name__)
 
 
+def _safe_float(value, default: float) -> float:
+    """Coerce an LLM-provided number (may be null/str) to float, clamped to [0, 1]."""
+    try:
+        if value is None:
+            return default
+        f = float(value)
+    except (TypeError, ValueError):
+        return default
+    if f != f:  # NaN
+        return default
+    return max(0.0, min(1.0, f))
+
+
+def _safe_page(value, default: int) -> int:
+    try:
+        if value is None:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 class ExtractionStatus(str, Enum):
     """Status of a chunk extraction attempt."""
     SUCCESS = "success"              # Parsed JSON, found entities/claims/rels
@@ -224,6 +246,118 @@ class OllamaExtractor:
             attempts=max_attempts,
         )
 
+    def extract_relationships(
+        self,
+        chunk: Chunk,
+        entities: list,
+        context: RetrievalContext,
+        profile: DocumentProfile,
+    ) -> tuple[list, list]:
+        """Second pass: relationships and claims only, given the entities found in the chunk.
+
+        Returns (relationships, claims) tagged with source='llm_pass2'.
+        """
+        from schemas.claims import ClaimCategory, EngineeringClaim
+        from schemas.knowledge import ExtractedRelationship, RelationshipType
+
+        prompt_path = self._prompts_dir / "relationship_extraction.txt"
+        if not prompt_path.exists():
+            return [], []
+        template = prompt_path.read_text(encoding="utf-8")
+        names = []
+        for e in entities:
+            label = e.name if not e.canonical_name or e.canonical_name == e.name else f"{e.name} ({e.canonical_name})"
+            tag = f" tag={e.canonical_tag}" if getattr(e, "canonical_tag", None) else ""
+            names.append(f"- {label} [{e.entity_type.value}]{tag}")
+        nl = chr(10)
+        prompt = template.format(
+            document_info=f"Document: {profile.title or profile.source_filename}{nl}"
+                          f"Plant/Unit: {profile.plant or 'unknown'} / {profile.unit or 'unknown'}",
+            section_path=chunk.section_path,
+            page_range=f"Pages {chunk.page_start}-{chunk.page_end}",
+            entity_list=nl.join(names) or "(none)",
+            graph_context=context.to_prompt_context(),
+            chunk_text=chunk.text,
+            page_hint=chunk.page_start,
+        )
+        try:
+            raw = self._call_ollama(prompt)
+        except Exception as e:
+            logger.warning(f"Relationship pass failed for {chunk.chunk_id}: {e}")
+            return [], []
+        json_str = self._find_json_in_response(raw)
+        if not json_str:
+            return [], []
+        try:
+            data = json.loads(json_str)
+        except json.JSONDecodeError:
+            repaired = self._repair_json(json_str)
+            try:
+                data = json.loads(repaired) if repaired else {}
+            except json.JSONDecodeError:
+                return [], []
+        if not isinstance(data, dict):
+            return [], []
+
+        rels = []
+        for r in data.get("relationships", []) or []:
+            if not isinstance(r, dict):
+                continue
+            raw_pred = str(r.get("predicate") or "ASSOCIATED_WITH")
+            try:
+                pred = RelationshipType(raw_pred.strip().upper().replace(" ", "_"))
+            except ValueError:
+                pred = RelationshipType.ASSOCIATED_WITH
+            try:
+                rels.append(ExtractedRelationship(
+                    relationship_id=f"{chunk.chunk_id}_r2_{len(rels)}",
+                    subject=str(r.get("subject") or ""),
+                    predicate=pred,
+                    predicate_raw=raw_pred,
+                    object=str(r.get("object") or ""),
+                    evidence=str(r.get("evidence") or ""),
+                    page=_safe_page(r.get("page"), chunk.page_start),
+                    section=chunk.section_path,
+                    document_id=profile.document_id,
+                    chunk_id=chunk.chunk_id,
+                    confidence=_safe_float(r.get("confidence"), 0.5),
+                    sentence_index=_safe_page(r.get("sentence_index"), -1) if r.get("sentence_index") is not None else None,
+                    source="llm_pass2",
+                ))
+            except (ValueError, KeyError, TypeError) as ve:
+                logger.debug(f"Skipping invalid relationship (pass 2): {ve}")
+
+        claims = []
+        for c in data.get("claims", []) or []:
+            if not isinstance(c, dict):
+                continue
+            raw_cpred = str(c.get("predicate") or "generic_property")
+            try:
+                cpred = ClaimCategory(raw_cpred.strip().lower().replace(" ", "_"))
+            except ValueError:
+                cpred = ClaimCategory.GENERIC_PROPERTY
+            try:
+                claims.append(EngineeringClaim(
+                    claim_id=f"{chunk.chunk_id}_c2_{len(claims)}",
+                    subject=str(c.get("subject") or ""),
+                    predicate=cpred,
+                    predicate_raw=raw_cpred,
+                    value=str(c.get("value") if c.get("value") is not None else ""),
+                    unit=str(c.get("unit") or ""),
+                    evidence=str(c.get("evidence") or ""),
+                    page=_safe_page(c.get("page"), chunk.page_start),
+                    section=chunk.section_path,
+                    document_id=profile.document_id,
+                    chunk_id=chunk.chunk_id,
+                    confidence=_safe_float(c.get("confidence"), 0.5),
+                    is_from_table=bool(c.get("is_from_table") or False),
+                    source="llm_pass2",
+                ))
+            except (ValueError, KeyError, TypeError) as ve:
+                logger.debug(f"Skipping invalid claim (pass 2): {ve}")
+        logger.info(f"Relationship pass for {chunk.chunk_id}: {len(rels)} relationships, {len(claims)} claims")
+        return rels, claims
+
     def _save_failure(self, chunk_id: str, raw_response: str, error: str) -> None:
         """Preserve raw LLM output on failure for later inspection."""
         try:
@@ -288,6 +422,8 @@ class OllamaExtractor:
             "prompt": prompt,
             "stream": False,
             "format": "json",  # Enforce strict JSON output
+            "think": self.config.ollama.think,
+            "keep_alive": "30m",
             "options": {
                 "num_ctx": self.config.ollama.num_ctx,
                 "temperature": self.config.ollama.temperature,
@@ -350,73 +486,96 @@ class OllamaExtractor:
             else:
                 raise
 
-        # Parse entities
+        # Parse entities (open vocabulary: unknown labels map to OTHER, raw kept)
         for e in data.get("entities", []):
             from schemas.knowledge import ExtractedEntity, EntityType, EntityDomain
             try:
+                raw_type = str(e.get("entity_type") or "generic")
+                try:
+                    etype = EntityType(raw_type.strip().lower())
+                except ValueError:
+                    etype = EntityType.OTHER
+                try:
+                    edomain = EntityDomain(str(e.get("domain") or "unknown").strip().lower())
+                except ValueError:
+                    edomain = EntityDomain.UNKNOWN
                 entity = ExtractedEntity(
                     entity_id=f"{chunk.chunk_id}_e{len(extraction.entities)}",
-                    name=e.get("name", ""),
-                    canonical_name=e.get("canonical_name", e.get("name", "")),
-                    entity_type=EntityType(e.get("entity_type", "generic")),
-                    domain=EntityDomain(e.get("domain", "unknown")),
-                    aliases=e.get("aliases", []),
-                    description=e.get("description", ""),
-                    evidence=e.get("evidence", ""),
-                    page=e.get("page", chunk.page_start),
+                    name=str(e.get("name") or ""),
+                    canonical_name=str(e.get("canonical_name") or e.get("name") or ""),
+                    entity_type=etype,
+                    entity_type_raw=raw_type,
+                    domain=edomain,
+                    aliases=[str(a) for a in (e.get("aliases") or []) if a],
+                    description=str(e.get("description") or ""),
+                    evidence=str(e.get("evidence") or ""),
+                    page=_safe_page(e.get("page"), chunk.page_start),
                     section=chunk.section_path,
                     document_id=document_id,
                     chunk_id=chunk.chunk_id,
-                    confidence=float(e.get("confidence", 0.5)),
+                    confidence=_safe_float(e.get("confidence"), 0.5),
+                    sentence_index=_safe_page(e.get("sentence_index"), -1) if e.get("sentence_index") is not None else None,
                 )
                 extraction.entities.append(entity)
-            except (ValueError, KeyError) as ve:
+            except (ValueError, KeyError, TypeError) as ve:
                 logger.debug(f"Skipping invalid entity: {ve}")
 
         # Parse relationships
         for r in data.get("relationships", []):
             from schemas.knowledge import ExtractedRelationship, RelationshipType
             try:
+                raw_pred = str(r.get("predicate") or "ASSOCIATED_WITH")
+                try:
+                    pred = RelationshipType(raw_pred.strip().upper().replace(" ", "_"))
+                except ValueError:
+                    pred = RelationshipType.ASSOCIATED_WITH
                 rel = ExtractedRelationship(
                     relationship_id=f"{chunk.chunk_id}_r{len(extraction.relationships)}",
-                    subject=r.get("subject", ""),
-                    predicate=RelationshipType(r.get("predicate", "ASSOCIATED_WITH")),
-                    object=r.get("object", ""),
-                    evidence=r.get("evidence", ""),
-                    page=r.get("page", chunk.page_start),
+                    subject=str(r.get("subject") or ""),
+                    predicate=pred,
+                    predicate_raw=raw_pred,
+                    object=str(r.get("object") or ""),
+                    evidence=str(r.get("evidence") or ""),
+                    page=_safe_page(r.get("page"), chunk.page_start),
                     section=chunk.section_path,
                     document_id=document_id,
                     chunk_id=chunk.chunk_id,
-                    confidence=float(r.get("confidence", 0.5)),
+                    confidence=_safe_float(r.get("confidence"), 0.5),
                 )
                 extraction.relationships.append(rel)
-            except (ValueError, KeyError) as ve:
+            except (ValueError, KeyError, TypeError) as ve:
                 logger.debug(f"Skipping invalid relationship: {ve}")
 
         # Parse claims
         for c in data.get("claims", []):
             from schemas.claims import EngineeringClaim, ClaimCategory
             try:
+                raw_cpred = str(c.get("predicate") or "generic_property")
+                try:
+                    cpred = ClaimCategory(raw_cpred.strip().lower().replace(" ", "_"))
+                except ValueError:
+                    cpred = ClaimCategory.GENERIC_PROPERTY
                 claim = EngineeringClaim(
                     claim_id=f"{chunk.chunk_id}_c{len(extraction.claims)}",
-                    subject=c.get("subject", ""),
-                    predicate=ClaimCategory(c.get("predicate", "generic_property")),
+                    subject=str(c.get("subject") or ""),
+                    predicate=cpred,
+                    predicate_raw=raw_cpred,
                     value=str(c.get("value", "")),
-                    unit=c.get("unit", ""),
-                    evidence=c.get("evidence", ""),
-                    page=c.get("page", chunk.page_start),
+                    unit=str(c.get("unit") or ""),
+                    evidence=str(c.get("evidence") or ""),
+                    page=_safe_page(c.get("page"), chunk.page_start),
                     section=chunk.section_path,
                     document_id=document_id,
                     chunk_id=chunk.chunk_id,
-                    confidence=float(c.get("confidence", 0.5)),
-                    is_from_table=c.get("is_from_table", False),
+                    confidence=_safe_float(c.get("confidence"), 0.5),
+                    is_from_table=bool(c.get("is_from_table") or False),
                 )
                 extraction.claims.append(claim)
-            except (ValueError, KeyError) as ve:
+            except (ValueError, KeyError, TypeError) as ve:
                 logger.debug(f"Skipping invalid claim: {ve}")
 
         # Parse references
-        extraction.references = data.get("references", [])
+        extraction.references = [str(x) for x in (data.get("references") or []) if x]
 
         return extraction
 

@@ -17,15 +17,26 @@ CRITICAL EXTRACTION RULES
 
 1. Extract ONLY facts explicitly stated in the source text below.
 2. NEVER invent information from your training data.
-3. Every entity, relationship, and claim MUST include "evidence" — the exact quote from the source text that supports it.
-4. If you cannot find explicit evidence, DO NOT extract it.
+3. Every entity, relationship, and claim MUST include "evidence": copy the COMPLETE source sentence
+   (or the complete table row) that supports it, not a fragment. Add "sentence_index" (0-based index of
+   that sentence/line in the source text) when you can.
+4. If the source text does not mention it, DO NOT extract it.
 5. Use glossary terms exactly as defined — do NOT re-interpret abbreviations.
-6. A relationship (e.g., FEEDS, UPSTREAM_OF) requires EXPLICIT evidence.
-   Co-occurrence in the same paragraph or table is NOT sufficient.
-7. For table data: only assign values to entities when the row/column mapping is unambiguous.
-8. Prefer UNKNOWN over GUESS. If confidence is below 0.3, skip the item.
+6. Extract EVERY routing, containment, control and protection statement as a relationship.
+   Elliptical forms count:
+     "X to Y" / "X is routed to Y"       -> X FEEDS Y (or X DISCHARGES_TO Y for lines/headers)
+     "X from Y"                            -> X RECEIVES_FROM Y
+     "X upstream of TAG" / "downstream of" -> X UPSTREAM_OF TAG / X DOWNSTREAM_OF TAG
+     "A comprises B" / "A consists of B"   -> B PART_OF A
+     "X is protected by Y"                 -> X PROTECTED_BY Y
+     "X is controlled by Y"                -> X CONTROLLED_BY Y
+     "X takes suction from Y"              -> X SUCTION_FROM Y
+   A routing list ("Kerosene to" followed by "Storage", "Diesel Header") gives one relationship per line.
+7. For table data: one claim per numeric cell whose row and column headers identify the subject and the
+   property (design/normal/maximum pressure, temperature, flow, capacity, specific gravity, ...).
+8. Report a confidence between 0 and 1; use lower confidence rather than omitting a stated fact.
 9. Do NOT assign general engineering knowledge as if it came from this document.
-10. Check existing knowledge above to avoid duplicate extractions.
+10. Check existing knowledge above to avoid duplicate extractions; reuse known tags/names exactly.
 
 ═══════════════════════════════════════════════════════════
 ENTITY TYPES (use these exact values):
@@ -85,7 +96,8 @@ Return a JSON object with this exact structure:
       "subject": "P-101",
       "predicate": "SUCTION_FROM",
       "object": "T-101",
-      "evidence": "P-101 takes suction from crude storage tank T-101",
+      "evidence": "P-101 takes suction from crude storage tank T-101.",
+      "sentence_index": 3,
       "page": 15,
       "confidence": 0.85
     }}

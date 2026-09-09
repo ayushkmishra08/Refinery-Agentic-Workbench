@@ -1,0 +1,18 @@
+chunk CDU operating manual_chunk_0000 pages 1-2 section='SECTION A:  PREFACE'
+chunk tokens~562, prompt chars=8179 (~2044 tokens)
+---- chunk text (first 1200 chars) ----
+[Figure on page 1]
+
+# SECTION A:  PREFACE
+
+The  principal  objective  of  an  operating  manual  is  to  describe  relevant  operating  procedures, instructions and process safety information in an orderly manner for use by operating personnel for safe and efficient operation of a plant facility. These operating procedures and instructions shall be up-to-date reflecting changes in plant hardware and operating practices carried out from time to time.
+
+The Crude and Vacuum Distillation Unit-II was commissioned under the Visakh Refinery Expansion Project-I  (VREP-I)  to  enhance  the  crude  refining  capacity  of  VR  by  3.0  MMTPA.  CDU-II  is equipped  with  the  latest  technology.  Its  design  provides  for  energy  conservation;  operational flexibility and maximization of product recoveries.
+
+The original edition of operating manual of Crude Distillation Unit-II (CDU-II) was prepared prior to the commissioning of the unit in the year 1985 by M/s EIL. It was later updated in July 2008, based on the standard operating manual and process package provided by EIL. Plant Standing Instructions (PSI) issued from time to time based on operating experience and learning are available se
+
+---- raw response (71 chars, 31s) ----
+{ "entities": [], "relationships": [], "claims": [], "references": [] }
+
+parsed: 0 entities, 0 relationships, 0 claims, refs=[]
+validation passed=True errors=0 warnings=0 valid e/r/c=0/0/0
