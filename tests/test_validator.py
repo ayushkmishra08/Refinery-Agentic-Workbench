@@ -82,7 +82,7 @@ class TestValidator:
         result = self.validator.validate(extraction, chunk)
         assert result.rejected_entities > 0
 
-    def test_entity_without_evidence_rejected(self):
+    def test_entity_without_evidence_and_absent_from_chunk_rejected(self):
         extraction = ChunkExtraction(
             chunk_id="test_chunk", document_id="test_doc",
             page_start=1, page_end=1,
@@ -94,9 +94,38 @@ class TestValidator:
                 )
             ],
         )
-        chunk = self._make_chunk("P-101 operates at 10 bar")
+        chunk = self._make_chunk("The charge pump operates at 10 bar")   # P-101 never named
         result = self.validator.validate(extraction, chunk)
         assert result.rejected_entities > 0
+
+    def test_entity_without_evidence_but_named_in_chunk_accepted_with_anchor(self):
+        entity = ExtractedEntity(
+            entity_id="e1", name="P-101",
+            entity_type=EntityType.PUMP, evidence="",  # NO EVIDENCE
+            page=1, confidence=0.9,
+        )
+        extraction = ChunkExtraction(
+            chunk_id="test_chunk", document_id="test_doc",
+            page_start=1, page_end=1, entities=[entity],
+        )
+        chunk = self._make_chunk("Crude is charged by P-101. P-101 operates at 10 bar.")
+        result = self.validator.validate(extraction, chunk)
+        assert result.rejected_entities == 0 and result.valid_entities == 1
+        assert result.warning_checks >= 1
+        assert "P-101" in entity.evidence          # anchored to the sentence naming it
+
+    def test_claim_with_value_like_subject_rejected(self):
+        for bad in ("10%", "IBP", "6.5-8.0", "Specifications"):
+            extraction = ChunkExtraction(
+                chunk_id="test_chunk", document_id="test_doc", page_start=1, page_end=1,
+                claims=[EngineeringClaim(
+                    claim_id="c1", subject=bad, predicate=ClaimCategory.OPERATING_TEMPERATURE,
+                    value="175", unit="°C", evidence=f"{bad} | 213.5 | 175", page=1, document_id="test_doc",
+                )],
+            )
+            chunk = self._make_chunk(f"Property | Basrah | Bombay high\n{bad} | 213.5 | 175")
+            result = self.validator.validate(extraction, chunk)
+            assert result.rejected_claims == 1, bad
 
     def test_pressure_with_temperature_unit_rejected(self):
         extraction = ChunkExtraction(

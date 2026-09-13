@@ -40,8 +40,28 @@ from schemas.validation import (
 from src.chunker import Chunk
 from src.config import PipelineConfig
 from src.memory import Neo4jMemory
+from src.table_context import is_distillation_point, is_numeric_like
 
 logger = logging.getLogger(__name__)
+
+# Words that name a table axis, not a thing in the plant
+_GENERIC_SUBJECTS = {
+    "specification", "specifications", "value", "values", "consumption", "data", "unit", "units",
+    "remarks", "remark", "description", "quantity", "qty", "parameter", "parameters", "temperature",
+    "pressure", "range", "limit", "limits", "requirement", "requirements", "condition", "conditions",
+    "total", "property", "properties", "details", "particulars", "item", "items", "none", "n a", "na",
+    "design", "normal", "minimum", "maximum", "min", "max", "case", "mode", "figure", "table",
+}
+
+
+def is_non_entity_name(name: str) -> bool:
+    """True for subjects that are values or table labels rather than entities ('10%', 'IBP', '6.5-8.0')."""
+    s = (name or "").strip()
+    if not s:
+        return True
+    if is_numeric_like(s) or is_distillation_point(s):
+        return True
+    return re.sub(r"[^a-z]+", " ", s.lower()).strip() in _GENERIC_SUBJECTS
 
 # Impossible entity-type / relationship-type combinations
 IMPOSSIBLE_RELATIONSHIPS: set[tuple[str, str]] = {
@@ -74,14 +94,43 @@ _UNIT_ALIASES: dict[str, str] = {
     "° c": "°C", "degree c": "°C", "degrees c": "°C", "degree celsius": "°C", "celsius": "°C",
     "degf": "°F", "deg f": "°F", "ºf": "°F", "℉": "°F", "degree f": "°F", "fahrenheit": "°F",
     "kelvin": "K",
-    "kg/cm2g": "kg/cm2", "kg/cm2 g": "kg/cm2", "kg/cm2(g)": "kg/cm2", "kg/cm2a": "kg/cm2",
-    "kg/cm²g": "kg/cm²", "kg/cm² g": "kg/cm²", "kg/cm2 (g)": "kg/cm2", "kgf/cm2": "kg/cm2",
+    "kg/cm2g": "kg/cm2", "kg/cm2 g": "kg/cm2", "kg/cm2(g)": "kg/cm2", "kg/cm2a": "kg/cm2", "kg/cm2 a": "kg/cm2",
+    "kg/cm²g": "kg/cm²", "kg/cm² g": "kg/cm²", "kg/cm2 (g)": "kg/cm2", "kg/cm2 (a)": "kg/cm2", "kgf/cm2": "kg/cm2",
+    "kg/cm²a": "kg/cm²", "kg/cm² a": "kg/cm²", "kg/cm²(g)": "kg/cm²", "kg/cm²(a)": "kg/cm²",
     "kg/sq.cm": "kg/cm2", "kg/sqcm": "kg/cm2", "ksc": "kg/cm2", "kscg": "kg/cm2", "ksca": "kg/cm2",
     "bar g": "barg", "bar(g)": "barg", "bar a": "bara", "bar(a)": "bara",
     "m3/hr": "m3/h", "m³/hr": "m³/h", "cum/hr": "m3/h", "cu.m/hr": "m3/h", "nm3/hr": "Nm3/h",
+    "m3h": "m3/h", "m³h": "m³/h", "m3hr": "m3/h", "m³hr": "m³/h", "cum/h": "m3/h",
     "kg/hr": "kg/h", "t/hr": "t/h", "tph": "t/h", "mt/hr": "MT/h", "mtph": "MT/h", "tpd": "t/d",
     "percent": "%", "pct": "%", "wt%": "%", "vol%": "%", "% wt": "%", "% vol": "%",
+    "meters": "m", "meter": "m", "metres": "m", "metre": "m", "mtrs": "m", "mtr": "m",
+    "deg": "°C",
 }
+
+_PRESSURE_BASIS_RE = re.compile(
+    r"^(?:kg\s*/\s*cm\s*[2²]|kgf\s*/\s*cm\s*[2²]|ksc|bar|psi|kpa|mpa|atm)\s*[(\s]?\s*(?P<basis>[ag])\s*\)?$", re.I,
+)
+
+
+def pressure_basis(unit_raw: str) -> str:
+    """'kg/cm2A' -> 'absolute', 'kg/cm2 g' / 'barg' / 'psig' -> 'gauge', 'kg/cm2' -> ''.
+
+    Absolute and gauge pressures are different physical quantities; the
+    canonical unit spelling drops the suffix, so the basis is kept separately
+    on the claim and takes part in the conflict context key.
+    """
+    u = re.sub(r"\s+", " ", (unit_raw or "").strip())
+    if not u:
+        return ""
+    low = u.lower()
+    if low in ("barg", "psig", "kscg"):
+        return "gauge"
+    if low in ("bara", "psia", "ksca"):
+        return "absolute"
+    m = _PRESSURE_BASIS_RE.match(u)
+    if m:
+        return "absolute" if m.group("basis").lower() == "a" else "gauge"
+    return ""
 
 
 def normalize_unit(unit: str) -> str:
@@ -282,10 +331,15 @@ class ExtractionValidator:
         for entity in extraction.entities:
             total_checks += 1
             entity_issues = self._validate_entity_schema(entity)
-            if entity.evidence and not entity_issues:
-                if not _fuzzy_match(entity.evidence, chunk.text, self.config.validation.evidence_similarity_threshold):
-                    # Paraphrased quote: accept if the entity itself appears in the chunk,
-                    # and re-anchor the evidence to the sentence that names it.
+            if not entity_issues:
+                had_evidence = bool(entity.evidence)
+                evidence_ok = had_evidence and _fuzzy_match(
+                    entity.evidence, chunk.text, self.config.validation.evidence_similarity_threshold,
+                )
+                if not evidence_ok:
+                    # Missing or paraphrased quote: accept when the entity itself appears in the
+                    # chunk and anchor the evidence to the sentence that names it (recall first;
+                    # the graph never carries a quote that is not in the source).
                     level, sent, idx = ground_pair(entity.name, entity.name, chunk.text)
                     if level == "none" and entity.canonical_name:
                         level, sent, idx = ground_pair(entity.canonical_name, entity.canonical_name, chunk.text)
@@ -294,7 +348,8 @@ class ExtractionValidator:
                             issue_id=str(uuid.uuid4())[:8],
                             category=ValidationCategory.EVIDENCE,
                             severity=ValidationSeverity.ERROR,
-                            message=f"Entity '{entity.name}' does not appear in the source chunk",
+                            message=f"Entity '{entity.name}' does not appear in the source chunk"
+                                    + ("" if had_evidence else " (and no evidence was given)"),
                             item_type="entity", item_id=entity.entity_id,
                         ))
                     else:
@@ -304,7 +359,9 @@ class ExtractionValidator:
                             issue_id=str(uuid.uuid4())[:8],
                             category=ValidationCategory.EVIDENCE,
                             severity=ValidationSeverity.WARNING,
-                            message=f"Entity '{entity.name}': quote paraphrased; evidence re-anchored to source sentence",
+                            message=f"Entity '{entity.name}': "
+                                    + ("quote paraphrased" if had_evidence else "no quote given")
+                                    + "; evidence anchored to the source sentence",
                             item_type="entity", item_id=entity.entity_id,
                         ))
             if entity_issues:
@@ -317,6 +374,16 @@ class ExtractionValidator:
         for claim in extraction.claims:
             total_checks += 1
             claim_issues = []
+
+            # The subject must be a thing, not a value or a table axis label
+            if is_non_entity_name(claim.subject):
+                claim_issues.append(ValidationIssue(
+                    issue_id=str(uuid.uuid4())[:8],
+                    category=ValidationCategory.SCHEMA,
+                    severity=ValidationSeverity.ERROR,
+                    message=f"claim: subject '{claim.subject}' is a value or table label, not an entity",
+                    item_type="claim", item_id=claim.claim_id,
+                ))
 
             # Sentence-level grounding (subject + value in one sentence/row)
             claim_issues.extend(self._ground_item(claim, claim.subject, claim.value, chunk.text, "claim",
@@ -336,6 +403,16 @@ class ExtractionValidator:
         for rel in extraction.relationships:
             total_checks += 1
             rel_issues = []
+
+            for side, name in (("subject", rel.subject), ("object", rel.object)):
+                if is_non_entity_name(name):
+                    rel_issues.append(ValidationIssue(
+                        issue_id=str(uuid.uuid4())[:8],
+                        category=ValidationCategory.SCHEMA,
+                        severity=ValidationSeverity.ERROR,
+                        message=f"relationship: {side} '{name}' is a value or table label, not an entity",
+                        item_type="relationship", item_id=rel.relationship_id,
+                    ))
 
             # Sentence-level grounding (subject + object in one sentence/row)
             rel_issues.extend(self._ground_item(rel, rel.subject, rel.object, chunk.text, "relationship",
@@ -425,15 +502,8 @@ class ExtractionValidator:
                 item_type="entity",
                 item_id=entity.entity_id,
             ))
-        if not entity.evidence:
-            issues.append(ValidationIssue(
-                issue_id=str(uuid.uuid4())[:8],
-                category=ValidationCategory.EVIDENCE,
-                severity=ValidationSeverity.ERROR,
-                message=f"Entity '{entity.name}' missing evidence",
-                item_type="entity",
-                item_id=entity.entity_id,
-            ))
+        # A missing quote is not fatal here: validate() grounds the entity by name and
+        # anchors evidence to the sentence that names it (rejected only if absent).
         return issues
 
     def _ground_item(
@@ -621,6 +691,8 @@ class ExtractionValidator:
                 claim.subject_uid,
                 claim.predicate.value,
                 claim.value,
+                getattr(claim, "qualifier", "") or "",
+                context_key=claim.context_key(),
             )
             for conflict in conflicts:
                 issues.append(ValidationIssue(

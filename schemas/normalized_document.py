@@ -43,6 +43,25 @@ class FilterDecision(str, Enum):
     DECORATIVE = "decorative"
     DUPLICATE = "duplicate"
     EMPTY = "empty"
+    FIGURE_PLACEHOLDER = "figure_placeholder"   # "[Figure on page N]" markers (image kept in parsed layer)
+    RUNNING_TITLE = "running_title"             # chapter title repeated as a page heading
+
+
+class ProcedureType(str, Enum):
+    """Kind of ordered instruction block found in the document."""
+    STARTUP = "startup"
+    SHUTDOWN = "shutdown"
+    EMERGENCY = "emergency"
+    CHANGEOVER = "changeover"
+    COMMISSIONING = "commissioning"
+    ISOLATION = "isolation"
+    SAMPLING = "sampling"
+    UPSET_RESPONSE = "upset_response"
+    SAFETY = "safety"
+    MAINTENANCE = "maintenance"
+    NORMAL_OPERATION = "normal_operation"
+    CHECKLIST = "checklist"
+    GENERIC = "procedure"
 
 
 class NormalizedElement(BaseModel):
@@ -67,6 +86,14 @@ class NormalizedElement(BaseModel):
         default=True,
         description="Whether this element contains engineering-relevant content",
     )
+    # Structure (filled by the normalizer from the TOC / page-header boxes)
+    chapter_number: int | None = Field(default=None, description="Chapter this element belongs to")
+    section_id: str | None = Field(default=None, description="Enclosing SectionNode id")
+    # Procedures (filled by src.structure.detect_procedures)
+    procedure_id: str | None = Field(default=None, description="Procedure this element belongs to, if any")
+    step_number: int | None = Field(default=None, description="1-based step order; 0 = the procedure's title line")
+    list_enumerated: bool | None = Field(default=None)
+    list_marker: str | None = Field(default=None)
 
 
 class FilteredElement(BaseModel):
@@ -88,6 +115,50 @@ class SectionNode(BaseModel):
     parent_section_id: str | None = Field(default=None)
     children: list[str] = Field(default_factory=list, description="Child section IDs")
     element_count: int = Field(default=0, description="Number of content elements in this section")
+    chapter_number: int | None = Field(default=None)
+    number: str = Field(default="", description="Section number as printed ('6.1.2'), if any")
+    path: str = Field(default="", description="Full section path")
+
+
+class ChapterNode(BaseModel):
+    """A chapter of the document, reconstructed from the table of contents / page headers."""
+    number: int
+    title: str
+    page_start: int
+    page_end: int | None = Field(default=None)
+    revision: str = Field(default="")
+    revision_date: str = Field(default="")
+    source: str = Field(default="toc", description="toc | page_header | heading")
+    is_administrative: bool = Field(
+        default=False,
+        description="Document-control chapter (preface, TOC, revisions, copy holders): not engineering knowledge",
+    )
+    section_ids: list[str] = Field(default_factory=list)
+
+
+class ProcedureStepRecord(BaseModel):
+    """One ordered step of a detected procedure."""
+    sequence: int
+    text: str
+    page: int
+    element_id: str
+    tags: list[str] = Field(default_factory=list, description="Canonical asset tags named in the step")
+
+
+class ProcedureBlock(BaseModel):
+    """An ordered block of instructions detected deterministically in the document."""
+    procedure_id: str
+    title: str
+    procedure_type: ProcedureType = ProcedureType.GENERIC
+    chapter_number: int | None = None
+    section_id: str | None = None
+    section_path: str = ""
+    page_start: int = 0
+    page_end: int = 0
+    label_element_id: str | None = Field(default=None, description="Element holding the title line, if any")
+    steps: list[ProcedureStepRecord] = Field(default_factory=list)
+    applies_to: list[str] = Field(default_factory=list, description="Asset tags named in the title/steps")
+    detection_reasons: list[str] = Field(default_factory=list)
 
 
 class NormalizationStats(BaseModel):
@@ -105,6 +176,12 @@ class NormalizationStats(BaseModel):
     empty_elements_found: int = Field(default=0)
     engineering_tables_kept: int = Field(default=0)
     non_engineering_tables_filtered: int = Field(default=0)
+    figure_placeholders_found: int = Field(default=0)
+    running_titles_found: int = Field(default=0)
+    administrative_found: int = Field(default=0)
+    procedures_found: int = Field(default=0)
+    procedure_steps_found: int = Field(default=0)
+    chapters_from_toc: int = Field(default=0)
 
 
 class NormalizedDocument(BaseModel):
@@ -118,10 +195,15 @@ class NormalizedDocument(BaseModel):
     source_filename: str
     total_pages: int = Field(default=0)
 
-    # Section hierarchy
+    # Chapter structure (from the TOC table / page-header boxes) and section hierarchy
+    chapters: list[ChapterNode] = Field(default_factory=list)
     sections: list[SectionNode] = Field(
         default_factory=list,
         description="Document section tree (chapters, sections, subsections)",
+    )
+    procedures: list[ProcedureBlock] = Field(
+        default_factory=list,
+        description="Ordered instruction blocks detected deterministically",
     )
 
     # Kept content (in document order)

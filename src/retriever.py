@@ -89,8 +89,10 @@ class RetrievalContext:
             parts.append("\n## Existing Claims (already extracted)")
             for c in self.existing_claims[:10]:
                 claim = c.get("claim", c)
+                qualifier = claim.get("qualifier") or ""
                 parts.append(
-                    f"- {claim.get('predicate', '?')}: {claim.get('value', '?')} "
+                    f"- {claim.get('predicate', '?')}"
+                    f"{' (' + qualifier + ')' if qualifier else ''}: {claim.get('value', '?')} "
                     f"{claim.get('unit', '')} [doc: {claim.get('document_id', '?')}, "
                     f"p.{claim.get('page', '?')}]"
                 )

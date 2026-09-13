@@ -33,8 +33,10 @@ NON_TAG_PREFIXES: frozenset[str] = frozenset({
     "ISO", "API", "ASTM", "ASME", "ANSI", "IS", "BS", "EN", "DIN", "NFPA", "OISD", "IBR", "IEC",
     "SOP", "DOC", "REV", "PAGE", "PG", "CH", "SEC", "FIG", "TAB", "NO", "STEP", "PART", "VOL",
     "ITEM", "SL", "SR", "REF", "NOTE", "TEL", "PH", "FAX", "EXT", "ROOM", "PO", "WO", "PTW",
-    "MOC", "PSM", "HSE", "PPM", "RPM", "PSI", "KPA", "MPA", "BAR", "KG", "KW", "MW", "HP", "AM", "PM",
+    "MOC", "PSM", "HSE", "PPM", "RPM", "PSI", "KPA", "MPA", "BAR", "KG", "KW", "MW", "HP", "AM",
 })
+# NOTE: "PM" (pump-motor, 11-PM-01A/B) and "PG" (pressure gauge, 11-PG-103) are real prefixes in this
+# corpus; a match that carries a plant number ("11-...") is never checked against NON_TAG_PREFIXES.
 
 # Default scan/validation patterns (configurable via PipelineConfig.identity.tag_patterns).
 DEFAULT_TAG_PATTERNS: tuple[str, ...] = (
@@ -103,9 +105,9 @@ def parse_tag(
         if not m:
             continue
         prefix = m.group("prefix")
-        if prefix in NON_TAG_PREFIXES:
-            return None
         plant = m.group("plant")
+        if prefix in NON_TAG_PREFIXES and not plant:
+            return None
         number = m.group("number")
         suffix = m.group("suffix") or ""
         suffixes = [s for s in suffix.split("/") if s]

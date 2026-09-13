@@ -41,6 +41,30 @@ class ChapterInfo(BaseModel):
     title: str
     page_start: int | None = None
     page_end: int | None = None
+    revision: str = Field(default="")
+    revision_date: str = Field(default="")
+    source: str = Field(default="heading", description="toc | page_header | heading")
+    is_administrative: bool = Field(default=False)
+
+
+class CrossReference(BaseModel):
+    """An explicit in-document reference ('refer Chapter 34', 'see Section 6.1.6.4')."""
+    source_section: str = Field(default="", description="Section path of the referring text")
+    source_page: int = 0
+    target_kind: str = Field(description="chapter | section | annexure | appendix")
+    target_number: str
+    evidence: str = Field(default="")
+
+
+class StandingInstruction(BaseModel):
+    """A standing instruction listed in the document-control chapter."""
+    number: str
+    title: str
+    issue_date: str = Field(default="")
+    status: str = Field(default="", description="in_use | cancelled | expired | incorporated")
+    incorporated_in_chapter: str = Field(default="")
+    remark: str = Field(default="")
+    page: int = 0
 
 
 class SectionInfo(BaseModel):
@@ -122,6 +146,8 @@ class DocumentProfile(BaseModel):
 
     # References
     referenced_documents: list[ReferencedDocument] = Field(default_factory=list)
+    cross_references: list[CrossReference] = Field(default_factory=list)
+    standing_instructions: list[StandingInstruction] = Field(default_factory=list)
 
     # Table categories discovered
     table_categories_found: list[str] = Field(default_factory=list)

@@ -28,6 +28,7 @@ class PipelinePhase(str, Enum):
     DOCUMENT_PROFILE = "document_profile"
     GLOSSARY = "glossary"
     NEO4J_SETUP = "neo4j_setup"
+    DOCUMENT_GRAPH = "document_graph"
     CHUNKING = "chunking"
     EMBEDDING = "embedding"
     EXTRACTION = "extraction"
@@ -170,7 +171,7 @@ class PipelineCheckpoint:
 
     def reset_extraction_phase(self) -> None:
         """Reset only the extraction phase for a clean re-run.
-        
+
         Preserves parsing/normalizing/chunking checkpoints but clears
         extraction progress so all chunks are reprocessed.
         """
@@ -179,6 +180,7 @@ class PipelineCheckpoint:
         # Remove extraction-related phases from completed
         extraction_phases = {
             PipelinePhase.NEO4J_SETUP.value,
+            PipelinePhase.DOCUMENT_GRAPH.value,
             PipelinePhase.EMBEDDING.value,
             PipelinePhase.EXTRACTION.value,
             PipelinePhase.VALIDATION.value,
@@ -193,6 +195,17 @@ class PipelineCheckpoint:
         self._state["current_phase"] = PipelinePhase.NEO4J_SETUP.value
         self._save()
         logger.info(f"Checkpoint: extraction phase reset for {self.document_id}")
+
+    def reset_after_parsing(self) -> None:
+        """Keep only the (expensive) parse; everything downstream runs again (``--rebuild``)."""
+        self._state["completed_chunks"] = []
+        self._state["failed_chunks"] = []
+        self._state["completed_phases"] = [
+            p for p in self._state.get("completed_phases", []) if p == PipelinePhase.PARSING.value
+        ]
+        self._state["current_phase"] = PipelinePhase.NORMALIZING.value
+        self._save()
+        logger.info(f"Checkpoint: all phases after parsing reset for {self.document_id}")
 
     def flush(self) -> None:
         """Force save current state."""

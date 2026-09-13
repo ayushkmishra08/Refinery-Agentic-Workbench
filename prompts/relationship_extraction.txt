@@ -1,9 +1,11 @@
-You are extracting ENGINEERING RELATIONSHIPS and NUMERIC CLAIMS from one passage of a refinery operating manual.
+You are extracting ENGINEERING RELATIONSHIPS and NUMERIC CLAIMS from ONE passage of a refinery operating manual.
+You output a single JSON object and nothing else.
 
 DOCUMENT INFORMATION:
 {document_info}
 Section: {section_path}
 {page_range}
+Passage type: {chunk_type}
 
 ENTITIES ALREADY IDENTIFIED IN THIS PASSAGE (use these exact names as subject/object):
 {entity_list}
@@ -14,13 +16,21 @@ KNOWN IDENTITIES FROM THE GRAPH (reuse exact tags/names, do not invent variants)
 RULES
 1. Extract ONLY relationships that the passage states explicitly. Co-occurrence is NOT a relationship.
 2. Every relationship MUST carry "evidence": the exact words from the passage (copy them verbatim, do not paraphrase).
+   Every name, tag, number and unit you output must appear literally in the passage.
 3. Routing lists like "Kerosene to / Storage / Diesel Header" mean Kerosene ROUTES_TO Storage and Kerosene ROUTES_TO Diesel Header.
 4. "X comprises A and B" means A PART_OF X and B PART_OF X.
-5. "P-101 takes suction from T-101" means P-101 SUCTION_FROM T-101. "driven by" -> DRIVEN_BY. "controlled by" -> CONTROLLED_BY.
+5. "P takes suction from T" means P SUCTION_FROM T. "driven by" -> DRIVEN_BY. "controlled by" -> CONTROLLED_BY.
 6. "upstream of" / "downstream of" -> UPSTREAM_OF / DOWNSTREAM_OF between the two named items.
-7. Also extract CLAIMS: every numeric value the passage states about one of the entities
-   (pressure, temperature, flow, capacity, specific gravity, yield, ...). Use the row/column headers
-   for table rows. Value is the number as written, unit as written.
+7. Also extract CLAIMS: every numeric value a PROSE SENTENCE states about one of the entities
+   (pressure, temperature, flow, capacity, specific gravity, yield, ...). Value is the number as
+   written, unit as written. Table cells (lines containing " | ") are converted to claims by the
+   pipeline itself - skip them.
+   Every claim carries its CONTEXT: "parameter_role" (design | rated | normal | operating | minimum | maximum |
+   mechanical_design | test | relief | alarm | trip), "location" (suction | discharge | inlet | outlet | top |
+   bottom | overhead | flash_zone ...), "operating_mode" (normal_operation | startup | shutdown | emergency |
+   temporary | upset), "scenario" (crude / design case / mode named in the text) and "temporal_status"
+   (current | historical | design | defunct). Use "" when the text does not say. Different roles, locations,
+   modes or scenarios are different facts, never contradictions.
 8. Report a confidence between 0 and 1; use lower confidence rather than omitting a stated fact.
 
 RELATIONSHIP TYPES (use these exact values):
@@ -31,28 +41,32 @@ RELATIONSHIP TYPES (use these exact values):
   PROTECTED_BY, RELIEVED_BY, HAS_FEED, HAS_PRODUCT, USES_UTILITY,
   APPLIES_TO, REQUIRES, REFERENCES, ASSOCIATED_WITH
 
-PASSAGE:
-═══════════════════════════════════════════════════════════
-{chunk_text}
-═══════════════════════════════════════════════════════════
-
 CLAIM PREDICATES (use these exact values):
   design_pressure, normal_pressure, maximum_pressure, minimum_pressure, operating_pressure,
   design_temperature, normal_temperature, maximum_temperature, minimum_temperature, operating_temperature,
   flow_rate, mass_flow_rate, volumetric_flow_rate, capacity, power, speed, diameter, material,
   specific_gravity, density, viscosity, yield, cut_range, pour_point, flash_point,
-  setpoint, alarm_limit, trip_limit, operating_condition, generic_property
+  setpoint, alarm_limit, trip_limit, operating_condition, status, generic_property
 
-Return ONLY a JSON object of this exact shape:
+OUTPUT FORMAT (the SHAPE only; angle-bracket placeholders are descriptions, never values to copy):
 {{
   "relationships": [
-    {{"subject": "Kerosene", "predicate": "FEEDS", "object": "Diesel Header",
-      "evidence": "Kerosene to Diesel Header", "sentence_index": 12, "page": {page_hint}, "confidence": 0.85}}
+    {{"subject": "<entity from the list above>", "predicate": "<one RELATIONSHIP TYPE>", "object": "<entity from the list above>",
+      "evidence": "<exact words from the passage>", "sentence_index": <int>, "page": {page_hint}, "confidence": <0..1>}}
   ],
   "claims": [
-    {{"subject": "LPG", "predicate": "operating_pressure", "value": "8.0", "unit": "Kg/cm2 A",
-      "evidence": "LPG | C3-C4 | 40 | 8.0", "sentence_index": 30, "page": {page_hint}, "confidence": 0.8,
-      "is_from_table": true}}
+    {{"subject": "<entity from the list above>", "predicate": "<one CLAIM PREDICATE>", "value": "<number as written>",
+      "unit": "<unit as written>", "parameter_role": "<or empty>", "location": "<or empty>", "operating_mode": "<or empty>",
+      "scenario": "<or empty>", "temporal_status": "<current|historical|design|defunct>",
+      "evidence": "<exact sentence from the passage>", "sentence_index": <int>, "page": {page_hint},
+      "confidence": <0..1>, "is_from_table": false}}
   ]
 }}
-If the passage states no relationship or numeric claim, return {{"relationships": [], "claims": []}}.
+
+PASSAGE:
+═══════════════════════════════════════════════════════════
+{chunk_text}
+═══════════════════════════════════════════════════════════
+
+Now return the JSON object for THIS passage only. If the passage states no relationship or numeric claim,
+return {{"relationships": [], "claims": []}}.

@@ -45,14 +45,7 @@ EQUIPMENT_PATTERNS = [
     (r"\bH-\d{2,4}[A-Z]?\b", "Heaters (H-xxx)"),
 ]
 
-# Document reference patterns
-DOC_REF_PATTERNS = [
-    (r"P&ID[\s-]*(?:No\.?\s*)?[\w.-]+", "P&ID"),
-    (r"PFD[\s-]*(?:No\.?\s*)?[\w.-]+", "PFD"),
-    (r"SOP[\s-]*(?:No\.?\s*)?[\w.-]+", "SOP"),
-    (r"(?:Dwg|Drawing)[\s.-]*(?:No\.?\s*)?[\w.-]+", "Drawing"),
-    (r"(?:Doc|Document)[\s.-]*(?:No\.?\s*)?[\w.-]+", "Document"),
-]
+# Document references are extracted by src.structure.extract_document_references (identifier required).
 
 
 class DocumentProfiler:
@@ -65,6 +58,7 @@ class DocumentProfiler:
         self,
         normalized_doc: NormalizedDocument,
         table_results: TableNormalizationResult,
+        parsed_tables: list | None = None,
     ) -> DocumentProfile:
         """Build document profile using deterministic Pass 1.
 
@@ -74,10 +68,17 @@ class DocumentProfiler:
         Args:
             normalized_doc: Layer 2 normalized document.
             table_results: Table classification results.
+            parsed_tables: Parsed tables (for the standing-instruction register).
 
         Returns:
             DocumentProfile with deterministically-extractable information.
         """
+        from src.structure import (
+            extract_cross_references,
+            extract_document_references,
+            parse_standing_instructions,
+        )
+
         doc_id = normalized_doc.document_id
         logger.info(f"Building document profile for {doc_id}")
 
@@ -90,7 +91,7 @@ class DocumentProfiler:
         # Pass 1a: Extract title and document type from first page
         self._extract_title_metadata(normalized_doc, profile)
 
-        # Pass 1b: Build chapter/section hierarchy
+        # Pass 1b: chapter/section hierarchy (TOC-based chapters when the normalizer found them)
         self._extract_structure(normalized_doc, profile)
 
         # Pass 1b2: Title/plant from the repeating page-header box, if present
@@ -102,8 +103,19 @@ class DocumentProfiler:
         # Pass 1d: Detect equipment naming conventions
         self._detect_equipment_conventions(normalized_doc, profile)
 
-        # Pass 1e: Extract document references
-        self._extract_references(normalized_doc, profile)
+        # Pass 1e: document references (only with a real identifier), cross references,
+        #          standing-instruction register
+        profile.referenced_documents = extract_document_references(normalized_doc.elements)
+        profile.cross_references = extract_cross_references(normalized_doc.elements)
+        if parsed_tables:
+            profile.standing_instructions = parse_standing_instructions(parsed_tables)
+        # Revision / date from the TOC chapter list when every chapter agrees
+        revisions = {c.revision for c in normalized_doc.chapters if c.revision}
+        dates = {c.revision_date for c in normalized_doc.chapters if c.revision_date}
+        if len(revisions) == 1 and not profile.revision:
+            profile.revision = revisions.pop()
+        if len(dates) == 1 and not profile.effective_date:
+            profile.effective_date = dates.pop()
 
         # Pass 1f: Detect table categories
         self._detect_table_categories(table_results, profile)
@@ -200,7 +212,23 @@ class DocumentProfiler:
     def _extract_structure(
         self, doc: NormalizedDocument, profile: DocumentProfile,
     ) -> None:
-        """Build chapter/section hierarchy from headings."""
+        """Chapter/section hierarchy: TOC chapters from the normalizer, sections from headings."""
+        if doc.chapters:
+            for ch in doc.chapters:
+                profile.chapters.append(ChapterInfo(
+                    number=str(ch.number), title=ch.title, page_start=ch.page_start, page_end=ch.page_end,
+                    revision=ch.revision, revision_date=ch.revision_date, source=ch.source,
+                    is_administrative=ch.is_administrative,
+                ))
+            for node in doc.sections:
+                if node.level <= 1:
+                    continue
+                profile.sections.append(SectionInfo(
+                    number=node.number, title=node.title, page=node.page_start,
+                    parent_chapter=(str(node.chapter_number) if node.chapter_number is not None else None),
+                ))
+            return
+
         for elem in doc.elements:
             if elem.content_type != ContentType.HEADING:
                 continue
@@ -346,21 +374,6 @@ class DocumentProfiler:
                         examples=unique_examples,
                     )
                 )
-
-    def _extract_references(
-        self, doc: NormalizedDocument, profile: DocumentProfile,
-    ) -> None:
-        """Extract explicit document references."""
-        all_text = " ".join(e.content for e in doc.elements)
-
-        for pattern, ref_type in DOC_REF_PATTERNS:
-            matches = re.findall(pattern, all_text)
-            for match in set(matches):
-                profile.referenced_documents.append(ReferencedDocument(
-                    reference_text=match.strip(),
-                    document_type=ref_type,
-                    present_in_corpus=False,  # Will be updated later
-                ))
 
     def _detect_table_categories(
         self, table_results: TableNormalizationResult, profile: DocumentProfile,

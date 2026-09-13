@@ -60,6 +60,106 @@ def _safe_page(value, default: int) -> int:
         return default
 
 
+_ROOT_KEYS = ("entities", "relationships", "claims", "references")
+
+_ROLE_VALUES = {"design", "rated", "normal", "operating", "minimum", "maximum", "mechanical_design", "test",
+                "relief", "alarm", "trip"}
+_MODE_VALUES = {"normal_operation", "startup", "shutdown", "emergency", "temporary", "upset", "commissioning"}
+_TEMPORAL_VALUES = {"current", "historical", "design", "defunct", "proposed"}
+
+_CHUNK_TYPE_HINTS = {
+    "procedure": "PROCEDURE - ordered operating steps. Extract the equipment/instruments/utilities named in the "
+                 "steps and the numeric targets they state (pressure to be maintained, temperature to reach, "
+                 "flow to keep). The step order itself is already captured by the pipeline.",
+    "table": "TABLE - the numeric cells are already converted to claims deterministically; extract the entities "
+             "(products, streams, equipment tags, utilities) the table names and any relationship its rows state.",
+    "specification": "SPECIFICATION - equipment data block; label/value pairs are already captured; extract the "
+                     "equipment identity (type, driver, material, standby arrangement) and relationships.",
+    "safety": "SAFETY - hazards, safeguards, PPE, permits, isolation requirements; extract hazards as entities "
+              "of type hazard and what they apply to (APPLIES_TO / PROTECTED_BY / REQUIRES).",
+    "upset": "UPSET - condition, possible causes, checks and corrective actions; extract the affected equipment "
+             "and instruments and the numeric limits mentioned.",
+    "control": "CONTROL - control loops and interlocks; extract instruments, controllers, valves and what they "
+               "MEASURE / CONTROL / TRIP (CONTROLLED_BY, MEASURED_BY, TRIPPED_BY, INTERLOCKED_WITH).",
+    "equipment": "EQUIPMENT DESCRIPTION - extract every tagged item, its type, driver (DRIVEN_BY), what it is "
+                 "PART_OF, what it FEEDS / RECEIVES_FROM, and prose numeric values with their role.",
+    "narrative": "PROCESS DESCRIPTION - extract the process topology (FEEDS, RECEIVES_FROM, DISCHARGES_TO, "
+                 "ROUTES_TO, PART_OF), equipment/instrument tags and prose numeric values with their role.",
+}
+
+
+def _chunk_type_hint(chunk) -> str:
+    ctype = getattr(chunk, "chunk_type", "narrative") or "narrative"
+    return f"{ctype} -- {_CHUNK_TYPE_HINTS.get(ctype, _CHUNK_TYPE_HINTS['narrative'])}"
+
+
+def _claim_context_fields(c: dict, chunk) -> dict:
+    """Context dimensions the model may return; unknown values are dropped rather than guessed."""
+    def pick(key: str, allowed: set[str] | None = None) -> str:
+        v = str(c.get(key) or "").strip().lower().replace(" ", "_")
+        if not v or v in ("null", "none", "unknown", "n/a", "-"):
+            return ""
+        if allowed is not None and v not in allowed:
+            return ""
+        return v
+
+    from src.spec_claims import operating_mode_for
+    scenario = str(c.get("scenario") or "").strip()
+    if scenario.lower() in ("null", "none", "unknown", "n/a", "-"):
+        scenario = ""
+    return {
+        "parameter_role": pick("parameter_role", _ROLE_VALUES),
+        "location": pick("location"),
+        "operating_mode": pick("operating_mode", _MODE_VALUES) or operating_mode_for(getattr(chunk, "section_path", "")),
+        "scenario": scenario[:60],
+        "temporal_status": pick("temporal_status", _TEMPORAL_VALUES) or "current",
+        "qualifier": str(c.get("qualifier") or "").strip()[:120],
+    }
+
+
+def _unwrap_root(data):
+    """Coerce whatever JSON the model returned into the expected top-level dict.
+
+    Tolerates a bare list (treated as entities) and a single wrapper key
+    ({"result": {"entities": [...]}}).  Anything else becomes an empty dict, so a
+    shape surprise never costs a retry round-trip to the model.
+    """
+    if isinstance(data, list):
+        return {"entities": data}
+    if not isinstance(data, dict):
+        return {}
+    keys = {str(k).strip().lower() for k in data.keys()}
+    if keys & set(_ROOT_KEYS):
+        return data
+    for v in data.values():
+        if isinstance(v, dict) and {str(k).strip().lower() for k in v.keys()} & set(_ROOT_KEYS):
+            return v
+    return data
+
+
+def _lookup_list(data: dict, *keys: str) -> list:
+    """Case-insensitive list lookup: data['entities'] / data['Entities'] / data['ENTITIES']."""
+    if not isinstance(data, dict):
+        return []
+    lowered = {str(k).strip().lower(): v for k, v in data.items()}
+    for k in keys:
+        v = lowered.get(k.lower())
+        if isinstance(v, list):
+            return v
+        if isinstance(v, dict):
+            return [v]
+    return []
+
+
+def _as_record(item, name_key: str) -> dict | None:
+    """Tolerate list items the model emits as bare strings ("entities": ["P-101", ...])."""
+    if isinstance(item, dict):
+        return item
+    if isinstance(item, str) and item.strip():
+        return {name_key: item.strip()}
+    return None
+
+
 class ExtractionStatus(str, Enum):
     """Status of a chunk extraction attempt."""
     SUCCESS = "success"              # Parsed JSON, found entities/claims/rels
@@ -275,6 +375,7 @@ class OllamaExtractor:
                           f"Plant/Unit: {profile.plant or 'unknown'} / {profile.unit or 'unknown'}",
             section_path=chunk.section_path,
             page_range=f"Pages {chunk.page_start}-{chunk.page_end}",
+            chunk_type=_chunk_type_hint(chunk),
             entity_list=nl.join(names) or "(none)",
             graph_context=context.to_prompt_context(),
             chunk_text=chunk.text,
@@ -296,11 +397,12 @@ class OllamaExtractor:
                 data = json.loads(repaired) if repaired else {}
             except json.JSONDecodeError:
                 return [], []
+        data = _unwrap_root(data)
         if not isinstance(data, dict):
             return [], []
 
         rels = []
-        for r in data.get("relationships", []) or []:
+        for r in _lookup_list(data, "relationships", "relations", "relationship"):
             if not isinstance(r, dict):
                 continue
             raw_pred = str(r.get("predicate") or "ASSOCIATED_WITH")
@@ -328,7 +430,7 @@ class OllamaExtractor:
                 logger.debug(f"Skipping invalid relationship (pass 2): {ve}")
 
         claims = []
-        for c in data.get("claims", []) or []:
+        for c in _lookup_list(data, "claims", "claim"):
             if not isinstance(c, dict):
                 continue
             raw_cpred = str(c.get("predicate") or "generic_property")
@@ -352,6 +454,7 @@ class OllamaExtractor:
                     confidence=_safe_float(c.get("confidence"), 0.5),
                     is_from_table=bool(c.get("is_from_table") or False),
                     source="llm_pass2",
+                    **_claim_context_fields(c, chunk),
                 ))
             except (ValueError, KeyError, TypeError) as ve:
                 logger.debug(f"Skipping invalid claim (pass 2): {ve}")
@@ -403,11 +506,12 @@ class OllamaExtractor:
 
         graph_context = context.to_prompt_context()
 
-        # Assemble the prompt
+        # Assemble the prompt (typed input: the chunk's semantic type steers the extraction focus)
         prompt = template.format(
             document_info=doc_info,
             section_path=chunk.section_path,
             page_range=f"Pages {chunk.page_start}-{chunk.page_end}",
+            chunk_type=_chunk_type_hint(chunk),
             glossary=glossary_text or "(No glossary entries)",
             graph_context=graph_context,
             chunk_text=chunk.text,
@@ -486,11 +590,16 @@ class OllamaExtractor:
             else:
                 raise
 
+        data = _unwrap_root(data)
+
         # Parse entities (open vocabulary: unknown labels map to OTHER, raw kept)
-        for e in data.get("entities", []):
+        for raw_e in _lookup_list(data, "entities", "entity"):
             from schemas.knowledge import ExtractedEntity, EntityType, EntityDomain
+            e = _as_record(raw_e, "name")
+            if e is None:
+                continue
             try:
-                raw_type = str(e.get("entity_type") or "generic")
+                raw_type = str(e.get("entity_type") or e.get("type") or "generic")
                 try:
                     etype = EntityType(raw_type.strip().lower())
                 except ValueError:
@@ -521,8 +630,10 @@ class OllamaExtractor:
                 logger.debug(f"Skipping invalid entity: {ve}")
 
         # Parse relationships
-        for r in data.get("relationships", []):
+        for r in _lookup_list(data, "relationships", "relations", "relationship"):
             from schemas.knowledge import ExtractedRelationship, RelationshipType
+            if not isinstance(r, dict):
+                continue
             try:
                 raw_pred = str(r.get("predicate") or "ASSOCIATED_WITH")
                 try:
@@ -547,8 +658,10 @@ class OllamaExtractor:
                 logger.debug(f"Skipping invalid relationship: {ve}")
 
         # Parse claims
-        for c in data.get("claims", []):
+        for c in _lookup_list(data, "claims", "claim"):
             from schemas.claims import EngineeringClaim, ClaimCategory
+            if not isinstance(c, dict):
+                continue
             try:
                 raw_cpred = str(c.get("predicate") or "generic_property")
                 try:
@@ -569,13 +682,14 @@ class OllamaExtractor:
                     chunk_id=chunk.chunk_id,
                     confidence=_safe_float(c.get("confidence"), 0.5),
                     is_from_table=bool(c.get("is_from_table") or False),
+                    **_claim_context_fields(c, chunk),
                 )
                 extraction.claims.append(claim)
             except (ValueError, KeyError, TypeError) as ve:
                 logger.debug(f"Skipping invalid claim: {ve}")
 
         # Parse references
-        extraction.references = [str(x) for x in (data.get("references") or []) if x]
+        extraction.references = [str(x) for x in _lookup_list(data, "references", "reference") if x]
 
         return extraction
 

@@ -90,14 +90,21 @@ class NormalizerSettings(BaseModel):
         default_factory=lambda: [
             "OPERATING MANUAL",
             "Chapter No",
+            "Chapter Rev No",
             "Page No",
+            "PLANT NO",
+            "PLANT NAME",
             "Revision",
             "Doc. No",
             "Document No",
             "CONFIDENTIAL",
             "PROPRIETARY",
         ],
-        description="Text patterns commonly found in page headers/footers",
+        description="Text patterns commonly found in page headers/footers (matched only on short lines)",
+    )
+    procedure_min_steps: int = Field(default=3, description="Minimum list items for a procedure block")
+    procedure_min_imperative_fraction: float = Field(
+        default=0.5, description="Fraction of items that must read as instructions when no procedure heading introduces them",
     )
 
 
@@ -115,15 +122,22 @@ class OllamaSettings(BaseModel):
         description="Near-deterministic for factual extraction.",
     )
     num_predict: int = Field(
-        default=2048,
-        description="Maximum output tokens for the JSON extraction of one chunk.",
+        default=3072,
+        description="Maximum output tokens for the JSON extraction of one chunk. Entity-dense prose "
+                    "chunks (~20 entities with evidence sentences) exceed 2048 and were truncated, "
+                    "losing the relationships/claims arrays that follow the entities in the JSON.",
     )
     think: bool = Field(
         default=False,
         description="Enable DeepSeek-R1 chain-of-thought. Off: JSON grammar is applied directly "
                     "(much faster on a 4GB GPU).",
     )
-    timeout_seconds: int = Field(default=900, description="Request timeout (CPU/GPU split inference is slow)")
+    timeout_seconds: int = Field(
+        default=1800,
+        description="Request timeout. deepseek-r1:7b (4.7 GB) does not fit a 4 GB GPU and generates at ~3 tokens/s "
+                    "in the CPU/GPU split, so a 3072-token answer needs ~18 min; a model that fits the GPU "
+                    "(RKL_OLLAMA_MODEL=qwen3:4b) is ~10x faster.",
+    )
     relationship_pass: bool = Field(
         default=True,
         description="Run a second, relationship-only LLM pass when a chunk yielded >= 2 entities "
@@ -135,6 +149,13 @@ class OllamaSettings(BaseModel):
         description="Deterministic routing/composition rules (exact-line evidence) before the LLM passes",
     )
     max_retries: int = Field(default=2)
+    skip_chunk_types: list[str] = Field(
+        default_factory=lambda: ["document_control", "toc"],
+        description="Chunk types never sent to the LLM (deterministic passes still run on them)",
+    )
+    llm_only_engineering: bool = Field(
+        default=True, description="Send only engineering chunks (not document-control content) to the LLM",
+    )
 
 
 class Neo4jSettings(BaseModel):
@@ -148,8 +169,10 @@ class Neo4jSettings(BaseModel):
 class EmbeddingSettings(BaseModel):
     """Embedding model configuration."""
     model_name: str = Field(
-        default="all-MiniLM-L6-v2",
-        description="Sentence transformer model for chunk embeddings",
+        default="BAAI/bge-small-en-v1.5",
+        description="Sentence transformer model for chunk embeddings (384-dim, drop-in for all-MiniLM-L6-v2 "
+                    "with stronger retrieval on technical text; the vector index is recreated automatically "
+                    "if the dimension changes)",
     )
     dimensions: int = Field(default=384)
     device: str = Field(default="cpu", description="cpu to avoid VRAM contention")

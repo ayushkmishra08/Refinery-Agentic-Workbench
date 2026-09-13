@@ -54,8 +54,8 @@ class ChunkEmbedder:
 
     @staticmethod
     def _embedding_text(chunk: Chunk) -> str:
-        head = chunk.section_path or chunk.parent_heading or ""
-        return f"{head}\n{chunk.text}" if head else chunk.text
+        """Retrieval representation: section path + short bridge + canonical text (never used for extraction)."""
+        return chunk.retrieval_text
 
     def cache_path(self, doc_id: str) -> Path:
         return self.config.paths.knowledge_dir / doc_id / "chunk_embeddings.json"
@@ -116,11 +116,17 @@ def store_chunks_in_memory(memory, doc_id: str, chunks: list[Chunk]) -> int:
             "page_start": c.page_start,
             "page_end": c.page_end,
             "section": c.section_path,
+            "section_id": c.section_id,
+            "chapter_number": c.chapter_number,
             "sequence": c.sequence,
             "embedding": c.embedding,
             "text": c.text[:4000],
+            "chunk_type": c.chunk_type,
+            "is_engineering": c.is_engineering,
             "contains_table": c.contains_table,
+            "contains_procedure": c.contains_procedure,
             "table_ids": c.table_ids,
+            "procedure_ids": c.procedure_ids,
         })
         written += 1
     return written

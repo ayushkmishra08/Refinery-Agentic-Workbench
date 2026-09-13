@@ -9,6 +9,7 @@ e.g., a pressure claim must not have temperature units.
 
 from __future__ import annotations
 
+import re
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -31,6 +32,7 @@ class ClaimCategory(str, Enum):
     MAXIMUM_TEMPERATURE = "maximum_temperature"
     MINIMUM_TEMPERATURE = "minimum_temperature"
     OPERATING_TEMPERATURE = "operating_temperature"
+    DISTILLATION_TEMPERATURE = "distillation_temperature"   # IBP / 10% / ... / FBP points of a cut
 
     # Flow
     FLOW_RATE = "flow_rate"
@@ -138,6 +140,7 @@ CLAIM_UNIT_RULES: dict[ClaimCategory, set[UnitFamily]] = {
     ClaimCategory.MAXIMUM_TEMPERATURE: {UnitFamily.TEMPERATURE},
     ClaimCategory.MINIMUM_TEMPERATURE: {UnitFamily.TEMPERATURE},
     ClaimCategory.OPERATING_TEMPERATURE: {UnitFamily.TEMPERATURE},
+    ClaimCategory.DISTILLATION_TEMPERATURE: {UnitFamily.TEMPERATURE},
 
     # Flow claims
     ClaimCategory.FLOW_RATE: {UnitFamily.MASS_FLOW, UnitFamily.VOLUMETRIC_FLOW},
@@ -178,8 +181,8 @@ VALID_UNITS: dict[UnitFamily, set[str]] = {
     },
     UnitFamily.TEMPERATURE: {"°C", "°F", "K", "C", "F"},
     UnitFamily.MASS_FLOW: {
-        "kg/h", "kg/hr", "kg/s", "t/h", "t/hr",
-        "MT/h", "MTPA", "TPA", "lb/h", "lb/hr",
+        "kg/h", "kg/hr", "kg/s", "t/h", "t/hr", "t/d",
+        "MT/h", "MTPA", "MMTPA", "TMTPA", "TPA", "lb/h", "lb/hr",
     },
     UnitFamily.VOLUMETRIC_FLOW: {
         "m3/h", "m³/h", "m3/hr", "l/h", "l/min",
@@ -201,11 +204,43 @@ VALID_UNITS: dict[UnitFamily, set[str]] = {
 }
 
 
+class ParameterRole(str, Enum):
+    """Which value of a parameter a claim states (never compare across roles)."""
+    DESIGN = "design"
+    RATED = "rated"
+    NORMAL = "normal"
+    OPERATING = "operating"
+    MINIMUM = "minimum"
+    MAXIMUM = "maximum"
+    MECHANICAL_DESIGN = "mechanical_design"
+    TEST = "test"
+    RELIEF = "relief"
+    ALARM = "alarm"
+    TRIP = "trip"
+    UNSPECIFIED = ""
+
+
+class ResolutionStatus(str, Enum):
+    """Life-cycle state of a claim in the evidence layer."""
+    UNREVIEWED = "unreviewed"
+    SUPPORTED = "supported"                 # corroborated by another source/table/page
+    CONTEXTUAL = "contextual"               # differs from another claim only by context (role/mode/scenario)
+    POTENTIAL_CONFLICT = "potential_conflict"
+    CONFIRMED_CONFLICT = "confirmed_conflict"
+    SUPERSEDED = "superseded"
+    REJECTED = "rejected"
+
+
 class EngineeringClaim(BaseModel):
     """A single engineering claim with full provenance.
 
     Every claim is a (subject, predicate, value) triple with evidence
-    traceable to a specific document, page, and source text.
+    traceable to a specific document, page, and source text, plus the
+    *context dimensions* that decide whether two values are comparable:
+    parameter_role (design/normal/min/max), location (suction/discharge),
+    operating_mode, scenario (crude case / BH-PG mode) and pressure basis.
+    Two claims about one subject and predicate are only ever compared when
+    their ``context_key`` matches.
     """
     claim_id: str = Field(description="Unique claim identifier")
     subject: str = Field(description="Entity this claim is about (e.g., 'P-101')")
@@ -215,6 +250,24 @@ class EngineeringClaim(BaseModel):
     value: str = Field(description="The claimed value (numeric or text)")
     unit: str = Field(default="", description="Engineering unit if applicable")
     unit_family: UnitFamily = Field(default=UnitFamily.UNKNOWN)
+    qualifier: str = Field(
+        default="",
+        description="Context that distinguishes this measurement from others on the same subject/predicate: "
+                    "the table's label or operating case, a column condition (inlet/outlet, BH/PG mode), "
+                    "a reference condition ('@ 20 °C'), a distillation point ('IBP', '10%') or, for "
+                    "generic_property, the property name itself. Two claims conflict only when it matches.",
+    )
+
+    # Context dimensions (see class docstring)
+    parameter_role: str = Field(default="", description="design | rated | normal | operating | minimum | maximum | mechanical_design | test | relief | alarm | trip")
+    location: str = Field(default="", description="suction | discharge | inlet | outlet | top | bottom | overhead | flash_zone | shell | tube | ...")
+    operating_mode: str = Field(default="", description="normal_operation | startup | shutdown | emergency | temporary | upset | commissioning")
+    scenario: str = Field(default="", description="Design/check case or mode: 'Basrah', 'Bombay High', 'BH mode', 'PG mode', 'SKO operation', ...")
+    pressure_basis: str = Field(default="", description="absolute | gauge | '' (kg/cm2A vs kg/cm2G are different quantities)")
+    temporal_status: str = Field(default="current", description="current | historical | design | defunct | proposed")
+    value_numeric: float | None = Field(default=None, description="Leading number of value, if it parses")
+    unit_normalized: str = Field(default="", description="Canonical unit spelling")
+    resolution_status: ResolutionStatus = Field(default=ResolutionStatus.UNREVIEWED)
 
     # Provenance
     evidence: str = Field(description="Source text supporting this claim")
@@ -237,3 +290,31 @@ class EngineeringClaim(BaseModel):
     # Conflict tracking
     has_conflict: bool = Field(default=False)
     conflicting_claim_ids: list[str] = Field(default_factory=list)
+    corroborating_claim_ids: list[str] = Field(default_factory=list)
+
+    def context_key(self) -> str:
+        """Comparison key: two claims on one subject/predicate are comparable only when this matches."""
+        parts = [
+            self.predicate.value,
+            (self.parameter_role or "").strip().lower(),
+            (self.location or "").strip().lower(),
+            (self.operating_mode or "").strip().lower(),
+            (self.scenario or "").strip().lower(),
+            (self.pressure_basis or "").strip().lower(),
+            (self.qualifier or "").strip().lower(),
+        ]
+        return "|".join(parts)
+
+
+_LEADING_NUMBER_RE = re.compile(r"[<>≤≥~±]?\s*([+-]?\d[\d,]*(?:\.\d+)?)")
+
+
+def leading_number(value: str) -> float | None:
+    """'24.45' -> 24.45; '482 m3/h' -> 482.0; '7-9' -> 7.0; 'SS410' -> None."""
+    m = _LEADING_NUMBER_RE.match((value or "").strip())
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", ""))
+    except ValueError:
+        return None

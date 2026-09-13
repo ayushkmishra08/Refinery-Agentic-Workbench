@@ -17,19 +17,24 @@ from __future__ import annotations
 import hashlib
 import logging
 
-from schemas.claims import EngineeringClaim
+from schemas.claims import EngineeringClaim, ResolutionStatus, leading_number
 from schemas.knowledge import ChunkExtraction, ExtractedEntity
 from schemas.validation import ValidationResult
 from src.entity_resolver import EntityResolver, Resolution
 from src.memory import Neo4jMemory
-from src.validator import normalize_unit
+from src.validator import normalize_unit, pressure_basis
 
 logger = logging.getLogger(__name__)
 
 
-def _make_claim_uid(subject_uid: str, predicate: str, value: str, unit: str, document_id: str, page: int) -> str:
-    """Deterministic UID for a claim: per subject entity, predicate, value, document and page."""
+def _make_claim_uid(subject_uid: str, predicate: str, value: str, unit: str, document_id: str, page: int,
+                    qualifier: str = "", context_key: str = "") -> str:
+    """Deterministic UID for a claim: per subject entity, context, value, document and page."""
     key = f"{subject_uid}|{predicate}|{value.strip().lower()}|{unit.strip().lower()}|{document_id}|{page}"
+    if context_key:
+        key += f"|{context_key.strip().lower()}"
+    elif qualifier:
+        key += f"|{qualifier.strip().lower()}"
     return hashlib.md5(key.encode()).hexdigest()[:16]
 
 
@@ -95,7 +100,8 @@ class GraphInserter:
         chunk_embedding: list[float] | None = None,
     ) -> dict[str, int]:
         """Insert validated extraction into Neo4j (items with ERROR issues are skipped)."""
-        counts = {"entities": 0, "relationships": 0, "claims": 0, "conflicts": 0, "same_as": 0, "errors": 0}
+        counts = {"entities": 0, "relationships": 0, "claims": 0, "conflicts": 0, "corroborations": 0,
+                  "same_as": 0, "errors": 0}
         rejected_ids = {issue.item_id for issue in validation.issues if issue.severity.value == "error"}
         doc_id = extraction.document_id
         scope = self._scope()
@@ -160,18 +166,35 @@ class GraphInserter:
             try:
                 res = resolve_name(claim.subject)
                 unit = normalize_unit(claim.unit)
-                claim_uid = _make_claim_uid(res.uid, claim.predicate.value, claim.value, unit, doc_id, claim.page)
+                if not claim.pressure_basis:
+                    claim.pressure_basis = pressure_basis(claim.unit)
+                if claim.value_numeric is None:
+                    claim.value_numeric = leading_number(claim.value)
+                claim.unit_normalized = unit
+                context_key = claim.context_key()
+                claim_uid = _make_claim_uid(res.uid, claim.predicate.value, claim.value, unit, doc_id, claim.page,
+                                            claim.qualifier, context_key)
                 claim.subject_uid = res.uid
-                conflicts = self.memory.upsert_claim({
+                links = self.memory.upsert_claim({
                     "uid": claim_uid,
                     "subject_uid": res.uid,
                     "subject_name": claim.subject,
                     "canonical_tag": res.canonical_tag,
                     "predicate": claim.predicate.value,
                     "predicate_raw": claim.predicate_raw,
+                    "qualifier": claim.qualifier or "",
+                    "parameter_role": claim.parameter_role or "",
+                    "location": claim.location or "",
+                    "operating_mode": claim.operating_mode or "",
+                    "scenario": claim.scenario or "",
+                    "pressure_basis": claim.pressure_basis or "",
+                    "temporal_status": claim.temporal_status or "current",
+                    "context_key": context_key,
                     "value": claim.value,
+                    "value_numeric": claim.value_numeric,
                     "unit": unit,
                     "unit_raw": claim.unit,
+                    "unit_normalized": unit,
                     "claim_category": claim.predicate.value,
                     "document_id": doc_id,
                     "page": claim.page,
@@ -184,14 +207,23 @@ class GraphInserter:
                     "is_from_table": claim.is_from_table,
                     "table_id": claim.table_id,
                     "sentence_index": claim.sentence_index,
+                    "resolution_status": claim.resolution_status.value,
                     **scope,
                 })
+                conflicts = links.get("conflicts", []) if isinstance(links, dict) else list(links or [])
+                corroborations = links.get("corroborations", []) if isinstance(links, dict) else []
                 if conflicts:
                     claim.has_conflict = True
                     claim.conflicting_claim_ids = conflicts
+                    claim.resolution_status = ResolutionStatus.POTENTIAL_CONFLICT
                     counts["conflicts"] += len(conflicts)
-                    logger.info(f"Claim conflict: {claim.subject} {claim.predicate.value}={claim.value} "
-                                f"vs {len(conflicts)} existing claim(s)")
+                    logger.info(f"Potential conflict: {claim.subject} {context_key}={claim.value} {unit} "
+                                f"vs {len(conflicts)} comparable claim(s)")
+                if corroborations:
+                    claim.corroborating_claim_ids = corroborations
+                    if not conflicts:
+                        claim.resolution_status = ResolutionStatus.SUPPORTED
+                    counts["corroborations"] = counts.get("corroborations", 0) + len(corroborations)
                 inserted_claim_uids.append(claim_uid)
                 counts["claims"] += 1
             except Exception as e:
@@ -240,7 +272,8 @@ class GraphInserter:
             f"{counts['entities']} entities, {counts['claims']} claims, "
             f"{counts['relationships']} relationships"
             + (f", {counts['same_as']} SAME_AS" if counts["same_as"] else "")
-            + (f", {counts['conflicts']} conflicts" if counts["conflicts"] else "")
+            + (f", {counts['conflicts']} potential conflicts" if counts["conflicts"] else "")
+            + (f", {counts['corroborations']} corroborations" if counts.get("corroborations") else "")
             + (f", {counts['errors']} errors" if counts["errors"] else "")
         )
         return counts

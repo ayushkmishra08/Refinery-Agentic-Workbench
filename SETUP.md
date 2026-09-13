@@ -75,7 +75,20 @@ This guide provides the necessary steps to set up the `refinery-knowledge-layer`
 
 2. **Ollama**: `ollama pull deepseek-r1:7b`. On a 4 GB GPU the model is split between GPU and CPU;
    extraction is slow but works. Do not run Ollama inference while the Docling parse is running.
+   Ollama is optional: `python -m src --no-llm` builds the document graph, procedures and every
+   deterministic claim without it.
+
+3. **Embeddings**: `BAAI/bge-small-en-v1.5` (~130 MB) is downloaded from Hugging Face on the first run
+   and cached under `~/.cache/huggingface`. Offline machines: set `embedding.model_name` in
+   `src/config.py` to a model already in the cache (e.g. `all-MiniLM-L6-v2`); the vector index is
+   recreated automatically when the dimension changes.
 
 ## Running
 
-You can now run the scripts or start the pipeline. See the `README.md` or `walkthrough.md` for more detailed usage instructions.
+```powershell
+python -m src                 # resumable full pipeline
+python -m src --rebuild       # after upgrading the normalizer/chunker: redo everything but the parse
+python scripts\audit_pipeline.py "<document id>"    # offline quality gate (no services needed)
+```
+
+See the `README.md` for the flags and the graph model.
