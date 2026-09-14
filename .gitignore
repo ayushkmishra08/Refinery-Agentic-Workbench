@@ -44,3 +44,9 @@ neo4j-data/
 # pipeline run logs
 data/reports/*.log
 data/parsed/**/*.log
+
+# workbench runtime artefacts
+data/workbench/sessions/*
+data/workbench/audit/*
+data/workbench/reports/*
+!data/workbench/**/.gitkeep

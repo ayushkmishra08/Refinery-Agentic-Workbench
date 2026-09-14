@@ -28,7 +28,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["src*", "schemas*"]
+include = ["knowledge_layer*", "workbench*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,55 @@
+[
+  {
+    "claim_id": "c1",
+    "entity_uid": "e-11-PM-01",
+    "predicate": "flow_rate",
+    "value": 482,
+    "unit": "m3/h",
+    "parameter_role": "normal",
+    "location": null,
+    "document_id": "CDU operating manual",
+    "page": 61,
+    "evidence": "Normal flow 482 m3/h",
+    "source": "table"
+  },
+  {
+    "claim_id": "c2",
+    "entity_uid": "e-11-PM-01",
+    "predicate": "flow_rate",
+    "value": 219,
+    "unit": "m3/h",
+    "parameter_role": "minimum",
+    "location": null,
+    "document_id": "CDU operating manual",
+    "page": 61,
+    "evidence": "Minimum flow 219 m3/h",
+    "source": "table"
+  },
+  {
+    "claim_id": "c3",
+    "entity_uid": "e-11-PM-01",
+    "predicate": "pressure",
+    "value": 24.45,
+    "unit": "kg/cm2",
+    "pressure_basis": "absolute",
+    "parameter_role": "normal",
+    "location": "discharge",
+    "document_id": "CDU operating manual",
+    "page": 61,
+    "evidence": "Discharge pressure 24.45 kg/cm2A",
+    "source": "table"
+  },
+  {
+    "claim_id": "c4",
+    "entity_uid": "e-12-C-01",
+    "predicate": "temperature",
+    "value": 350,
+    "unit": "degC",
+    "parameter_role": "normal",
+    "location": "bottom",
+    "document_id": "CDU operating manual",
+    "page": 117,
+    "evidence": "Column bottom temperature 350 degC",
+    "source": "table"
+  }
+]
