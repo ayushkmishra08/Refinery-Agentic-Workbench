@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "refinery-knowledge-layer"
 version = "0.1.0"
-description = "Source-grounded refinery engineering knowledge extraction system"
+description = "Refinery Engineering AI Workbench: source-grounded knowledge layer + fully local agentic orchestration"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -19,6 +19,12 @@ dependencies = [
     "rich>=13.0",
     "xxhash>=3.0",
     "onnxruntime>=1.15.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-multipart>=0.0.9",
+    "rank-bm25>=0.2",
+    "pyyaml>=6.0",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]

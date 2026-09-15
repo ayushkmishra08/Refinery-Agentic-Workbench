@@ -1,0 +1,250 @@
+# Canonical benchmark prompts (from the design brief), one entry per request.
+# expected_task: the TaskType the classifier+resolver should produce (after ambiguity handling)
+# expected_agents: agents that must appear in the executed plan
+# expected_entities: substrings that must appear in a resolved entity name/tag (any one)
+# min_blocks: block types the final answer must contain
+- category: lookup
+  prompts:
+    - text: What is the normal flow rate of the crude charge pump?
+      expected_task: lookup
+      expected_agents: [lookup]
+      expected_entities: ["11-P-01", "11-PM-01", "Crude Charge Pump"]
+      min_blocks: [kpi]
+    - text: What are the operating limits of the atmospheric heater?
+      expected_task: limits
+      expected_agents: [lookup]
+      expected_entities: ["11-F-01"]
+    - text: Which instruments monitor the crude charge pump?
+      expected_task: multi_hop
+      expected_agents: [graph]
+      expected_entities: ["11-P-01", "11-PM-01", "Crude Charge Pump"]
+    - text: What is the design pressure and temperature of the vacuum column?
+      expected_task: lookup
+      expected_agents: [lookup]
+      expected_entities: ["12-C-01"]
+    - text: Which pumps are available for RCO transfer?
+      expected_task: lookup
+      expected_agents: [lookup]
+    - text: What products are produced by the atmospheric column?
+      expected_task: lookup
+      expected_agents: [lookup]
+      expected_entities: ["11-C-01"]
+    - text: Where is the desalter located in the CDU process?
+      expected_task: multi_hop
+      expected_agents: [graph]
+      expected_entities: ["11-V-02"]
+- category: multi_hop
+  prompts:
+    - text: Trace the crude flow from the crude charge pump to the atmospheric column.
+      expected_task: multi_hop
+      expected_agents: [graph]
+      expected_entities: ["11-C-01"]
+    - text: What equipment does the crude pass through before entering the atmospheric heater?
+      expected_task: multi_hop
+      expected_agents: [graph]
+      expected_entities: ["11-F-01"]
+    - text: Which equipment receives the RCO from the atmospheric column?
+      expected_task: multi_hop
+      expected_agents: [graph]
+    - text: Trace the downstream path of RCO from the atmospheric column.
+      expected_task: multi_hop
+      expected_agents: [graph]
+    - text: Which instruments are associated with the crude charge pump, and what process variables do they measure?
+      expected_task: multi_hop
+      expected_agents: [graph]
+    - text: Which pumps can act as standby for the crude charge pump, and under what conditions would they be used?
+      expected_task: multi_hop
+      expected_agents: [graph]
+- category: procedure
+  prompts:
+    - text: How do I change over from the running crude charge pump to the standby pump?
+      expected_task: procedure
+      expected_agents: [procedure, safety]
+      min_blocks: [steps]
+    - text: Give me the startup procedure for the atmospheric heater.
+      expected_task: procedure
+      expected_agents: [procedure, safety]
+      expected_entities: ["11-F-01"]
+    - text: What checks must be completed before starting the vacuum heater?
+      expected_task: procedure
+      expected_agents: [procedure]
+      expected_entities: ["12-F-01"]
+    - text: What is the shutdown procedure for the atmospheric column?
+      expected_task: procedure
+      expected_agents: [procedure]
+    - text: What conditions must be satisfied before starting the desalter?
+      expected_task: procedure
+      expected_agents: [procedure]
+      expected_entities: ["11-V-02"]
+    - text: Explain the procedure for restarting the unit after an emergency shutdown.
+      expected_task: procedure
+      expected_agents: [procedure]
+- category: troubleshooting
+  prompts:
+    - text: The crude charge pump discharge pressure is dropping. What should I check?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic, safety]
+    - text: The atmospheric column pressure is increasing. What could be causing it?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic]
+      expected_entities: ["11-C-01"]
+    - text: The desalter is showing poor performance. What possible causes and corrective actions are documented?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic]
+      expected_entities: ["11-V-02"]
+    - text: The vacuum column pressure is higher than normal. What should the operator investigate?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic]
+      expected_entities: ["12-C-01"]
+    - text: RCO flow to the vacuum heater has decreased. What could be the possible causes?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic]
+    - text: The pump is running but the expected flow is not being achieved. What should I check first?
+      expected_task: troubleshooting
+      expected_agents: [diagnostic]
+      allow_ambiguous: true
+- category: limits
+  prompts:
+    - text: What is the normal operating range of the crude charge pump?
+      expected_task: limits
+      expected_agents: [lookup]
+    - text: What happens if the atmospheric heater temperature exceeds its operating limit?
+      expected_task: limits
+      expected_agents: [lookup]
+      expected_entities: ["11-F-01"]
+    - text: The crude charge pump is operating at 520 m3/h. Is this acceptable?
+      expected_task: limits
+      expected_agents: [lookup, calculation, safety]
+      min_blocks: [limit_gauge]
+    - text: Is the current operating condition within the documented operating envelope?
+      expected_task: ambiguous
+      allow_ambiguous: true
+- category: explanation
+  prompts:
+    - text: Why is the crude heated before entering the atmospheric column?
+      expected_task: explanation
+      expected_agents: [explanation]
+    - text: Why is the desalter installed before the atmospheric heater?
+      expected_task: explanation
+      expected_agents: [explanation]
+    - text: Why is RCO routed to the vacuum unit?
+      expected_task: explanation
+      expected_agents: [explanation]
+    - text: Why is steam used in this part of the process?
+      expected_task: explanation
+      allow_ambiguous: true
+- category: safety
+  prompts:
+    - text: What safety precautions are required before working on the crude charge pump?
+      expected_task: safety
+      expected_agents: [safety]
+      min_blocks: [safety]
+    - text: What isolation requirements apply before maintenance on this pump?
+      expected_task: safety
+      allow_ambiguous: true
+    - text: What safeguards protect the atmospheric heater from unsafe operation?
+      expected_task: safety
+      expected_agents: [safety]
+      expected_entities: ["11-F-01"]
+    - text: What interlocks or trips are associated with the vacuum heater?
+      expected_task: safety
+      expected_agents: [safety]
+      expected_entities: ["12-F-01"]
+    - text: Can I bypass this protection temporarily?
+      expected_task: ambiguous
+      expected_safety: restricted
+      allow_ambiguous: true
+    - text: Can I bypass the vacuum heater low fuel gas pressure trip temporarily?
+      expected_task: safety
+      expected_safety: restricted
+      expected_agents: [safety]
+- category: comparison
+  prompts:
+    - text: Compare the operating limits of the two crude charge pumps.
+      expected_task: comparison
+      expected_agents: [comparison]
+    - text: What is different between the normal and temporary operating configurations?
+      expected_task: comparison
+      expected_agents: [comparison]
+    - text: Compare the startup procedure and shutdown procedure for the vacuum unit.
+      expected_task: comparison
+      expected_agents: [comparison]
+    - text: Compare the documented operating conditions for Basrah crude and Bombay High crude.
+      expected_task: comparison
+      expected_agents: [comparison]
+      min_blocks: [comparison]
+- category: cross_document
+  prompts:
+    - text: Which documents describe the startup procedure for the atmospheric heater?
+      expected_task: cross_document
+      expected_agents: [cross_document]
+    - text: Find all sections that mention crude charge pump changeover.
+      expected_task: cross_document
+      expected_agents: [cross_document]
+    - text: Are there any standing instructions affecting this procedure?
+      expected_task: cross_document
+      expected_agents: [cross_document]
+    - text: Find conflicting values for the atmospheric heater operating temperature and tell me which source is more authoritative.
+      expected_task: conflict
+      expected_agents: [revision_conflict]
+      expected_entities: ["11-F-01"]
+- category: provenance
+  prompts:
+    - text: I found two different normal flow values for the crude charge pump. Which one should I trust?
+      expected_task: conflict
+      expected_agents: [revision_conflict]
+    - text: Show me all documented values for the pump discharge pressure and their sources.
+      expected_task: provenance
+      expected_agents: [revision_conflict]
+      allow_ambiguous: true
+    - text: Show me the evidence supporting this answer.
+      expected_task: provenance
+      allow_ambiguous: true
+- category: planning
+  prompts:
+    - text: I need to prepare the unit for crude charge pump maintenance. What should I do?
+      expected_task: planning
+      expected_agents: [planner, procedure, safety]
+      min_blocks: [plan]
+    - text: Create a work plan for inspecting the crude charge pump.
+      expected_task: planning
+      expected_agents: [planner]
+    - text: Prepare an engineering investigation plan for repeated trips of the vacuum heater.
+      expected_task: planning
+      expected_agents: [planner, diagnostic]
+      expected_entities: ["12-F-01"]
+- category: report
+  prompts:
+    - text: Prepare a report on the atmospheric column operating envelope.
+      expected_task: report
+      expected_agents: [report]
+      expected_entities: ["11-C-01"]
+    - text: Prepare an engineering report explaining the crude flow path through the CDU.
+      expected_task: report
+      expected_agents: [report]
+- category: complex
+  prompts:
+    - text: The crude charge pump discharge pressure is lower than normal and the atmospheric heater is also showing reduced feed. Investigate the possible causes and give me a recommended diagnostic sequence based only on the documented operating procedures.
+      expected_task: troubleshooting
+      expected_agents: [diagnostic, safety]
+    - text: We need to take the running crude charge pump out of service for maintenance. Determine the correct changeover procedure, required prerequisites, isolation requirements, relevant operating limits, and supporting documents.
+      expected_task: procedure
+      expected_agents: [procedure, safety]
+    - text: The vacuum column pressure has increased beyond the normal range. Identify the affected equipment and instruments, determine possible documented causes, and prepare a troubleshooting plan with safety checks.
+      expected_task: troubleshooting
+      expected_agents: [diagnostic, safety]
+      expected_entities: ["12-C-01"]
+- category: ambiguous
+  prompts:
+    - text: Why is the pump pressure low?
+      expected_task: ambiguous
+      min_blocks: [clarification]
+    - text: Can I run this at 500?
+      expected_task: ambiguous
+      min_blocks: [clarification]
+    - text: How do I start it?
+      expected_task: ambiguous
+      min_blocks: [clarification]
+    - text: Is this safe?
+      expected_task: ambiguous
+      min_blocks: [clarification]

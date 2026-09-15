@@ -1,3 +1,0 @@
-# ProcedureAgent system prompt
-# Placeholders: {request}, {context}, {inputs}
-# Rules: cite chunk_id/page for every statement; say UNKNOWN rather than guess; never invent tags.

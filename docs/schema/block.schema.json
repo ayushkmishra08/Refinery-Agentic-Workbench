@@ -1,0 +1,1794 @@
+{
+  "$defs": {
+    "AuditBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "audit",
+          "default": "audit",
+          "title": "Type",
+          "type": "string"
+        },
+        "audit_id": {
+          "title": "Audit Id",
+          "type": "string"
+        },
+        "phases": {
+          "items": {
+            "$ref": "#/$defs/AuditPhase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "llm_calls": {
+          "default": 0,
+          "title": "Llm Calls",
+          "type": "integer"
+        },
+        "backend": {
+          "default": "",
+          "title": "Backend",
+          "type": "string"
+        }
+      },
+      "required": [
+        "audit_id",
+        "phases"
+      ],
+      "title": "AuditBlock",
+      "type": "object"
+    },
+    "AuditPhase": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "agent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Agent"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "duration_ms": {
+          "title": "Duration Ms",
+          "type": "integer"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "duration_ms"
+      ],
+      "title": "AuditPhase",
+      "type": "object"
+    },
+    "CalloutBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "callout",
+          "default": "callout",
+          "title": "Type",
+          "type": "string"
+        },
+        "level": {
+          "default": "info",
+          "enum": [
+            "info",
+            "success",
+            "warning",
+            "danger"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "markdown": {
+          "title": "Markdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "markdown"
+      ],
+      "title": "CalloutBlock",
+      "type": "object"
+    },
+    "ClarificationBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "clarification",
+          "default": "clarification",
+          "title": "Type",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "missing": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing",
+          "type": "array"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Options",
+          "type": "array"
+        }
+      },
+      "required": [
+        "question",
+        "missing"
+      ],
+      "title": "ClarificationBlock",
+      "type": "object"
+    },
+    "ComparisonBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "comparison",
+          "default": "comparison",
+          "title": "Type",
+          "type": "string"
+        },
+        "subjects": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Subjects",
+          "type": "array"
+        },
+        "attributes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Attributes",
+          "type": "array"
+        },
+        "cells": {
+          "description": "rows = attributes, cols = subjects",
+          "items": {
+            "items": {
+              "$ref": "#/$defs/ComparisonCell"
+            },
+            "type": "array"
+          },
+          "title": "Cells",
+          "type": "array"
+        },
+        "differences": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Differences",
+          "type": "array"
+        }
+      },
+      "required": [
+        "subjects",
+        "attributes",
+        "cells"
+      ],
+      "title": "ComparisonBlock",
+      "type": "object"
+    },
+    "ComparisonCell": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "title": "ComparisonCell",
+      "type": "object"
+    },
+    "ConfidenceBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "confidence",
+          "default": "confidence",
+          "title": "Type",
+          "type": "string"
+        },
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "level": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "basis": {
+          "title": "Basis",
+          "type": "string"
+        },
+        "uncertainties": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Uncertainties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "level",
+        "basis"
+      ],
+      "title": "ConfidenceBlock",
+      "type": "object"
+    },
+    "ConflictBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "conflict",
+          "default": "conflict",
+          "title": "Type",
+          "type": "string"
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        },
+        "parameter": {
+          "title": "Parameter",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/ConflictClaim"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "corroborated",
+            "different_context",
+            "potential_conflict",
+            "resolved",
+            "unresolved"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "preferred_index": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preferred Index"
+        },
+        "resolution": {
+          "default": "",
+          "title": "Resolution",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subject",
+        "parameter",
+        "claims",
+        "status"
+      ],
+      "title": "ConflictBlock",
+      "type": "object"
+    },
+    "ConflictClaim": {
+      "properties": {
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "context": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Context"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        },
+        "temporal_status": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Temporal Status"
+        }
+      },
+      "required": [
+        "value",
+        "document_id",
+        "source"
+      ],
+      "title": "ConflictClaim",
+      "type": "object"
+    },
+    "EvidenceBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "evidence",
+          "default": "evidence",
+          "title": "Type",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/EvidenceItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "EvidenceBlock",
+      "type": "object"
+    },
+    "EvidenceItem": {
+      "properties": {
+        "ref": {
+          "title": "Ref",
+          "type": "string"
+        },
+        "document_id": {
+          "title": "Document Id",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "chunk_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Chunk Id"
+        },
+        "claim_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Claim Id"
+        },
+        "section_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Path"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "source": {
+          "default": "graph",
+          "title": "Source",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision"
+        }
+      },
+      "required": [
+        "ref",
+        "document_id",
+        "text"
+      ],
+      "title": "EvidenceItem",
+      "type": "object"
+    },
+    "GaugeMarker": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "number"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "GaugeMarker",
+      "type": "object"
+    },
+    "GraphBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "graph",
+          "default": "graph",
+          "title": "Type",
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/GraphNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/GraphEdge"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "layout": {
+          "default": "left-right",
+          "enum": [
+            "left-right",
+            "top-down",
+            "radial"
+          ],
+          "title": "Layout",
+          "type": "string"
+        },
+        "mermaid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Pre-rendered Mermaid source for frontends without a graph library",
+          "title": "Mermaid"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "title": "GraphBlock",
+      "type": "object"
+    },
+    "GraphEdge": {
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        },
+        "inferred": {
+          "default": false,
+          "title": "Inferred",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "label"
+      ],
+      "title": "GraphEdge",
+      "type": "object"
+    },
+    "GraphNode": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Type"
+        },
+        "is_focus": {
+          "default": false,
+          "title": "Is Focus",
+          "type": "boolean"
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": true,
+          "title": "Properties"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "GraphNode",
+      "type": "object"
+    },
+    "ImageBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "image",
+          "default": "image",
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "ImageBlock",
+      "type": "object"
+    },
+    "KpiBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "kpi",
+          "default": "kpi",
+          "title": "Type",
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/KpiItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "required": [
+        "items"
+      ],
+      "title": "KpiBlock",
+      "type": "object"
+    },
+    "KpiItem": {
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "qualifier": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Qualifier"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "KpiItem",
+      "type": "object"
+    },
+    "LimitGaugeBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "limit_gauge",
+          "default": "limit_gauge",
+          "title": "Type",
+          "type": "string"
+        },
+        "entity": {
+          "title": "Entity",
+          "type": "string"
+        },
+        "parameter": {
+          "title": "Parameter",
+          "type": "string"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "markers": {
+          "items": {
+            "$ref": "#/$defs/GaugeMarker"
+          },
+          "title": "Markers",
+          "type": "array"
+        },
+        "verdict": {
+          "default": "unknown",
+          "enum": [
+            "within_normal",
+            "within_design",
+            "outside_design",
+            "unknown"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "message": {
+          "default": "",
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entity",
+        "parameter",
+        "unit",
+        "markers"
+      ],
+      "title": "LimitGaugeBlock",
+      "type": "object"
+    },
+    "PlanBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "plan",
+          "default": "plan",
+          "title": "Type",
+          "type": "string"
+        },
+        "goal": {
+          "title": "Goal",
+          "type": "string"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/PlanTask"
+          },
+          "title": "Tasks",
+          "type": "array"
+        },
+        "mermaid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mermaid"
+        }
+      },
+      "required": [
+        "goal",
+        "tasks"
+      ],
+      "title": "PlanBlock",
+      "type": "object"
+    },
+    "PlanTask": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "agent": {
+          "title": "Agent",
+          "type": "string"
+        },
+        "depends_on": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Depends On",
+          "type": "array"
+        },
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "failed",
+            "skipped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Summary"
+        },
+        "safety_sensitive": {
+          "default": false,
+          "title": "Safety Sensitive",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "agent"
+      ],
+      "title": "PlanTask",
+      "type": "object"
+    },
+    "SafetyBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "safety",
+          "default": "safety",
+          "title": "Type",
+          "type": "string"
+        },
+        "flags": {
+          "items": {
+            "$ref": "#/$defs/SafetyFlagItem"
+          },
+          "title": "Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "flags"
+      ],
+      "title": "SafetyBlock",
+      "type": "object"
+    },
+    "SafetyFlagItem": {
+      "properties": {
+        "severity": {
+          "enum": [
+            "info",
+            "caution",
+            "warning",
+            "danger"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        },
+        "requires_authorization": {
+          "default": false,
+          "title": "Requires Authorization",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "severity",
+        "message"
+      ],
+      "title": "SafetyFlagItem",
+      "type": "object"
+    },
+    "StepItem": {
+      "properties": {
+        "sequence": {
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "page": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page"
+        },
+        "citation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Citation"
+        },
+        "is_prerequisite": {
+          "default": false,
+          "title": "Is Prerequisite",
+          "type": "boolean"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        },
+        "mentions": {
+          "description": "Equipment tags mentioned in the step",
+          "items": {
+            "type": "string"
+          },
+          "title": "Mentions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "sequence",
+        "text"
+      ],
+      "title": "StepItem",
+      "type": "object"
+    },
+    "StepsBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "steps",
+          "default": "steps",
+          "title": "Type",
+          "type": "string"
+        },
+        "procedure_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Procedure Id"
+        },
+        "procedure_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Procedure Type"
+        },
+        "document_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Document Id"
+        },
+        "section_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Section Path"
+        },
+        "page_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Start"
+        },
+        "page_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page End"
+        },
+        "prerequisites": {
+          "items": {
+            "$ref": "#/$defs/StepItem"
+          },
+          "title": "Prerequisites",
+          "type": "array"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/StepItem"
+          },
+          "title": "Steps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "steps"
+      ],
+      "title": "StepsBlock",
+      "type": "object"
+    },
+    "TableBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "table",
+          "default": "table",
+          "title": "Type",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "rows": {
+          "items": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "row_citations": {
+          "description": "Per row, evidence refs",
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Row Citations",
+          "type": "array"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        }
+      },
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "title": "TableBlock",
+      "type": "object"
+    },
+    "TextBlock": {
+      "properties": {
+        "id": {
+          "default": "",
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "citations": {
+          "description": "Evidence ref labels ([1], [2]) that support this block",
+          "items": {
+            "type": "string"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "type": {
+          "const": "text",
+          "default": "text",
+          "title": "Type",
+          "type": "string"
+        },
+        "markdown": {
+          "title": "Markdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "markdown"
+      ],
+      "title": "TextBlock",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "audit": "#/$defs/AuditBlock",
+      "callout": "#/$defs/CalloutBlock",
+      "clarification": "#/$defs/ClarificationBlock",
+      "comparison": "#/$defs/ComparisonBlock",
+      "confidence": "#/$defs/ConfidenceBlock",
+      "conflict": "#/$defs/ConflictBlock",
+      "evidence": "#/$defs/EvidenceBlock",
+      "graph": "#/$defs/GraphBlock",
+      "image": "#/$defs/ImageBlock",
+      "kpi": "#/$defs/KpiBlock",
+      "limit_gauge": "#/$defs/LimitGaugeBlock",
+      "plan": "#/$defs/PlanBlock",
+      "safety": "#/$defs/SafetyBlock",
+      "steps": "#/$defs/StepsBlock",
+      "table": "#/$defs/TableBlock",
+      "text": "#/$defs/TextBlock"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/TextBlock"
+    },
+    {
+      "$ref": "#/$defs/CalloutBlock"
+    },
+    {
+      "$ref": "#/$defs/KpiBlock"
+    },
+    {
+      "$ref": "#/$defs/TableBlock"
+    },
+    {
+      "$ref": "#/$defs/StepsBlock"
+    },
+    {
+      "$ref": "#/$defs/GraphBlock"
+    },
+    {
+      "$ref": "#/$defs/PlanBlock"
+    },
+    {
+      "$ref": "#/$defs/EvidenceBlock"
+    },
+    {
+      "$ref": "#/$defs/ComparisonBlock"
+    },
+    {
+      "$ref": "#/$defs/LimitGaugeBlock"
+    },
+    {
+      "$ref": "#/$defs/ConflictBlock"
+    },
+    {
+      "$ref": "#/$defs/SafetyBlock"
+    },
+    {
+      "$ref": "#/$defs/ConfidenceBlock"
+    },
+    {
+      "$ref": "#/$defs/ClarificationBlock"
+    },
+    {
+      "$ref": "#/$defs/ImageBlock"
+    },
+    {
+      "$ref": "#/$defs/AuditBlock"
+    }
+  ]
+}

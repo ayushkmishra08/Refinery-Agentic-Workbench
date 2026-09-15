@@ -1,0 +1,63 @@
+{
+  "properties": {
+    "event": {
+      "title": "Event",
+      "type": "string"
+    },
+    "phase": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Phase"
+    },
+    "agent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Agent"
+    },
+    "step_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Step Id"
+    },
+    "message": {
+      "default": "",
+      "title": "Message",
+      "type": "string"
+    },
+    "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+    },
+    "ts": {
+      "title": "Ts",
+      "type": "number"
+    }
+  },
+  "required": [
+    "event"
+  ],
+  "title": "ProgressEvent",
+  "type": "object"
+}

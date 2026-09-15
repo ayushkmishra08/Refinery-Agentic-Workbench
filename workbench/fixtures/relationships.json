@@ -1,1 +1,9 @@
-[]
+[
+  {"source_uid": "e-11-PM-01", "target_uid": "e-11-E-01", "type": "FEEDS", "page": 60, "evidence": "Crude charge pump 11-PM-01A/B discharges the crude to the preheat exchanger 11-E-01.", "source": "rule"},
+  {"source_uid": "e-11-E-01", "target_uid": "e-11-V-02", "type": "FEEDS", "page": 60, "evidence": "The preheated crude from 11-E-01 enters the desalter 11-V-02.", "source": "rule"},
+  {"source_uid": "e-11-V-02", "target_uid": "e-11-V-10", "type": "FEEDS", "page": 62, "evidence": "Desalted crude from 11-V-02 flows to the pre-flash drum 11-V-10.", "source": "rule"},
+  {"source_uid": "e-11-V-10", "target_uid": "e-11-F-01", "type": "FEEDS", "page": 63, "evidence": "Pre-flash drum 11-V-10 bottoms are pumped to the atmospheric heater 11-F-01.", "source": "rule"},
+  {"source_uid": "e-11-F-01", "target_uid": "e-11-C-01", "type": "FEEDS", "page": 64, "evidence": "The heater 11-F-01 outlet feeds the atmospheric column 11-C-01 flash zone.", "source": "rule"},
+  {"source_uid": "e-11-PG-101", "target_uid": "e-11-PM-01", "type": "MONITORS", "page": 61, "evidence": "11-PG-101 indicates the crude charge pump discharge pressure.", "source": "heuristic"},
+  {"source_uid": "e-11-FRC-101", "target_uid": "e-11-PM-01", "type": "CONTROLS", "page": 128, "evidence": "11-FRC-101 controls the crude charge flow by throttling the crude charge pump discharge.", "source": "heuristic"}
+]

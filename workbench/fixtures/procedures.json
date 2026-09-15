@@ -1,1 +1,45 @@
-[]
+[
+  {
+    "procedure_id": "proc-changeover-01",
+    "title": "Pump Change over Procedure: (11-PM-01A to 11-PM-01B)",
+    "procedure_type": "changeover",
+    "page_start": 226,
+    "page_end": 226,
+    "applies_to": ["e-11-PM-01"],
+    "section_path": "Chapter 16: Major equipment description and operating Procedure > 16.1 CRUDE CHARGE PUMP 11-PM-01A/B > Pump Change over Procedure",
+    "steps": [
+      {"sequence": 1, "text": "Ensure the standby pump 11-PM-01B is lined up and the suction valve is open before starting.", "page": 226, "tags": ["11-PM-01B"]},
+      {"sequence": 2, "text": "Start the standby pump 11-PM-01B and check the discharge pressure on 11-PG-101.", "page": 226, "tags": ["11-PM-01B", "11-PG-101"]},
+      {"sequence": 3, "text": "Slowly open the discharge valve of 11-PM-01B while closing the discharge valve of 11-PM-01A. Caution: do not allow the flow to drop below the minimum flow of 219 m3/h.", "page": 226, "tags": ["11-PM-01B", "11-PM-01A"]},
+      {"sequence": 4, "text": "Stop the running pump 11-PM-01A and inform the shift in-charge.", "page": 226, "tags": ["11-PM-01A"]}
+    ]
+  },
+  {
+    "procedure_id": "proc-heater-lightoff",
+    "title": "Heater light-off during normal start-up",
+    "procedure_type": "startup",
+    "page_start": 400,
+    "page_end": 401,
+    "applies_to": ["e-11-F-01"],
+    "section_path": "Chapter 32: Standard Operating Procedures > 32.11 HEATER > Heater light-off during normal start-up",
+    "steps": [
+      {"sequence": 1, "text": "Confirm the firebox of 11-F-01 has been purged with steam and the explosimeter reading is zero before light-off.", "page": 400, "tags": ["11-F-01"]},
+      {"sequence": 2, "text": "Ensure the fuel gas pressure is normal and the pilot gas line is lined up.", "page": 400, "tags": []},
+      {"sequence": 3, "text": "Light the pilot burner and observe the flame through the peephole.", "page": 401, "tags": []}
+    ]
+  },
+  {
+    "procedure_id": "proc-pump-isolation",
+    "title": "Isolation of crude charge pump for maintenance",
+    "procedure_type": "isolation",
+    "page_start": 458,
+    "page_end": 458,
+    "applies_to": ["e-11-PM-01"],
+    "section_path": "Chapter 32: Standard Operating Procedures > 32.5 PUMPS > Isolation of crude charge pump for maintenance",
+    "steps": [
+      {"sequence": 1, "text": "Obtain a work permit from the shift in-charge before isolating the crude charge pump.", "page": 458, "tags": []},
+      {"sequence": 2, "text": "Close the suction and discharge valves of 11-PM-01A and depressurise the pump casing to the closed drain.", "page": 458, "tags": ["11-PM-01A"]},
+      {"sequence": 3, "text": "Blind the suction and discharge lines and hand over the pump to maintenance.", "page": 458, "tags": []}
+    ]
+  }
+]

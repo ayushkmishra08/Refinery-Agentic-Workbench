@@ -50,3 +50,7 @@ data/workbench/sessions/*
 data/workbench/audit/*
 data/workbench/reports/*
 !data/workbench/**/.gitkeep
+
+data/workbench/cache/*
+data/workbench/uploads/*
+!data/workbench/**/.gitkeep

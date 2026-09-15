@@ -1,3 +1,1 @@
-"""Deterministic Rules / Calculators. Pure functions, unit-aware, fully tested.
-No LLM ever performs arithmetic; the Calculation Agent only chooses and parameterises these.
-"""
+"""Deterministic calculators: unit handling (units.py) and operating-envelope checks (limits.py). No LLM ever does arithmetic."""

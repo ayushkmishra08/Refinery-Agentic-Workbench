@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "Attachment": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "media_type": {
+          "default": "application/pdf",
+          "title": "Media Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "path"
+      ],
+      "title": "Attachment",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "session_id": {
+      "default": "default",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "user_role": {
+      "default": "engineer",
+      "title": "User Role",
+      "type": "string"
+    },
+    "attachments": {
+      "items": {
+        "$ref": "#/$defs/Attachment"
+      },
+      "title": "Attachments",
+      "type": "array"
+    },
+    "options": {
+      "additionalProperties": true,
+      "description": "Frontend hints: {'want_report': true, 'max_steps': 12}",
+      "title": "Options",
+      "type": "object"
+    }
+  },
+  "required": [
+    "text"
+  ],
+  "title": "UserRequest",
+  "type": "object"
+}

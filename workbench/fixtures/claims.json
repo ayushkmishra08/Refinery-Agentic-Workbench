@@ -1,55 +1,15 @@
 [
-  {
-    "claim_id": "c1",
-    "entity_uid": "e-11-PM-01",
-    "predicate": "flow_rate",
-    "value": 482,
-    "unit": "m3/h",
-    "parameter_role": "normal",
-    "location": null,
-    "document_id": "CDU operating manual",
-    "page": 61,
-    "evidence": "Normal flow 482 m3/h",
-    "source": "table"
-  },
-  {
-    "claim_id": "c2",
-    "entity_uid": "e-11-PM-01",
-    "predicate": "flow_rate",
-    "value": 219,
-    "unit": "m3/h",
-    "parameter_role": "minimum",
-    "location": null,
-    "document_id": "CDU operating manual",
-    "page": 61,
-    "evidence": "Minimum flow 219 m3/h",
-    "source": "table"
-  },
-  {
-    "claim_id": "c3",
-    "entity_uid": "e-11-PM-01",
-    "predicate": "pressure",
-    "value": 24.45,
-    "unit": "kg/cm2",
-    "pressure_basis": "absolute",
-    "parameter_role": "normal",
-    "location": "discharge",
-    "document_id": "CDU operating manual",
-    "page": 61,
-    "evidence": "Discharge pressure 24.45 kg/cm2A",
-    "source": "table"
-  },
-  {
-    "claim_id": "c4",
-    "entity_uid": "e-12-C-01",
-    "predicate": "temperature",
-    "value": 350,
-    "unit": "degC",
-    "parameter_role": "normal",
-    "location": "bottom",
-    "document_id": "CDU operating manual",
-    "page": 117,
-    "evidence": "Column bottom temperature 350 degC",
-    "source": "table"
-  }
+  {"claim_id": "c1", "entity_uid": "e-11-PM-01", "predicate": "flow_rate", "value": 482, "unit": "m3/h", "parameter_role": "normal", "location": null, "document_id": "CDU operating manual", "page": 61, "chunk_id": "ch-control", "evidence": "Normal flow 482 m3/h", "source": "table"},
+  {"claim_id": "c2", "entity_uid": "e-11-PM-01", "predicate": "flow_rate", "value": 219, "unit": "m3/h", "parameter_role": "minimum", "location": null, "document_id": "CDU operating manual", "page": 61, "chunk_id": "ch-control", "evidence": "Minimum flow 219 m3/h", "source": "table"},
+  {"claim_id": "c3", "entity_uid": "e-11-PM-01", "predicate": "flow_rate", "value": 520, "unit": "m3/h", "parameter_role": "design", "location": null, "document_id": "CDU operating manual", "page": 60, "chunk_id": "ch-feed", "evidence": "Design flow 520 m3/h", "source": "table"},
+  {"claim_id": "c4", "entity_uid": "e-11-PM-01", "predicate": "pressure", "value": 24.45, "unit": "kg/cm2", "pressure_basis": "absolute", "parameter_role": "normal", "location": "discharge", "document_id": "CDU operating manual", "page": 61, "chunk_id": "ch-control", "evidence": "Discharge pressure 24.45 kg/cm2A", "source": "table"},
+  {"claim_id": "c5", "entity_uid": "e-11-PM-01", "predicate": "pressure", "value": 2.0, "unit": "kg/cm2", "pressure_basis": "absolute", "parameter_role": "normal", "location": "suction", "document_id": "CDU operating manual", "page": 61, "chunk_id": "ch-control", "evidence": "Suction pressure 2.0 kg/cm2A", "source": "table"},
+  {"claim_id": "c6", "entity_uid": "e-11-PM-01", "predicate": "design_pressure", "value": 31.7, "unit": "kg/cm2", "pressure_basis": "absolute", "parameter_role": "design", "location": null, "document_id": "CDU operating manual", "page": 225, "chunk_id": "ch-feed", "evidence": "Design pressure 31.7 kg/cm2A", "source": "table"},
+  {"claim_id": "c7", "entity_uid": "e-11-PM-01", "predicate": "flow_rate", "value": 470, "unit": "m3/h", "parameter_role": "normal", "location": null, "document_id": "CDU operating manual", "page": 300, "chunk_id": "ch-upset", "evidence": "The normal charge rate is 470 m3/h during high sulphur operation", "source": "rule"},
+  {"claim_id": "c8", "entity_uid": "e-11-C-01", "predicate": "temperature", "value": 350, "unit": "degC", "parameter_role": "normal", "location": "bottom", "document_id": "CDU operating manual", "page": 117, "evidence": "Column bottom temperature 350 degC", "source": "table"},
+  {"claim_id": "c9", "entity_uid": "e-11-C-01", "predicate": "design_pressure", "value": 3.5, "unit": "kg/cm2", "pressure_basis": "gauge", "parameter_role": "design", "location": null, "document_id": "CDU operating manual", "page": 118, "evidence": "Design pressure 3.5 kg/cm2G", "source": "table"},
+  {"claim_id": "c10", "entity_uid": "e-11-C-01", "predicate": "pressure", "value": 1.2, "unit": "kg/cm2", "pressure_basis": "gauge", "parameter_role": "normal", "location": "top", "document_id": "CDU operating manual", "page": 117, "evidence": "Column top pressure 1.2 kg/cm2G", "source": "table"},
+  {"claim_id": "c11", "entity_uid": "e-11-F-01", "predicate": "temperature", "value": 360, "unit": "degC", "parameter_role": "normal", "location": "outlet", "document_id": "CDU operating manual", "page": 200, "evidence": "Heater outlet temperature normal 360 degC", "source": "table"},
+  {"claim_id": "c12", "entity_uid": "e-11-F-01", "predicate": "temperature", "value": 385, "unit": "degC", "parameter_role": "maximum", "location": "outlet", "document_id": "CDU operating manual", "page": 200, "evidence": "Heater outlet temperature maximum 385 degC", "source": "table"},
+  {"claim_id": "c13", "entity_uid": "e-11-F-01", "predicate": "temperature", "value": 400, "unit": "degC", "parameter_role": "design", "location": "outlet", "document_id": "CDU operating manual", "page": 201, "evidence": "Heater outlet design temperature 400 degC", "source": "table"}
 ]

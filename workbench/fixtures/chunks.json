@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "chunk_id": "ch-upset",
+    "chunk_type": "upset",
+    "page": 271,
+    "chapter_number": 17,
+    "section_path": "Chapter 17: Upset Conditions & Stabilization > 17.1 FEED PUMP LOSING SUCTION",
+    "entity_uids": ["e-11-PM-01", "e-11-PG-101"],
+    "text": "### 17.1 FEED PUMP LOSING SUCTION:\n\nThis can be confirmed by the feed pump suction pressure gauge. If the suction pressure is low, the crude charge pump discharge pressure will be dropping. The probable reasons are low level in the crude tank, a choked suction strainer or vapour lock in the suction line. Check the suction strainer differential pressure and the crude tank level. Check the discharge pressure gauge 11-PG-101 and compare with the normal value. The charge rate should be reduced immediately and the standby pump 11-PM-01B should be started. Inform the shift in-charge and stabilise the column."
+  },
+  {
+    "chunk_id": "ch-safety",
+    "chunk_type": "safety",
+    "page": 365,
+    "chapter_number": 27,
+    "section_path": "Chapter 27: Occupational Safety & Health > 27.4 WORK ON ROTATING EQUIPMENT",
+    "entity_uids": ["e-11-PM-01"],
+    "text": "### 27.4 WORK ON ROTATING EQUIPMENT\n\nBefore working on the crude charge pump, the pump must be isolated, depressurised and drained. A work permit shall be obtained from the shift in-charge. Wear PPE including gloves and goggles when opening the pump casing. Never bypass the low flow trip without written authorisation from the Division Head-Operations."
+  },
+  {
+    "chunk_id": "ch-feed",
+    "chunk_type": "narrative",
+    "page": 60,
+    "chapter_number": 6,
+    "section_path": "Chapter 6: Detailed Description of Configuration and Process > 6.1 CRUDE DISTILLATION UNIT > 6.1.1 FEED SUPPLY",
+    "entity_uids": ["e-11-PM-01", "e-11-E-01", "e-11-V-02"],
+    "text": "#### 6.1.1 FEED SUPPLY\n\nCrude is supplied to the unit from the crude tanks. Crude charge pump 11-PM-01A/B pumps the crude through the preheat exchanger 11-E-01 to the desalter 11-V-02. The crude is heated in the preheat train in order to reduce the heater duty and to improve desalting efficiency. Design flow 520 m3/h."
+  },
+  {
+    "chunk_id": "ch-control",
+    "chunk_type": "control",
+    "page": 128,
+    "chapter_number": 7,
+    "section_path": "Chapter 7: Description of critical control schemes > 7.1 ATMOSPHERIC SECTION > 7.1.2 Crude charge flow control",
+    "entity_uids": ["e-11-PM-01", "e-11-FRC-101"],
+    "text": "#### 7.1.2 Crude charge flow control\n\n11-FRC-101 controls the crude charge flow by throttling the pump discharge valve. Normal flow 482 m3/h; minimum flow 219 m3/h is required to protect the pump. Discharge pressure 24.45 kg/cm2A and suction pressure 2.0 kg/cm2A are the normal readings."
+  }
+]

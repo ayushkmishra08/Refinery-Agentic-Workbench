@@ -1,0 +1,3 @@
+Write the executive summary (3-6 sentences, plain language) of an engineering report for a refinery operations team.
+Use ONLY the listed facts; keep every number exactly as given, with its unit. Mention what is not documented if the list says so.
+No headings, no bullet points, no invented context. Output plain text only.

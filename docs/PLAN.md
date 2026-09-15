@@ -54,20 +54,25 @@ Invariants carried over from the knowledge layer: every statement maps to Eviden
 two numbers are comparable only when their claim context keys match; absolute vs gauge pressure are different
 quantities; UNKNOWN beats GUESS; the LLM never does arithmetic.
 
-## 3. Build order (each step is testable with the mock backend, no GPU/Neo4j needed)
+## 3. Build order and status (2026-09-15)
 
-1. **Contracts + mock backend** (done as stubs): `workbench/core`, `services/backends/mock_backend.py`, fixtures. Grow fixtures from real values in `data/knowledge/CDU operating manual/`.
-2. **LLM client**: port the Ollama structured-output plumbing from `knowledge_layer/extractor.py`; probe script for `qwen3:4b` vs `deepseek-r1:7b` latency (routing needs the small model).
-3. **Phase 0/1**: Task Classifier → Context Resolver → Safety gate → StructuredRequest. Golden-set test: ~30 hand-written questions per TaskType.
-4. **Phase 2 retrievers as services**: hybrid retrieval, evidence store, revision resolver, calculators (unit tests only, pure functions).
-5. **Phase 3**: Planner seeded by ROUTING_MATRIX, plan validator (agents exist, deps acyclic), executor over `Plan.ready_steps()`.
-6. **Phase 4 agents**: Procedure → Calculation → Comparison → Revision/Conflict → Diagnostic → Report → Verification, in that order (easiest-to-verify first).
-7. **Phase 5**: Governance agent, HITL gate, audit store, citation formatter, CLI `ask`/`repl`.
-8. **Switch backend**: implement `Neo4jKnowledgeBackend` over `knowledge_layer.memory` + `knowledge_layer.retriever` once extraction finishes; run the same golden set with `RWB_KNOWLEDGE_BACKEND=neo4j`; write `knowledge_layer/scripts/export_fixtures.py` to regenerate fixtures from the live graph.
-9. Optional: FastAPI server, parallel step execution, replan telemetry.
+| # | Step | Status |
+|---|---|---|
+| 1 | Contracts (blocks, request, plan, result, events) + mock backend + fixtures | **done** — `workbench/core`, `workbench/fixtures` |
+| 2 | LLM client (Ollama, JSON-schema constrained, `think=False`), FakeLLM, prompts | **done** — probed with `qwen3:4b` (~5-6 s per short call) |
+| 3 | Phase 0/1: Task Classifier (rules + LLM fallback) → Context Resolver → safety gate | **done** — 62-prompt benchmark 2026-09-15: task accuracy 1.00, entities 1.00, blocks 1.00, safety 1.00 (LLM-free, `data/workbench/reports/benchmark-20260915-045202.md`) |
+| 4 | Phase 2 services: files backend (index builder + BM25/vector/reranker store), evidence store, revision resolver, calculators, context builder | **done** — Neo4j backend pending (handoff doc) |
+| 5 | Phase 3: planner templates per task type, compound extension, validation, LLM refinement for planning | **done** |
+| 6 | Phase 4 agents: lookup, graph, explanation, cross_document, procedure, diagnostic, calculation, comparison, revision_conflict, report | **done** (LLM-optional) |
+| 7 | Phase 5: verification, governance (policy, confidence, HITL, citations), audit, CLI ask/repl/serve/bench/schema, API + SSE + btw + upload + reviews | **done** |
+| 8 | Switch to Neo4j once extraction completes; LLM-on quality pass; test uploads/images on real files | **pending** — see `docs/HANDOFF_KNOWLEDGE_LAYER_INTEGRATION.md` |
+| 9 | Frontend integration (friend's web UI) against `docs/API.md`; optional parallel step execution on large GPUs | **pending** |
+
+Documents: `docs/HOW_IT_WORKS.md` (presentation, all agents + workflow chart), `docs/API.md` (frontend contract),
+`docs/HANDOFF_KNOWLEDGE_LAYER_INTEGRATION.md` (what is left and how to plug in Neo4j).
 
 ## 4. Open decisions (defaults chosen, change if you disagree)
 
-- Orchestration is hand-rolled (pydantic + plain Python), not LangGraph/CrewAI, to keep it fully local, debuggable and dependency-light. Revisit at step 5 if the DAG logic grows.
-- Model split: `qwen3:4b` for classification/resolution, `deepseek-r1:7b` for synthesis. Both configurable via `RWB_*` env vars.
+- Orchestration is hand-rolled (pydantic + plain Python). Pydantic AI 1.0 and LangGraph were evaluated (2026-09-15): grammar-constrained Ollama JSON plus deterministic plan templates gives better reliability on 2-4B models than validate-and-retry agent loops, and keeps the system fully offline with fewer moving parts. LangGraph remains an option for durable multi-hour runs on the college GPU.
+- Models by hardware profile (`workbench/config.py`): 4 GB → `qwen3:4b` text + `qwen3.5:2b` vision; 8 GB → `qwen3.5:4b`; 12-16 GB → `qwen3.5:9b`; 24 GB → `qwen3.6:27b`. One model resident, idle unload, vision on demand. Override with `RWB_PROFILE` / `RWB_LLM_MODEL`.
 - Agents never call each other; only the executor does. Cross-cutting agents (Safety, Verification) are invoked by orchestration hooks.

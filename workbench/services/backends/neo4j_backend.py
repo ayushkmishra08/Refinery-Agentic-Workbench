@@ -1,19 +1,20 @@
-"""Live KnowledgeService over the graph produced by the knowledge layer.
+"""Neo4jKnowledgeBackend — to be implemented once knowledge-layer extraction has finished.
 
-TODO(build, after extraction completes): wrap ``src.memory.Neo4jMemory`` and
-``src.retriever`` (vector index on Chunk.retrieval_text) behind the protocol.
-Cypher must respect the claim context key (parameter_role / location / operating_mode /
-scenario / pressure_basis) — see README "Claims are the evidence layer".
+The graph model it must read is listed in docs/HANDOFF_KNOWLEDGE_LAYER_INTEGRATION.md
+(labels, relationship types, properties, vector index ``chunk_embeddings``). Until then this
+class raises a clear error so ``RWB_KNOWLEDGE_BACKEND=neo4j`` fails fast instead of silently
+degrading; the files backend gives identical answers from the deterministic layers.
 """
 from __future__ import annotations
 
-from knowledge_layer.config import PipelineConfig
+from workbench.config import WorkbenchConfig
 
 
 class Neo4jKnowledgeBackend:
-    def __init__(self, config: PipelineConfig):
-        from knowledge_layer.memory import Neo4jMemory
-        self.memory = Neo4jMemory(config)
-        self.memory.connect()
+    name = "neo4j"
 
-    # implement KnowledgeService methods here
+    def __init__(self, cfg: WorkbenchConfig) -> None:
+        raise NotImplementedError(
+            "Neo4jKnowledgeBackend is not implemented yet. Use RWB_KNOWLEDGE_BACKEND=files (default) — "
+            "see docs/HANDOFF_KNOWLEDGE_LAYER_INTEGRATION.md for the implementation checklist."
+        )

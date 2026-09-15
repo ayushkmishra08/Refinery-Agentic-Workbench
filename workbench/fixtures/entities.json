@@ -1,29 +1,69 @@
 [
   {
     "entity_uid": "e-11-PM-01",
-    "canonical_tag": "11-PM-01A/B",
-    "name": "Crude charge pump",
+    "canonical_tag": "11-PM-01",
+    "name": "Crude Charge Pump (11-PM-01)",
     "entity_type": "Pump",
-    "aliases": [
-      "11-PM-01A/B",
-      "11-PM-01A",
-      "11-PM-01B",
-      "CRUDE-CHARGE-PUMP"
-    ],
-    "document_ids": [
-      "CDU operating manual"
-    ]
+    "aliases": ["11-PM-01A/B", "11-PM-01A", "11-PM-01B", "11 PM 01", "crude charge pump", "crude charge pumps", "crude feed pump", "11-P-01"],
+    "mention_count": 40,
+    "description": "Crude charge pump, motor driven, 2 x 100%"
   },
   {
-    "entity_uid": "e-12-C-01",
-    "canonical_tag": "12-C-01",
-    "name": "Atmospheric column",
+    "entity_uid": "e-11-C-01",
+    "canonical_tag": "11-C-01",
+    "name": "Atmospheric Column (11-C-01)",
     "entity_type": "Column",
-    "aliases": [
-      "12-C-01"
-    ],
-    "document_ids": [
-      "CDU operating manual"
-    ]
+    "aliases": ["atmospheric column", "atmos column", "crude column", "main column", "atmospheric distillation column"],
+    "mention_count": 60
+  },
+  {
+    "entity_uid": "e-11-F-01",
+    "canonical_tag": "11-F-01",
+    "name": "Atmospheric Heater (11-F-01)",
+    "entity_type": "Heater",
+    "aliases": ["atmospheric heater", "atmos heater", "crude heater"],
+    "mention_count": 50
+  },
+  {
+    "entity_uid": "e-11-V-02",
+    "canonical_tag": "11-V-02",
+    "name": "Desalter (11-V-02)",
+    "entity_type": "Desalter",
+    "aliases": ["desalter", "crude desalter"],
+    "mention_count": 30
+  },
+  {
+    "entity_uid": "e-11-V-10",
+    "canonical_tag": "11-V-10",
+    "name": "Pre-Flash Drum (11-V-10)",
+    "entity_type": "Drum",
+    "aliases": ["pre-flash drum", "preflash drum", "flash drum"],
+    "mention_count": 12
+  },
+  {
+    "entity_uid": "e-11-E-01",
+    "canonical_tag": "11-E-01",
+    "name": "Crude / Kero Exchanger (11-E-01)",
+    "entity_type": "Exchanger",
+    "aliases": ["crude kero exchanger", "preheat exchanger"],
+    "mention_count": 8
+  },
+  {
+    "entity_uid": "e-11-PG-101",
+    "canonical_tag": "11-PG-101",
+    "name": "11-PG-101",
+    "entity_type": "Instrument",
+    "aliases": ["11-PG-101"],
+    "mention_count": 5,
+    "description": "Crude charge pump discharge pressure gauge"
+  },
+  {
+    "entity_uid": "e-11-FRC-101",
+    "canonical_tag": "11-FRC-101",
+    "name": "11-FRC-101",
+    "entity_type": "Controller",
+    "aliases": ["11-FRC-101"],
+    "mention_count": 6,
+    "description": "Crude charge flow recorder controller"
   }
 ]
