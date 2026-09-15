@@ -92,7 +92,7 @@ class VerificationAgent(BaseAgent):
                     if st is not None and any(p.startswith("number") and st.text[:50] in p for p in problems):
                         r.blocks.remove(b)
                         removed_blocks += 1
-                        r.trace.append("ungrounded narrative removed by verification")
+                        r.trace.append("An ungrounded narrative block was removed by verification.")
             score = ok / checked if checked else (1.0 if r.evidence or not r.blocks else 0.6)
             r.content["verification"] = {"checked": checked, "ok": ok, "score": round(score, 2), "problems": problems[:6]}
             total_checked += checked
@@ -112,4 +112,5 @@ class VerificationAgent(BaseAgent):
         result.summary = f"{total_ok}/{total_checked} statements grounded (score {overall:.2f})" + (f"; {removed_blocks} narrative block(s) removed" if removed_blocks else "") + (f"; {len(unknown_tags)} unknown tag(s)" if unknown_tags else "")
         result.confidence = self.confidence(overall, "share of statements whose numbers and text are found in the cited evidence")
         result.ok = True
-        result.trace.append(f"empty results: {[r.agent for r in empties]}")
+        if empties:
+            result.trace.append("Step(s) that produced no evidence at all: " + ", ".join(sorted({r.agent for r in empties})) + ".")

@@ -25,6 +25,8 @@ RULES: dict[TaskType, list[tuple[str, float]]] = {
         (r"\b(procedure|steps?|sequence|checklist) (for|to|of)\b", 1.6), (r"\b(start-?up|shutdown|shut-?down|changeover|change-?over|restart|isolation|light-?off|steam ?out) procedure\b", 2.2),
         (r"\bpre-?start(up)? checks?\b|\bchecks? (must|should|to) be (completed|done|carried out) before\b", 2.2), (r"\bconditions? (must|should) be (satisfied|met) before\b", 2.2),
         (r"\bgive me the .* procedure\b|\bexplain the procedure\b|\bwhat is the .* procedure\b", 2.2), (r"\bhow (do|to) (i |we )?(change ?over|start|restart|shut ?down|isolate)\b", 2.0),
+        (r"\b(recommended|correct|proper|preferred|right|best|standard|approved|safe) (way|method|sequence|approach|order) (to|for|of)\b", 2.4),
+        (r"\b(way|steps?|sequence) to (start|stop|shut ?down|restart|change ?over|isolate|commission|line ?up|bring)\b", 2.0),
         (r"\brestarting the unit\b|\brestart(ing)? (the )?(unit|section|plant)\b", 1.5),
         (r"\bdetermine the (correct |right |applicable )?.{0,40}procedure\b|\bout of service for maintenance\b|\btake .{0,40} out of service\b", 2.4),
     ],
@@ -129,6 +131,7 @@ def classify_by_rules(text: str) -> ClassifierOutput:
     if not scores:
         return ClassifierOutput(task_type=TaskType.LOOKUP, confidence=0.2, method="rules", signals=["no pattern matched; defaulting to lookup"])
     ranked = sorted(scores.items(), key=lambda kv: -kv[1][0])
+    per_type = {t.value: round(s, 2) for t, (s, _) in ranked}
     best_t, (best_s, best_hits) = ranked[0]
     second_s = ranked[1][1][0] if len(ranked) > 1 else 0.0
     # confidence: strong when the best score is high and clearly ahead
@@ -138,7 +141,7 @@ def classify_by_rules(text: str) -> ClassifierOutput:
     # compound requests: planning/report words + a diagnostic/procedure body -> keep the body as primary, planning/report as secondary
     if best_t in (TaskType.PLANNING, TaskType.REPORT) and secondary and secondary[0] in (TaskType.TROUBLESHOOTING, TaskType.PROCEDURE) and best_s - second_s < 1.0:
         pass  # planner/report templates already gather diagnostic/procedure content
-    return ClassifierOutput(task_type=best_t, secondary=secondary, intent="", confidence=round(confidence, 2), method="rules", signals=best_hits)
+    return ClassifierOutput(task_type=best_t, secondary=secondary, intent="", confidence=round(confidence, 2), method="rules", signals=best_hits, rule_scores=per_type)
 
 
 class TaskClassifierAgent(BaseAgent):
@@ -167,7 +170,8 @@ class TaskClassifierAgent(BaseAgent):
                     if llm.task_type != out.task_type and out.task_type not in llm.secondary and out.confidence >= 0.4:
                         llm.secondary = [out.task_type, *llm.secondary]
                     out = ClassifierOutput(task_type=llm.task_type, secondary=[t for t in llm.secondary if t != llm.task_type][:3], intent=llm.intent,
-                                           confidence=round(max(out.confidence, llm.confidence * 0.9), 2), method="rules+llm", signals=out.signals + ["llm agreed" if llm.task_type == out.task_type else "llm overrode rules"])
+                                           confidence=round(max(out.confidence, llm.confidence * 0.9), 2), method="rules+llm", rule_scores=out.rule_scores,
+                                           signals=out.signals + ["llm agreed" if llm.task_type == out.task_type else "llm overrode rules"])
                 else:
                     out.intent = out.intent or llm.intent
                     out.method = "rules+llm"

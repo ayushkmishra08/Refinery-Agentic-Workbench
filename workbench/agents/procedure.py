@@ -7,6 +7,7 @@ Never composes steps; every step is a ProcedureStep from the knowledge layer wit
 from __future__ import annotations
 
 import re
+import textwrap
 
 from workbench.agents.base import BaseAgent
 from workbench.core.blocks import StepItem, StepsBlock, TableBlock
@@ -23,6 +24,21 @@ ACTION_TYPES = {"startup": ["startup", "commissioning"], "restart": ["startup", 
 PREREQ_RE = re.compile(r"\b(ensure|make sure|confirm|check|verify|before|prior to|must be|should be|pre-?start|clearance|permit|line ?up|lined up|available|ready|in service|isolated|blinded|drained|purged|depressuri[sz]ed)\b", re.IGNORECASE)
 WARN_RE = re.compile(r"\b(caution|warning|danger|do not|don't|never|must not|shall not|immediately|slowly|gradually|carefully|avoid|hazard|hot|toxic|h2s|fire|explosion|relief|psv|trip|alarm|isolat)\w*", re.IGNORECASE)
 TAG_RE = re.compile(r"\b\d{1,3}-[A-Z]{1,4}-\d{1,5}(?:[A-Z](?:/[A-Z])*)?\b")
+
+
+def procedure_label(p: ProcedureRecord, limit: int = 70) -> str:
+    """A readable name for a procedure.
+
+    Many procedures in the manual start mid-sentence ("Systematically, the cold oil
+    circulation for both CDU & VDU can be done as per the following sequence:"), so the
+    section heading ("12.2.4. Cold oil Circulation") is the better label whenever the
+    title is a long fragment. Never truncates mid-word.
+    """
+    title = (p.title or "").strip().rstrip(":")
+    section = p.section_path.split(" > ")[-1].strip() if p.section_path else ""
+    if section and (not title or len(title) > limit):
+        return textwrap.shorten(section, limit, placeholder="…")
+    return textwrap.shorten(title, limit, placeholder="…") if title else "untitled procedure"
 
 
 class ProcedureAgent(BaseAgent):
@@ -46,11 +62,11 @@ class ProcedureAgent(BaseAgent):
             return
         result.content["procedure_ids"] = [p.procedure_id for p in procs]
         if mode == "find":
-            rows = [[p.title[:80], p.procedure_type, f"{p.page_start}" + (f"–{p.page_end}" if p.page_end and p.page_end != p.page_start else ""), len(p.steps), p.section_path.split(" > ")[-2] if " > " in p.section_path else p.section_path] for p in procs]
+            rows = [[procedure_label(p, 80), p.procedure_type, f"{p.page_start}" + (f"–{p.page_end}" if p.page_end and p.page_end != p.page_start else ""), len(p.steps), p.section_path.split(" > ")[-2] if " > " in p.section_path else p.section_path] for p in procs]
             result.blocks.append(TableBlock(id="procedures", title="Matching documented procedures", columns=["Procedure", "Type", "Pages", "Steps", "Section"], rows=rows))
             for p in procs:
-                self.statement(result, f"Procedure '{p.title[:60]}' ({p.procedure_type}) is documented on p.{p.page_start}", [self.cite(result, evidence_from_step(p, p.steps[0]))] if p.steps else [])
-            result.summary = f"{len(procs)} procedure(s): " + "; ".join(p.title[:40] for p in procs[:2])
+                self.statement(result, f"Procedure '{procedure_label(p, 60)}' ({p.procedure_type}) is documented on p.{p.page_start}", [self.cite(result, evidence_from_step(p, p.steps[0]))] if p.steps else [])
+            result.summary = f"{len(procs)} procedure(s): " + "; ".join(procedure_label(p, 44) for p in procs[:2])
             result.confidence = self.confidence(min(0.9, 0.5 + 0.1 * procs[0].score), f"best match score {procs[0].score}")
         elif mode == "prerequisites":
             self._prerequisites(procs, result)
@@ -125,7 +141,9 @@ class ProcedureAgent(BaseAgent):
         if out:
             best = out[0].score or 1.0
             out = [p for p in out if p.score >= 0.6 * best][:3]
-        result.trace.append(f"procedure candidates: {[(p.title[:30], p.score) for p in out]}")
+        scope = f" for {'/'.join(wanted_types)} procedures" if wanted_types else ""
+        kept = "; ".join(f'"{procedure_label(p, 44)}" (score {p.score:.1f}, {len(p.steps)} steps, p.{p.page_start})' for p in out) or "none"
+        result.trace.append(f"Searched the procedure index{scope}; kept {len(out)} of {len(cands)} candidate(s): {kept}.")
         return out
 
     # ------------------------------------------------------------------ renderers
@@ -160,7 +178,7 @@ class ProcedureAgent(BaseAgent):
             result.confidence = self.confidence(0.5, "no prerequisite sentences found")
             return
         p0 = procs[0]
-        result.blocks.append(StepsBlock(id="prereqs", title=f"Prerequisites and pre-checks — {p0.title[:70]}", procedure_id=p0.procedure_id, procedure_type=p0.procedure_type, document_id=p0.document_id,
+        result.blocks.append(StepsBlock(id="prereqs", title=f"Prerequisites and pre-checks — {procedure_label(p0)}", procedure_id=p0.procedure_id, procedure_type=p0.procedure_type, document_id=p0.document_id,
                                         section_path=p0.section_path, page_start=p0.page_start, page_end=p0.page_end, prerequisites=[], steps=uniq[:20], citations=[i.citation for i in uniq if i.citation]))
         result.summary = f"{len(uniq)} prerequisite(s)"
         result.confidence = self.confidence(0.75, "prerequisite sentences quoted from the procedure with page numbers")
@@ -168,7 +186,7 @@ class ProcedureAgent(BaseAgent):
     def _steps(self, procs: list[ProcedureRecord], request: StructuredRequest, result: AgentResult) -> None:
         for p in procs[:2]:
             steps = [self._step_item(p, s, result) for s in p.steps]
-            result.blocks.append(StepsBlock(id=f"steps-{p.procedure_id[-8:]}", title=p.title[:90], procedure_id=p.procedure_id, procedure_type=p.procedure_type, document_id=p.document_id,
+            result.blocks.append(StepsBlock(id=f"steps-{p.procedure_id[-8:]}", title=procedure_label(p, 90), procedure_id=p.procedure_id, procedure_type=p.procedure_type, document_id=p.document_id,
                                             section_path=p.section_path, page_start=p.page_start, page_end=p.page_end, steps=steps, citations=[s.citation for s in steps if s.citation]))
         result.content["steps"] = {p.procedure_id: [s.text for s in p.steps] for p in procs[:2]}
         n = sum(len(p.steps) for p in procs[:2])

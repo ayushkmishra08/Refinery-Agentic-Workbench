@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from pydantic import BaseModel, Field
 
-from workbench.agents.base import BaseAgent
+from workbench.agents.base import BaseAgent, usable_narrative
 from workbench.core.blocks import GraphBlock, GraphEdge, GraphNode, KpiBlock, KpiItem, TableBlock
 from workbench.core.context import ContextPackage
 from workbench.core.evidence import Evidence
@@ -470,10 +470,12 @@ class ExplanationAgent(BaseAgent):
         if mode == "why" and self.cfg.llm.use_llm_for_narrative:
             out = self.llm_json("explanation", self.Summary, result, max_tokens=260, purpose="why_summary",
                                 question=request.original.text, passages="\n".join(f"[P{i}] {ex}" for i, ex, _, _ in passages))
-            if out and out.summary:
+            if out and out.summary and usable_narrative(out.summary, request.original.text):
                 summary_text = out.summary.strip()
                 used = [passages[i - 1][3] for i in out.used_passages if 0 < i <= len(passages)] or keys
                 self.statement(result, summary_text, used, kind="inference")
+            elif out and out.summary:
+                result.trace.append("The model's summary was not usable (question restated or task narrated), so it was dropped; the quoted passages stand on their own.")
         if summary_text:
             result.blocks.append(self.text_block(summary_text, title="Answer", citations=keys))
         result.blocks.append(self.text_block(md, title=title, citations=keys))

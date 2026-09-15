@@ -53,4 +53,5 @@ data/workbench/reports/*
 
 data/workbench/cache/*
 data/workbench/uploads/*
+data/workbench/thinking/*
 !data/workbench/**/.gitkeep

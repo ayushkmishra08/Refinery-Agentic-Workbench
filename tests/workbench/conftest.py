@@ -36,6 +36,7 @@ def _redirect_paths(cfg, root):
     cfg.paths.reports_dir = root / "reports"
     cfg.paths.cache_dir = root / "cache"
     cfg.paths.uploads_dir = root / "uploads"
+    cfg.paths.thinking_dir = root / "thinking"
     cfg.paths.ensure_dirs()
     return cfg
 

@@ -147,7 +147,8 @@ class DiagnosticAgent(BaseAgent):
             out.append((score, c))
         out.sort(key=lambda x: -x[0])
         chosen = [c for _, c in out[:5]]
-        result.trace.append(f"upset chunks: {[(c.chunk_id[-10:], c.chunk_type, c.page_start) for c in chosen]}")
+        result.trace.append(f"Ranked {len(out)} candidate passage(s) by section heading, equipment class and symptom wording; kept "
+                            + "; ".join(f"p.{c.page_start} ({c.chunk_type})" for c in chosen) + ".")
         return chosen
 
     def _find_upset(self, request: StructuredRequest, chunks: list[ChunkRecord], result: AgentResult) -> None:
@@ -195,7 +196,7 @@ class DiagnosticAgent(BaseAgent):
             kept = [item for item in getattr(out, field)[:5] if item.text.strip() and item.quote.strip() and _grounded(item.quote, text_all)]
             setattr(out, field, kept)
         result.content["llm_structure"] = out.model_dump(mode="json")
-        result.trace.append(f"llm structure kept: {len(out.causes)} causes, {len(out.checks)} checks, {len(out.actions)} actions (ungrounded quotes dropped)")
+        result.trace.append(f"The LLM structured the upset text into {len(out.causes)} cause(s), {len(out.checks)} check(s) and {len(out.actions)} action(s); quotes not found verbatim in the evidence were dropped.")
         return out
 
     # ------------------------------------------------------------------ extraction helpers

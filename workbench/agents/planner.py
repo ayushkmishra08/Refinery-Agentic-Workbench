@@ -90,7 +90,7 @@ class PlannerAgent(BaseAgent):
             self._refine(plan, req, result)
         problems = plan.validate_dag()
         if problems:
-            result.trace.append(f"plan problems fixed: {problems}")
+            result.trace.append("Validated the DAG and repaired: " + "; ".join(problems) + ".")
             plan.steps = [s for s in plan.steps if all(d in {x.step_id for x in plan.steps} for d in s.depends_on)]
         if len(plan.steps) > 12:
             keep = plan.steps[:12]
@@ -115,7 +115,7 @@ class PlannerAgent(BaseAgent):
         allowed = AGENT_VOCAB - {a for a, words in (('comparison', ('compar', 'versus', ' vs ')), ('report', ('report',)), ('revision_conflict', ('conflict', 'revision', 'trust'))) if not any(w in text for w in words)}
         title_to_id = {s.goal.lower(): s.step_id for s in plan.steps}
         added = 0
-        for i, t in enumerate(out.tasks[:6]):
+        for t in out.tasks[:6]:
             title = str(t.get("title", "")).strip()
             agent = str(t.get("agent", "")).strip()
             if not title or agent not in allowed or agent in existing_agents or title.lower() in existing_goals:
@@ -124,7 +124,7 @@ class PlannerAgent(BaseAgent):
             if any(w in title.lower() for w in ("verify", "govern", "final answer")):
                 continue
             deps = [title_to_id[d.lower()] for d in (t.get("depends_on_titles") or []) if isinstance(d, str) and d.lower() in title_to_id] or ["scope"]
-            sid = f"llm{i}"
+            sid = f"{agent}_x"                        # LLM-proposed step, named after the agent it calls
             mode = {"procedure": "find", "diagnostic": "causes", "lookup": "limits", "safety": "answer", "cross_document": "follow", "explanation": "support", "graph": "neighbors", "calculation": "range", "revision_conflict": "check", "comparison": "gather", "report": "assemble"}[agent]
             plan.steps.insert(len(plan.steps) - 2, PlanStep(step_id=sid, agent=agent, goal=title[:90], depends_on=deps, inputs={"mode": mode}, optional=True, safety_sensitive=agent == "safety"))
             title_to_id[title.lower()] = sid

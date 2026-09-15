@@ -80,6 +80,7 @@ class ClassifierOutput(BaseModel):
     confidence: float = 0.0
     method: str = "rules"             # rules | llm | rules+llm
     signals: list[str] = Field(default_factory=list)
+    rule_scores: dict[str, float] = Field(default_factory=dict, description="Weighted rule score per task type, for the audit trail and the thinking trace")
 
 
 class StructuredRequest(BaseModel):

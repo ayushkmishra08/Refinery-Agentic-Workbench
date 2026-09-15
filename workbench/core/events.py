@@ -15,6 +15,9 @@ class ProgressEvent(BaseModel):
     step_id: str | None = None
     message: str = ""
     data: dict[str, Any] = Field(default_factory=dict)
+    thinking: str | None = None       # human-readable reasoning text for this event
+    model: str | None = None          # LLM model name when an LLM call is involved
+    decision: str | None = None       # outcome/decision label (e.g. "PROCEDURE", "resolved 2 entities")
     ts: float = Field(default_factory=time.time)
 
 

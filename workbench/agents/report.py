@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 import time
 
-from workbench.agents.base import BaseAgent, blocks_to_markdown
+from workbench.agents.base import BaseAgent, blocks_to_markdown, usable_narrative
 from workbench.core.blocks import Block, TextBlock
 from workbench.core.context import ContextPackage
 from workbench.core.plan import PlanStep
@@ -74,7 +74,7 @@ class ReportAgent(BaseAgent):
             path.write_text(blocks_to_markdown(result.blocks), encoding="utf-8")
             result.content["report_path"] = str(path)
         except Exception as exc:  # report saving must never fail the answer
-            result.trace.append(f"report not saved: {exc}")
+            result.trace.append(f"The report markdown could not be written to disk ({exc}); it is still returned in the answer.")
         result.summary = f"report with {len(blocks)} block(s) in {sum(1 for b in blocks if b.type == 'text' and b.markdown.startswith('## '))} section(s)"
         result.confidence = self.confidence(min(0.9, sum(r.confidence.score for r in prior) / max(1, len(prior))), "aggregate of the section confidences")
 
@@ -95,8 +95,10 @@ class ReportAgent(BaseAgent):
         missing = [m for r in prior for m in r.missing]
         llm = self.llm_text("report_summary", result, max_tokens=320, purpose="report_summary", request=request.original.text, facts="\n".join(f"- {f}" for f in facts),
                             missing="\n".join(f"- {m}" for m in missing) or "- none") if facts else None
-        if llm:
+        if llm and usable_narrative(llm, request.original.text, min_words=25):
             return llm
+        if llm:
+            result.trace.append("The model's executive summary was not usable (request restated or task narrated), so the deterministic fact list is used instead.")
         lines = [f"This report answers: *{request.original.text.strip()}*.", ""]
         lines += [f"- {f}" for f in facts[:8]]
         if missing:

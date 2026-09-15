@@ -16,6 +16,7 @@ from workbench.core.context import ContextPackage
 from workbench.core.plan import Plan, StepStatus
 from workbench.core.request import StructuredRequest
 from workbench.core.result import AgentResult
+from workbench.orchestration import narration
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,8 @@ class Executor:
                 break
             for step in ready:
                 step.mark(StepStatus.RUNNING)
-                self.s.events.emit("agent_started", phase="4 Execution", agent=step.agent, step_id=step.step_id, message=step.goal)
+                self.s.events.emit("agent_started", phase="4 Execution", agent=step.agent, step_id=step.step_id, message=step.goal,
+                                   thinking=narration.step_start(step), data={"mode": step.inputs.get("mode"), "depends_on": step.depends_on})
                 t0 = time.time()
                 llm_t0 = getattr(getattr(self.s.llm, "stats", None), "total_seconds", 0.0)
                 try:
@@ -62,9 +64,13 @@ class Executor:
                 res.duration_ms = res.duration_ms or int((time.time() - t0) * 1000)
                 results[step.step_id] = res
                 step.mark(StepStatus.DONE if res.ok else StepStatus.FAILED, res.summary[:160] if res.summary else None)
+                llm = self.s.llm
                 self.s.events.emit("agent_finished", phase="4 Execution", agent=step.agent, step_id=step.step_id, message=res.summary,
+                                   thinking=narration.step_finished(step, res),
+                                   decision=res.summary or ("failed" if not res.ok else "no result"),
+                                   model=(getattr(llm, "model", None) or getattr(llm, "name", None)) if res.llm_calls else None,
                                    data={"ok": res.ok, "duration_ms": res.duration_ms, "llm_calls": res.llm_calls, "blocks": len(res.blocks), "evidence": len(res.evidence), "missing": res.missing,
-                                         "llm_seconds": round(getattr(getattr(self.s.llm, "stats", None), "total_seconds", 0.0) - llm_t0, 2)})
+                                         "llm_seconds": round(getattr(getattr(llm, "stats", None), "total_seconds", 0.0) - llm_t0, 2)})
                 if on_step:
                     on_step(step, res)
                 if res.needs_replan and not step.optional:

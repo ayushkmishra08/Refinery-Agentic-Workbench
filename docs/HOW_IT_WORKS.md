@@ -363,7 +363,68 @@ Rules applied everywhere:
 
 ---
 
-## 11. The "btw" side channel
+## 11. The thinking trace: seeing the agents reason
+
+Every CLI run shows its reasoning as it happens and saves a structured copy for later analysis. Three pieces:
+
+- **`orchestration/narration.py`** turns each stage's structured output into a few plain sentences: which rules
+  matched and what they scored, what an entity resolved to and how, why a retrieval route was chosen, how the
+  template became a DAG, what a step found in its own trace, and how governance reached its verdict. It is the
+  single source of the reasoning text, so the terminal, the SSE stream and the saved JSON always agree.
+- **`app/thinking_display.py`** renders that to the terminal phase by phase: an agent header, the reasoning
+  lines in a gutter, the decision, and the timing / evidence / model line. Colour is used when the terminal
+  supports it and dropped otherwise; every line is wrapped to the terminal width.
+- **`services/thinking_store.py`** collects the same ProgressEvents into one JSON file per run under
+  `data/workbench/thinking/{timestamp}_{audit_id}.json`.
+
+`ProgressEvent` carries three extra fields for this: `thinking` (the narration), `model` (which model ran, when
+one did) and `decision` (the one-line outcome). They are optional, so existing subscribers are unaffected, and
+the SSE stream forwards them to the web UI for free.
+
+```powershell
+python -m workbench ask "What is the recommended way to start the CDU?"   # thinking is the default
+python -m workbench ask "..." --no-thinking                               # answer only
+python -m workbench ask "..." --json                                      # FinalResponse JSON, no thinking
+python -m workbench trace                                                 # list saved traces
+python -m workbench trace --show                                          # replay the newest one
+```
+
+What the terminal shows per phase:
+
+```
+── Phase 0/1 · Understanding ───────────────────────────────────────────────────
+
+  [cls] task_classifier · classify
+     Scoring the wording against the rule patterns of every task type
+     │ Matched phrase patterns: "recommended way to, way to start".
+     │ Rule scores: procedure=4.4, lookup=1.0.
+     │ Rules were decisive (0.98), so the LLM was not called.
+     │ Intent: Retrieve an ordered procedure with prerequisites.
+   └▸ task type = procedure (confidence 0.98, rules)
+     0 ms
+```
+
+An LLM call appears where it happens, with the model name and how long it took:
+
+```
+  [pln] planner · plan
+     ⟨calling qwen3:4b — plan_refine⟩
+     │ The LLM refined the step list for this planning request; the template steps are kept as the floor.
+   └▸ template 'planning', 9 steps
+     19.1 s · 1 LLM call(s) · qwen3:4b
+```
+
+The saved JSON holds more than the terminal: per-phase and per-agent timings and LLM counts, every LLM call with
+its purpose and prompt name, the plan DAG with each step's final status, replans, warnings, the confidence
+basis, the governance verdict, the answer markdown and the raw event list.
+
+Because small local models sometimes restate the prompt or narrate the task instead of doing it, narrative
+output passes `usable_narrative()` (`agents/base.py`) before it reaches an answer; rejected prose is replaced by
+the deterministic rendering and the reason is recorded in the step's trace.
+
+---
+
+## 12. The "btw" side channel
 
 While a request runs, the user can type "btw, what is going on?" in the REPL (`python -m workbench repl`) or
 call `POST /runs/{id}/btw` from the UI. A small status agent (`orchestration/status_agent.py`) answers from the
@@ -373,7 +434,7 @@ run. The same run state feeds the SSE progress stream.
 
 ---
 
-## 12. The benchmark set
+## 13. The benchmark set
 
 `workbench/benchmarks/prompts.yaml` holds the canonical prompts from the design brief in categories: lookup,
 multi_hop, procedure, troubleshooting, limits, explanation, safety, comparison, cross_document, provenance,
@@ -390,7 +451,7 @@ python -m workbench bench --category troubleshooting limits --verbose
 The runner (`workbench/benchmarks/runner.py`) prints task accuracy, agent coverage, entity resolution, block
 coverage, safety handling, mean confidence and latency, and writes `data/workbench/reports/benchmark-<ts>.md`.
 
-### 12.1 Result on 2026-09-15 (deterministic mode, files backend, GTX 1650, no LLM)
+### 13.1 Result on 2026-09-15 (deterministic mode, files backend, GTX 1650, no LLM)
 
 | metric | value | meaning |
 |---|---|---|
@@ -415,7 +476,7 @@ agent, and stronger weights for "which documents", "compare", "trace", "plan" an
 
 ---
 
-## 13. Done and pending
+## 14. Done and pending
 
 **Done:** the two-layer architecture with a swappable knowledge service; the files backend on the real manual;
 all sixteen agents; plan templates for all fourteen task types with compound extensions and a bounded replan
@@ -430,7 +491,7 @@ itself. The step-by-step plan for the Neo4j switch and the remaining work is in
 
 ---
 
-## 14. Glossary
+## 15. Glossary
 
 | term | meaning |
 |---|---|

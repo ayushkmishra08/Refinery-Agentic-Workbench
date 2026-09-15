@@ -108,12 +108,13 @@ class WorkbenchPaths(BaseModel):
     reports_dir: Path = PROJECT_ROOT / "data" / "workbench" / "reports"
     cache_dir: Path = PROJECT_ROOT / "data" / "workbench" / "cache"
     uploads_dir: Path = PROJECT_ROOT / "data" / "workbench" / "uploads"
+    thinking_dir: Path = PROJECT_ROOT / "data" / "workbench" / "thinking"
     prompts_dir: Path = PROJECT_ROOT / "workbench" / "prompts"
     fixtures_dir: Path = PROJECT_ROOT / "workbench" / "fixtures"
     benchmarks_dir: Path = PROJECT_ROOT / "workbench" / "benchmarks"
 
     def ensure_dirs(self) -> None:
-        for d in (self.sessions_dir, self.audit_dir, self.reports_dir, self.cache_dir, self.uploads_dir):
+        for d in (self.sessions_dir, self.audit_dir, self.reports_dir, self.cache_dir, self.uploads_dir, self.thinking_dir):
             d.mkdir(parents=True, exist_ok=True)
 
 

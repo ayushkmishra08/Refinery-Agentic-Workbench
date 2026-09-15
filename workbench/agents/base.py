@@ -9,6 +9,7 @@ Rules every agent follows
 """
 from __future__ import annotations
 
+import difflib
 import logging
 import re
 import time
@@ -34,6 +35,27 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 NUMBER_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)?(?![\w.])")
 TAG_SCRUB_RE = re.compile(r"\b\d{1,3}\s*-?\s*[A-Z]{1,4}\s*-\s*\d{1,5}(?:\s*[A-Z](?:\s*/\s*[A-Z])*)?\b|\b[A-Z]{1,4}-\d{2,5}[A-Z]?\b")
+META_RE = re.compile(
+    r"\b(we are given|the task is|i (?:will|should|need to|must)\b|let me (?:re-?read|check|think|see)|as an ai|"
+    r"the user (?:is asking|wants|asked)|here is (?:the|my) (?:summary|answer|report)|instructions?:|"
+    r"but we have to|note: this|in plain language for|based on the (?:given|provided) (?:facts|list))",
+    re.IGNORECASE,
+)
+
+
+def usable_narrative(text: str, question: str, min_words: int = 12) -> bool:
+    """False when a model's prose is not fit to show: too short, the question echoed back, or its own scratchpad.
+
+    Small local models sometimes restate the prompt, or narrate the task instead of doing it
+    ("We are given a list of facts. The task is to write..."). Showing that to an engineer is
+    worse than showing the quoted evidence alone, so the agent keeps its deterministic
+    rendering and records why in the trace.
+    """
+    words = re.sub(r"[^a-z0-9 ]+", " ", text.lower()).split()
+    if len(words) < min_words or META_RE.search(text):
+        return False
+    asked = re.sub(r"[^a-z0-9 ]+", " ", question.lower()).split()
+    return difflib.SequenceMatcher(None, " ".join(words), " ".join(asked)).ratio() < 0.7
 
 
 @dataclass
@@ -97,7 +119,8 @@ class BaseAgent:
             system = "You are a careful refinery engineering assistant. Answer only from the given evidence. Return JSON."
         user = "\n".join(f"## {k}\n{v}" for k, v in fields.items())
         try:
-            self.s.events.emit("llm_call", agent=self.name, message=purpose or prompt_name)
+            self.s.events.emit("llm_call", agent=self.name, message=purpose or prompt_name,
+                               model=getattr(self.llm, "model", None), data={"prompt": prompt_name, "max_tokens": max_tokens})
             out = self.llm.structured(system, user, schema, max_tokens=max_tokens, purpose=purpose or prompt_name)
             result.llm_calls += 1
             if self.s.resources is not None:
@@ -116,7 +139,8 @@ class BaseAgent:
             system = "You are a careful refinery engineering assistant. Write 2-4 sentences using only the given evidence."
         user = "\n".join(f"## {k}\n{v}" for k, v in fields.items())
         try:
-            self.s.events.emit("llm_call", agent=self.name, message=purpose or prompt_name)
+            self.s.events.emit("llm_call", agent=self.name, message=purpose or prompt_name,
+                               model=getattr(self.llm, "model", None), data={"prompt": prompt_name, "max_tokens": max_tokens})
             text = self.llm.complete(system, user, max_tokens=max_tokens, purpose=purpose or prompt_name)
             result.llm_calls += 1
             if self.s.resources is not None:

@@ -314,11 +314,14 @@ class ContextResolverAgent(BaseAgent):
         options: list[str] = []
         text = request.original.text
         if "entity" in missing:
+            # suggest candidates only when the request names an equipment class ("the pump");
+            # a full-text search on "How do I start it?" returns noise, and one odd suggestion
+            # is worse than none.
             word_m = GENERIC_EQUIPMENT_RE.search(text)
             if word_m:
                 options += [e.name for e in self.knowledge.search_entities(word_m.group(2), limit=6)]
-            if not options:
-                options += [e.name for e in self.knowledge.search_entities(text, limit=5)]
+            elif request.unresolved_mentions:
+                options += [e.name for m in request.unresolved_mentions[:2] for e in self.knowledge.search_entities(m, limit=3)]
         questions = {
             "entity": "Which equipment do you mean? Give the tag (e.g. 11-P-01) or the name (e.g. crude charge pump).",
             "parameter": "Which parameter is the value for (flow rate, pressure, temperature, level ...)?",
