@@ -34,6 +34,9 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | GET | `/health` | liveness, backend, model, effort level, resource state |
 | GET | `/agents` | list of agents (key, class, phase, description) |
 | GET | `/schema` | JSON schemas of `FinalResponse`, `Block`, `UserRequest` |
+| POST | `/auth/login` | username + password -> `{token, role, clearance, readable_documents}` |
+| POST | `/auth/logout` | revoke the bearer token |
+| GET | `/auth/whoami` | the caller's role, clearance and readable documents |
 | POST | `/ask` | run a request synchronously, returns `FinalResponse` |
 | POST | `/runs` | start a request in the background, returns `{run_id, session_id}` |
 | GET | `/runs` | all recorded runs (without the final response and event log) |
@@ -47,18 +50,59 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | POST | `/reviews/{response_id}` | approve / reject a flagged response |
 | GET | `/audit/{session_id}?audit_id=` | audit trail records of a session |
 
+### 2.0 Authentication — sign in before anything else
+
+Every document is classified and the CDU operating manual is `confidential`, so a caller without a
+token is cleared for nothing and `POST /ask` answers `401`. See `docs/ACCESS_AND_ANSWERS.md` for the
+role ladder and how documents are classified.
+
+```http
+POST /auth/login
+{"username": "lead", "password": "1234", "label": "web"}
+
+200 {"token": "y7Qd...", "username": "lead", "role": "lead_engineer", "clearance": "confidential",
+     "expires": 1789459200.0, "must_change_password": true,
+     "readable_documents": ["CDU operating manual"], "withheld_documents": []}
+```
+
+`401` on a wrong password, `423` while the account is locked (five failures inside fifteen minutes lock
+it for fifteen). `must_change_password: true` means the account still carries its seeded password —
+surface that in the UI.
+
+Send the token back on every subsequent call, either as a header or in the body:
+
+```http
+Authorization: Bearer y7Qd...
+```
+```json
+{"text": "...", "session_id": "web-user-42", "auth_token": "y7Qd..."}
+```
+
+`GET /auth/whoami` returns the same shape as the login response plus the full document listing with
+each document's classification and the reason for it — enough to build a "you are signed in as ... and
+may read ..." panel. `POST /auth/logout` revokes the token; the token also expires after eight hours,
+and changing an account's role invalidates every token minted under the old one. Tokens are stored as
+SHA-256 digests, so a lost token cannot be recovered from the server — issue a new one.
+
+Access decisions are audited: `GET /audit/{session_id}` carries a `kind: "access"` record for every
+request, allowed or denied.
+
 ### 2.1 `POST /ask` — synchronous answer
 
 Request body (`AskBody`):
 
 ```json
 {"text": "What is the normal flow rate of the crude charge pump?",
- "session_id": "web-user-42", "user_role": "engineer",
+ "session_id": "web-user-42", "user_role": "engineer", "auth_token": "y7Qd...",
  "options": {"want_report": false}, "attachments": []}
 ```
 
 `options.want_report: true` makes the planner append a report step to any task. `attachments` is a list of
 `{name, path, media_type}` objects that already exist on the server (normally you use `/upload` instead).
+`user_role` is a display hint only — the access policy reads the token and nothing else.
+
+`401` means the caller is not cleared for any loaded document; the body names the document, its
+classification and the role that would open it.
 
 Response: a `FinalResponse` (section 4). A lookup takes tens of milliseconds without the LLM; a
 troubleshooting or procedure request with the LLM on can take 10–60 s on the 4 GB card. For anything but
@@ -169,9 +213,19 @@ automatically: the answer was already delivered with the flag; the review is a r
 ## 3. Sessions and follow-ups
 
 - `session_id` is chosen by the client (any string). Memory is kept in `data/workbench/sessions/<id>.json`
-  (last 20 turns): request text, task type, resolved entities, parameter, scenario, status.
+  (last 20 turns): what was typed, what it was read as, task type, resolved entities, parameter, scenario,
+  status, any tag corrections, and the composed answer.
 - Pronouns and generic words ("it", "this pump", "the heater") are resolved against the previous turns'
   entities, so "What is its design pressure?" after a question about the vacuum column works.
+- A turn that depends on the one before it is **rewritten into a standalone question** before the pipeline
+  sees it. "What if we use 11-E-01 instead?" becomes a comparison against whatever the previous turn was
+  about, and comes back with `task_type: "comparison"` and both subjects in `entities`. `GET /sessions/{id}`
+  shows `rewritten_request` and `followup_kind` (`new`, `substitution`, `elaboration`, `continuation`) per
+  turn — useful if the UI wants to show "read as: ..." under the question.
+- A tag the documents do not contain is matched against the ones they do. When one candidate is clearly the
+  item meant, the answer opens by saying so and goes on to answer about it; when two are equally close the
+  response is a `clarification` block whose `options` name them. Either way the turn's `corrections` record
+  what was typed and what it was read as.
 - When a request cannot be anchored (no equipment, no unit, no parameter) the response has
   `status: "clarification"` and a `clarification` block with `missing` and `options`. Send the user's answer as a
   new request in the same session (for example "the crude charge pump, m3/h"); the resolver uses the session to
@@ -195,10 +249,10 @@ automatically: the answer was already delivered with the flag; the review is a r
 
 | field | meaning |
 |---|---|
-| `status` | `answered`, `clarification` (ask the user, see the `clarification` block), `restricted` (request to bypass a protection; no instructions given), `needs_review` (answered but confidence below 0.35 — show as a lead, not an answer), `failed` |
+| `status` | `answered`, `clarification` (ask the user, see the `clarification` block), `restricted` (request to bypass a protection; no instructions given), `unauthorized` (the caller is not cleared for any loaded document; returned as `401` by `/ask`), `needs_review` (answered but confidence below 0.35 — show as a lead, not an answer), `failed` |
 | `task_type` / `secondary_task_types` | one of `lookup, multi_hop, procedure, troubleshooting, limits, explanation, safety, comparison, conflict, provenance, planning, report, cross_document, ambiguous` |
-| `answer_markdown` | the same content rendered to Markdown by `blocks_to_markdown` (no evidence/audit); use only if you cannot render blocks |
-| `blocks` | ordered render blocks (section 5) |
+| `answer_markdown` | **the released answer**: the composed prose, the one or two blocks prose cannot carry (ordered steps, a limit gauge, a comparison), any documented DANGER, and a source line. This is what a chat-style UI shows; `blocks` is for a panelled one. `RWB_ANSWER_STYLE=full` makes it the whole block rendering instead |
+| `blocks` | ordered render blocks (section 5). `blocks[0]` is the composed answer as a `text` block with `id: "answer"` on an answered request |
 | `evidence` | the labelled evidence list; `ref` is the `[n]` label used by blocks |
 | `confidence` | `score` 0–1, `basis` (formula in words), `uncertainties`; level is `high ≥ 0.75`, `medium ≥ 0.45`, else `low` |
 | `safety_flags` | de-duplicated flags from all agents (`severity` info/caution/warning/danger) |

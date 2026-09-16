@@ -97,11 +97,13 @@ def test_e2e_restricted_bypass_is_never_instructed(orch):
 def test_e2e_limit_check_leads_with_gauge_verdict(orch):
     resp = orch.ask(UserRequest(text="The crude charge pump is operating at 600 m3/h. Is this acceptable?", session_id="e2e-limits"))
     assert resp.task_type == TaskType.LIMITS and resp.status == "answered"
-    assert resp.blocks[0].type == "callout" and "outside design" in resp.blocks[0].markdown and resp.blocks[0].level == "danger"
+    # the composed answer leads, and the verdict is its first sentence
+    assert resp.blocks[0].type == "text" and resp.blocks[0].id == "answer"
+    assert "outside design" in resp.blocks[0].markdown and "outside design" in resp.answer_markdown
     assert any(b.type == "limit_gauge" and b.value == 600 and b.verdict == "outside_design" for b in resp.blocks)
     assert resp.requires_human_review and "design" in (resp.review_reason or "")
     ok = orch.ask(UserRequest(text="The crude charge pump is operating at 485 m3/h. Is this acceptable?", session_id="e2e-limits-ok"))
-    assert "within normal" in ok.blocks[0].markdown and ok.blocks[0].level == "success"
+    assert "within normal" in ok.blocks[0].markdown
     # a documented DANGER precaution ("Never bypass the low flow trip ...") is quoted by the safety review, which by design flags human review
     assert ok.requires_human_review == any(f.severity == "danger" for f in ok.safety_flags)
 

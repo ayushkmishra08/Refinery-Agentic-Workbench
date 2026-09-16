@@ -65,7 +65,7 @@ class GovernanceAgent(BaseAgent):
     description = "Applies policy, aggregates confidence, decides human review, labels evidence and composes the final response."
 
     def compose(self, request: StructuredRequest, plan: Plan | None, results: dict[str, AgentResult], audit_id: str, phases: list[AuditPhase],
-                backend: str, started: float, warnings: list[str] | None = None) -> FinalResponse:
+                backend: str, started: float, warnings: list[str] | None = None, access=None) -> FinalResponse:
         store = EvidenceStore()
         ordered = [results[s.step_id] for s in (plan.steps if plan else []) if s.step_id in results] or list(results.values())
         verification = next((r for r in results.values() if r.agent == "verification"), None)
@@ -73,6 +73,7 @@ class GovernanceAgent(BaseAgent):
         report = next((r for r in ordered if r.agent == "report" and r.content.get("replace_blocks")), None)
         clarification = next((r for r in ordered if any(b.type == "clarification" for b in r.blocks)), None)
         restricted = request.safety_status == SafetyStatus.RESTRICTED
+        composed = next((r for r in results.values() if r.agent == "answer_composer" and r.content.get("composed")), None)
 
         # ---- evidence registry -----------------------------------------------------------
         for r in ordered:
@@ -123,6 +124,17 @@ class GovernanceAgent(BaseAgent):
             blocks.append(CalloutBlock(id="lead", level="danger", title="Restricted request", markdown="This request asks to bypass or defeat a protective function. No bypass steps are provided. The documented authorization route and applicable standing instructions are shown; a responsible person must review."))
             if safety_res:
                 blocks.extend(safety_res.blocks)
+        elif composed is not None:
+            # the composer already wrote the answer from all of this material; the typed blocks
+            # stay on the response as the supporting detail a frontend renders beside it
+            blocks.extend(composed.blocks)
+            if report:
+                blocks.extend(report.blocks)          # the report already gathered the others under headings
+            else:
+                for r in ordered:
+                    if r.agent in ("verification", "governance", "answer_composer"):
+                        continue
+                    blocks.extend(b for b in r.blocks if b.type != "clarification")
         else:
             lead = self._lead(request, ordered)
             if lead:
@@ -152,6 +164,7 @@ class GovernanceAgent(BaseAgent):
         if review:
             blocks.append(CalloutBlock(id="hitl", level="warning", title="Human review required", markdown=reason or "Operational recommendation: confirm with the shift in-charge before acting."))
         blocks.append(ConfidenceBlock(id="confidence", score=conf.score, level=conf.level, basis=conf.basis, uncertainties=conf.uncertainties))
+        blocks = self._dedupe(blocks)
         # ---- relabel citations, append evidence --------------------------------------------------
         for b in blocks:
             relabel_block(b, store)
@@ -160,7 +173,7 @@ class GovernanceAgent(BaseAgent):
         elapsed = int((time.time() - started) * 1000)
         llm_calls = sum(r.llm_calls for r in results.values())
         blocks.append(AuditBlock(id="audit", audit_id=audit_id, phases=phases, llm_calls=llm_calls, backend=backend))
-        answer_md = blocks_to_markdown([b for b in blocks if b.type not in ("audit", "evidence")])
+        answer_md = self._answer_markdown(blocks, composed, store, review, reason, access)
         resp = FinalResponse(
             response_id=f"resp-{uuid.uuid4().hex[:10]}", session_id=request.original.session_id, task_type=request.task_type,
             secondary_task_types=request.secondary_task_types, status=status, answer_markdown=answer_md, blocks=blocks,
@@ -172,6 +185,130 @@ class GovernanceAgent(BaseAgent):
             resp.status = "needs_review"
             resp.warnings.append("confidence below the answer threshold; treat as a lead, not an answer")
         return resp
+
+    # ------------------------------------------------------------------ the released markdown
+    def _answer_markdown(self, blocks: list[Block], composed: AgentResult | None, store: EvidenceStore,
+                         review: bool, reason: str | None, access) -> str:
+        """What a plain-text client prints: the composed answer, then only what prose cannot carry.
+
+        ``full`` style is the pre-composer rendering — every block, in order — and is what a
+        frontend that lays blocks out in panels wants from ``answer_markdown``. ``brief`` is
+        the default for a person reading a terminal: the answer, the few blocks that hold
+        information prose genuinely cannot (ordered steps, a limit gauge, a comparison table),
+        and one line saying where it came from.
+        """
+        presentation = self.cfg.presentation
+        renderable = [b for b in blocks if b.type not in ("audit", "evidence")]
+        if composed is None or presentation.style == "full":
+            return blocks_to_markdown(renderable)
+
+        parts: list[str] = [composed.content.get("answer", "").strip()]
+        keep = set(presentation.keep_blocks_in_markdown)
+        # blocks that reason *about* the answer belong in the thinking trace and the frontend's
+        # own panels, not in the text an engineer reads as the reply
+        reasoning_ids = {"answer", "verification", "confidence", "executed-plan", "hitl", "audit"}
+        supporting = self._supporting(
+            [b for b in renderable if b.type in keep and b.id not in reasoning_ids], presentation)
+        if supporting:
+            parts.append(blocks_to_markdown(supporting))
+        for b in renderable:                       # a documented DANGER is never left out of the text
+            if b.type == "safety" and any(f.severity in ("danger", "warning") for f in b.flags):
+                parts.append(blocks_to_markdown([b]))
+                break
+        not_documented = composed.content.get("not_documented") or []
+        if not_documented:
+            parts.append("*Not covered by the documents: " + "; ".join(not_documented[:3]) + ".*")
+        assumptions = composed.content.get("assumptions") or []
+        if assumptions:
+            parts.append("*Assumed: " + "; ".join(assumptions[:2]) + ".*")
+        if access is not None and getattr(access, "denied", None):
+            parts.append("*" + access.message() + "*")
+        if review and reason:
+            parts.append(f"**Human review required.** {reason}")
+        if presentation.show_sources_line:
+            line = self._sources_line(store, presentation.max_sources_in_line, composed.content.get("brief_pages"))
+            if line:
+                parts.append(line)
+        return "\n\n".join(p for p in parts if p.strip())
+
+    @staticmethod
+    def _dedupe(blocks: list[Block]) -> list[Block]:
+        """Drop blocks that repeat one already released.
+
+        Two plan steps can legitimately land on the same evidence — a substitution question
+        resolves three entities and the planner compares more than one pair of them — and the
+        engineer should not read the same table twice because of it.
+        """
+        seen: set[str] = set()
+        out: list[Block] = []
+        for b in blocks:
+            body = b.model_dump_json(exclude={"id", "citations"})
+            key = f"{b.type}:{hash(body)}"
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(b)
+        return out
+
+    @staticmethod
+    def _supporting(blocks: list[Block], presentation) -> list[Block]:
+        """The few blocks worth printing under the prose, one per kind and trimmed to length.
+
+        A long specification table under a short answer is the block dump the composed answer
+        exists to replace, so the rendering keeps the head of each table and says how much it
+        left out. The whole block is still on the response for a frontend, and ``--detail``
+        prints everything.
+        """
+        chosen: list[Block] = []
+        seen_kinds: set[str] = set()
+        for b in blocks:
+            if b.type in seen_kinds or len(chosen) >= presentation.max_supporting_blocks:
+                continue
+            seen_kinds.add(b.type)
+            chosen.append(GovernanceAgent._trim(b, presentation.max_supporting_rows))
+        return chosen
+
+    @staticmethod
+    def _trim(block: Block, limit: int) -> Block:
+        rows = getattr(block, "rows", None)
+        if rows is not None and len(rows) > limit:
+            caption = (block.caption + " " if getattr(block, "caption", None) else "")
+            return block.model_copy(update={"rows": rows[:limit], "row_citations": (block.row_citations or [])[:limit],
+                                            "caption": f"{caption}({len(rows) - limit} further row(s) in the full response.)"})
+        attrs = getattr(block, "attributes", None)
+        if attrs is not None and len(attrs) > limit:
+            return block.model_copy(update={"attributes": attrs[:limit], "cells": block.cells[:limit],
+                                            "differences": block.differences[:3],
+                                            "title": f"{block.title or 'Comparison'} (first {limit} of {len(attrs)} attributes)"})
+        steps = getattr(block, "steps", None)
+        if steps is not None and len(steps) > limit * 3:
+            return block.model_copy(update={"steps": steps[:limit * 3]})
+        return block
+
+    @staticmethod
+    def _sources_line(store: EvidenceStore, max_pages: int, brief_pages: list[int] | None = None) -> str:
+        """One line naming the document and the pages the answer stands on.
+
+        ``brief_pages`` are the pages that reached the composer. Naming those is narrower and
+        truer than naming every page the retrieval touched: a page the composer never saw is
+        not a source for what it wrote.
+        """
+        wanted = set(brief_pages or [])
+        by_doc: dict[str, list[int]] = {}
+        for ev in store.labelled():
+            if ev.page is None or (wanted and ev.page not in wanted):
+                continue
+            by_doc.setdefault(ev.document_id, [])
+            if ev.page not in by_doc[ev.document_id]:
+                by_doc[ev.document_id].append(ev.page)
+        if not by_doc:
+            return ""
+        chunks = []
+        for doc, pages in by_doc.items():
+            shown = sorted(pages)[:max_pages]
+            more = "" if len(pages) <= max_pages else f" (+{len(pages) - max_pages} more)"
+            chunks.append(f"{doc}, p. {', '.join(str(p) for p in shown)}{more}")
+        return "*Source: " + "; ".join(chunks) + ".*"
 
     # ------------------------------------------------------------------ helpers
     def _review_decision(self, request: StructuredRequest, ordered: list[AgentResult], flags: list[SafetyFlag]) -> tuple[bool, str | None]:

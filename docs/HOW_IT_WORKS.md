@@ -32,6 +32,17 @@ It handles fourteen kinds of request (`workbench/core/request.py`, `TaskType`):
 | `cross_document` | Which documents describe the startup procedure for the atmospheric heater? |
 | `ambiguous` | Can I run this at 500? (→ the workbench asks which equipment, which parameter, which unit) |
 
+Three things sit around those fourteen and are described in `docs/ACCESS_AND_ANSWERS.md`:
+
+- **who is asking.** Every document carries a classification and the CDU manual is `confidential`, so the
+  first request of a session asks for the lead engineer password. The gate is at the knowledge service, not
+  at the UI, so no agent can reach around it.
+- **what comes back.** The retrieved claims, edges, steps and passages are context; an Answer Composer writes
+  the reply from them and is checked against them. The typed blocks are still on the response for a frontend.
+- **what came before.** "What if we use 11-E-01 instead?" is rewritten into a standalone comparison against
+  the previous turn's subject, and a tag the documents do not contain ("12-3-01") is matched to the ones they
+  do before the question is refused.
+
 ---
 
 ## 2. Two layers
@@ -98,6 +109,16 @@ Evidence-Provenance" boxes of the architecture diagram).
 | Report Agent (`report`) | 4/5 | Assembles the other agents' blocks under ordered headings, adds an executive summary, saves Markdown under `data/workbench/reports/`. | prior results → ordered report | `report` (and any task with `want_report`) |
 | Verification Agent (`verification`) | 4 | Checks each statement's evidence exists and contains its numbers, that tags are known, and removes ungrounded LLM narrative. | all results → per-result score | every request |
 | Governance Agent (`governance`) | 5 | Applies policy (restricted requests, human review), aggregates confidence, labels evidence `[n]`, composes the `FinalResponse`. | results + plan → `FinalResponse` | every request |
+
+Plus one agent that is not a plan step. The **Answer Composer** (`answer_composer`,
+`workbench/agents/composer.py`) runs in Phase 5 between verification and governance on every answered
+request, and turns everything the run gathered into the prose the engineer reads. It builds a compact brief
+from the material — documented values as sentences, relationships with both endpoints named, condensed
+procedure steps, trimmed passages, the limit verdict, what is missing — asks the model for a structured
+`{answer, assumptions, not_documented}`, and checks every figure, tag and equipment name in the reply against
+that brief before releasing it. With no model, or after a failed check, a deterministic composer writes the
+same shape of answer from the same material. It is skipped for clarifications and refusals, which are already
+worded for the situation. See `docs/ACCESS_AND_ANSWERS.md` §2.
 
 ### 3.2 The four Phase-2 retrieval specialists (`workbench/agents/retrieval.py`)
 

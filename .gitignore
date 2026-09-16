@@ -54,4 +54,6 @@ data/workbench/reports/*
 data/workbench/cache/*
 data/workbench/uploads/*
 data/workbench/thinking/*
+# credential store: password digests, salts and live session tokens. Never committed.
+data/workbench/security/
 !data/workbench/**/.gitkeep

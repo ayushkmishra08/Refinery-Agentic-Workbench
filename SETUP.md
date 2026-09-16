@@ -83,12 +83,26 @@ This guide provides the necessary steps to set up the `refinery-knowledge-layer`
    `knowledge_layer/config.py` to a model already in the cache (e.g. `all-MiniLM-L6-v2`); the vector index is
    recreated automatically when the dimension changes.
 
+4. **Workbench accounts**: the first workbench command creates `data/workbench/security/users.json` with one
+   account, `lead` / `1234`, cleared for the classified unit manuals. Set a real password before that first run:
+   ```powershell
+   $env:RWB_LEAD_PASSWORD = "<a real password>"     # read only when the credential store is seeded
+   ```
+   Already seeded? Change it with `python -m workbench passwd`, which also signs out every session for that
+   account. Add colleagues with `python -m workbench users --add <name> --role engineer|lead_engineer|admin`;
+   only `lead_engineer` and `admin` may read the CDU manual. `RWB_AUTH=off` removes the gate (the benchmark and
+   the test suite use it). Details in `docs/ACCESS_AND_ANSWERS.md`.
+
 ## Running
 
 ```powershell
 python -m knowledge_layer                 # resumable full pipeline
 python -m knowledge_layer --rebuild       # after upgrading the normalizer/chunker: redo everything but the parse
 python knowledge_layer\scripts\audit_pipeline.py "<document id>"    # offline quality gate (no services needed)
+
+python -m workbench login                 # sign in before asking anything of the classified documents
+python -m workbench ask "What is the normal flow rate of the crude charge pump?"
+python -m workbench repl                  # follow-ups are read in the context of the turns before them
 ```
 
 See the `README.md` for the flags and the graph model.

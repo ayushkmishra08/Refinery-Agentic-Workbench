@@ -1,0 +1,300 @@
+# Access control, composed answers and conversation
+
+Four changes to the workbench, all visible to whoever is sitting in front of it:
+
+1. **Nothing is readable until someone signs in.** The CDU manual is classified, and a guest is
+   cleared for nothing classified.
+2. **The answer is written, not assembled.** The retrieved claims, edges, steps and passages are
+   context for an answer; they are no longer the answer.
+3. **A turn is read in the context of the ones before it.** "What if we use 11-E-01 instead?"
+   knows what it is instead *of*.
+4. **A tag that does not exist is matched to the ones that do.** "12-3-01" is answered as
+   12-P-01 when that is clearly what was meant, and asked about when it is not.
+
+---
+
+## 1. Access control
+
+### The model
+
+| Piece | Where | What it does |
+|---|---|---|
+| Roles and clearances | `workbench/security/roles.py` | `guest < operator/engineer < lead_engineer < admin`, each carrying a clearance |
+| Document classification | `workbench/security/classification.py` | Which clearance a document needs; persisted to `data/workbench/security/classifications.json` |
+| Credentials and tokens | `workbench/security/auth.py` | PBKDF2-HMAC-SHA256 over 240 000 iterations, lockout, bearer tokens |
+| The decision | `workbench/security/policy.py` | `AccessPolicy.decide(principal, documents) -> AccessDecision` |
+| Enforcement | `workbench/security/guard.py` | A `KnowledgeService` wrapper that drops every record the principal may not read |
+
+Clearances, lowest to highest: `public`, `internal`, `confidential`, `secret`. A principal may
+read a document at or below their own clearance and nothing else.
+
+```
+guest          public
+operator       internal
+engineer       internal
+lead_engineer  confidential   <- the CDU operating manual sits here
+admin          secret
+```
+
+### Why the CDU manual is confidential
+
+`DEFAULT_RULES` in `classification.py` matches a document's id, title, unit and type. A unit
+operating manual — anything naming CDU, VDU, crude or vacuum distillation, or typed as an
+operating manual — is `confidential`. A document that matches no rule is *also* confidential:
+an unclassified document is not a public one. Session uploads are `internal`, because the
+person who uploaded them already holds the session.
+
+To reclassify by hand, edit `data/workbench/security/classifications.json` (a `pinned` entry is
+never recomputed) or call `ClassificationRegistry.set()`.
+
+### The guard is the enforcement point
+
+Agents never hold the raw backend. `Orchestrator._run` resolves the principal, asks the policy
+what they may read, and wraps the knowledge service:
+
+```python
+principal, access = self.access_for(request.auth_token)
+knowledge = GuardedKnowledgeService(self.knowledge, access.allowed, enabled=cfg.security.enabled)
+```
+
+Every list-returning method is filtered by `document_id`; every single-record lookup returns
+`None` for a document that is not allowed; an entity survives only if at least one of its
+documents is readable, and its `document_ids` are narrowed to those. There is no route around
+it — not a search, not a tag lookup, not a neighbour walk, not `get_entity` on a uid guessed
+from somewhere else.
+
+When *nothing* is readable the run stops before Phase 0 and returns `status="unauthorized"`
+with no evidence attached, naming the document, its classification and the role that would open
+it.
+
+### Signing in
+
+```bash
+python -m workbench login              # default account: lead
+python -m workbench whoami             # role, clearance, readable and withheld documents
+python -m workbench passwd             # change a password; signs out every session for it
+python -m workbench users --add asha --role engineer
+python -m workbench logout
+```
+
+`ask` and `repl` check the stored token before running and prompt in place when it does not
+open the loaded documents, so the password question appears exactly where the engineer is.
+The token lives in `data/workbench/security/cli_session.json` and lasts eight hours.
+
+The seeded account is `lead` / `1234`. It is marked `must_change`, and every login says so.
+Set `RWB_LEAD_PASSWORD` before the first run to seed a real one instead.
+
+Over HTTP:
+
+```bash
+curl -X POST localhost:8000/auth/login -d '{"username":"lead","password":"1234"}' -H 'content-type: application/json'
+# -> {"token": "...", "role": "lead_engineer", "readable_documents": ["CDU operating manual"]}
+
+curl -X POST localhost:8000/ask -H "Authorization: Bearer $TOKEN" \
+     -H 'content-type: application/json' -d '{"text":"..."}'
+```
+
+`POST /ask` without a usable token is `401`. `POST /auth/login` is `401` on a wrong password and
+`423` while an account is locked out. `user_role` in the request body is a frontend hint and is
+never consulted by the policy — only the token decides.
+
+### What is refused, and how
+
+- five wrong passwords inside fifteen minutes lock the account for fifteen minutes, and the
+  right password does not open a locked account;
+- a wrong password and an unknown username give the same message and cost roughly the same time;
+- raw passwords are never stored and raw tokens are never written to disk (the store holds a
+  SHA-256 digest);
+- changing an account's role invalidates every token minted under the old one;
+- every access decision, allowed or denied, is written to the audit trail as `kind: "access"`.
+
+### Switching it off
+
+`RWB_AUTH=off` disables the gate. The test suite and the benchmark use it — they exercise
+routing and retrieval, and signing in two hundred times tests the same door two hundred times.
+`tests/workbench/test_security.py` turns it back on and is where the door itself is tested.
+
+---
+
+## 2. The composed answer
+
+### The problem
+
+Before: a lookup returned a KPI block, an evidence list, a confidence block and an audit line;
+"what does this pump do" returned five verbatim passages, twelve inferred instrument edges and
+eighteen citations. All of it true, none of it an answer.
+
+### The agent
+
+`workbench/agents/composer.py` runs in Phase 5, between verification and governance. It:
+
+1. flattens everything the run produced into a few shapes — documented values as sentences,
+   relationships with both endpoints named, condensed procedure steps, trimmed passages,
+   safety points, the limit verdict, what is missing;
+2. builds a **brief**: the question, the conversation it belongs to, the equipment, and the
+   material that bears on it, ordered by task type and trimmed to
+   `cfg.llm.answer_brief_tokens` (1500 by default);
+3. asks the model for `{answer, assumptions, not_documented}` — a *structured* call, because a
+   grammar-constrained decode cannot open with "Hmm, the user wants me to...", which is exactly
+   what a 4B model does when asked for free text;
+4. checks what came back, and releases it or falls back.
+
+### What the answer is checked against
+
+| Check | What it catches |
+|---|---|
+| Figures | A number the brief does not contain |
+| Tags | An equipment tag the brief does not contain |
+| Names on tags | `12-F-01 (atmospheric furnace inlet)` — a right tag with a wrong name. Most of the gloss must appear in the documented name, type or aliases |
+| Contradictory qualifiers | atmospheric/vacuum, suction/discharge, inlet/outlet, upstream/downstream, overhead/bottom, cold/hot — a furnace is a furnace, but the *vacuum* one is not the *atmospheric* one |
+| Preamble | An opening sentence about the question rather than about the unit. One is cut; an answer that is all preamble is re-asked |
+| Repetition | An answer that hands back the previous turn's answer (>75% similar) |
+
+A failed check is re-asked once with the problem named. A second failure falls back to the
+deterministic composer, which writes the same shape of answer from the same material without a
+model — plainer prose, never a block dump. That path is what `effort=low`, a dead Ollama and the
+whole test suite use.
+
+### Why prompt length, not context size, is the budget
+
+On a GTX 1650 with qwen3:4b at `num_ctx` 4096:
+
+| Prompt | Generation | Rate | Wall clock |
+|---|---|---|---|
+| ~330 tokens | 260 tokens | 17 tok/s | 25 s |
+| ~5800 tokens | 250 tokens | 3.7 tok/s | 131 s |
+
+The brief is capped for that reason. Sending everything retrieved would cost four times the
+wall clock for a worse answer.
+
+### What is released
+
+`FinalResponse.answer_markdown` in `brief` style (the default) is:
+
+```
+<the composed prose>
+
+<at most 2 supporting blocks, 8 rows each — ordered steps, a limit gauge, a comparison>
+
+<a documented DANGER or WARNING, always>
+
+*Not covered by the documents: ...*
+*Source: CDU operating manual, p. 60, 66, 73, 96, 125, 192.*
+```
+
+The source line names the pages that reached the brief, not every page retrieval touched: a
+page the composer never saw is not a source for what it wrote.
+
+`FinalResponse.blocks` still carries everything — KPI, evidence, confidence, verification,
+plan, audit — so a frontend renders it in panels and `python -m workbench ask ... --detail`
+prints all of it. `RWB_ANSWER_STYLE=full` restores the old rendering as the default.
+
+Composition is skipped, and the wording released verbatim, when the run is asking a
+clarification or refusing a restricted request. Those are already written for the situation, and
+recomposing them would soften a refusal and bury a question.
+
+---
+
+## 3. Conversation
+
+`workbench/memory/followup.py` rewrites a dependent turn into a standalone question *before*
+classification, because everything downstream reads one sentence and has no memory.
+
+| Shape | Trigger | Rewrite |
+|---|---|---|
+| `substitution` | instead, rather than, in place of, "what if we used X" | a comparison against the previous subject; the task type becomes `comparison` and both sides are resolved |
+| `elaboration` | opens with and/but/why/what about, and names no subject of its own | the previous subject with the new angle attached |
+| `continuation` | a pronoun or a short question with no subject | the pronoun replaced by the subject it refers to |
+| `new` | names its own subject | untouched |
+
+```
+> what does pump 11-P-01 do
+  Pump 11-P-01 (Crude Charge Pump) discharges crude oil to the vacuum heater 12-F-01. It
+  operates at 24 kg/cm² pressure and has a rated capacity of 482 m³/h ...
+
+> what if we use 11-e-01 instead
+  The proposed 11-E-01 (Crude/HN) exchanger does not function as a pump. It is a heat
+  exchanger ... Unlike 11-P-01 (Crude Charge Pump), which moves crude oil at 482 m³/h rated
+  capacity ... Using it instead would not meet the crude charge pump function.
+
+> and at start-up?
+  Pump 11-P-01 A/B is started during startup to charge crude oil into the unit after gravity
+  displacement of air ...
+```
+
+Rules do the work; the model is asked to rewrite only when the sentence is clearly dependent and
+the rules could not supply a subject, and its version is kept only if it actually names the
+carried subject. `Turn` records what was typed, what it was read as, and the composed answer, so
+the next turn can refer back.
+
+---
+
+## 4. Tags that do not exist
+
+`workbench/services/tag_matcher.py`. A tag is decomposed into unit / class / number / train and
+each part scored separately, because the parts fail differently. The unit prefix is almost never
+wrong — it is the section of plant the engineer is standing in. The number is usually right. The
+class letter is what gets dropped, OCR'd into a digit, or guessed.
+
+The equipment word in the sentence is a signal: `pump 12-3-01` prefers a pump, `exchanger
+12-3-01` prefers an exchanger. The A/B trains of one item are collapsed, so three spellings of
+one pump do not read as three candidates.
+
+```
+what does the exchanger 12-3-01 do
+  -> There is no 12-3-01 in the documents; the closest documented item is 12-E-01
+     (Crude/ Kero Cr), and this answer is about that. If you meant 13-E-01 instead, say so.
+     The exchanger 12-E-01 preheats crude oil in the atmospheric section ...
+
+what does pump 12-3-01 do
+  -> There is no 12-3-01 in the loaded documents. Several documented items are an equally
+     close match — which one did you mean?
+       12-P-01 (Quench Pumps) — a pump, same unit prefix 12
+       12-PM-01 (SR Pumps) — a pump, same unit prefix 12
+```
+
+The difference is `adopt()`: a candidate is taken without asking only when it scores ≥ 0.72
+*and* the runner-up is ≥ 0.08 behind, or when every field of the tag matches exactly, or when
+two near-perfect matches differ clearly in how often the manual talks about them. Two unit-12
+pumps numbered 01 are a genuine tie, and one extra question is cheaper than an answer about the
+wrong pump.
+
+The correction sentence is written deterministically and placed first, whatever the model wrote,
+so which equipment the answer is about is never buried.
+
+A related fix: the backend's own fuzzy resolution used to accept `11-PP-01` as `11-F-01` — a
+pump becoming a heater, silently. Tag resolution is now exact-only; anything else goes to the
+matcher, which can weigh the unit, the number and the class the question named.
+
+---
+
+## 5. Configuration
+
+| Setting | Default | Effect |
+|---|---|---|
+| `RWB_AUTH` | on | `off` disables the access gate entirely |
+| `RWB_LEAD_PASSWORD` | `1234` | Password for the seeded `lead` account (read at first run only) |
+| `RWB_ANSWER_STYLE` | `brief` | `full` puts the whole block rendering in `answer_markdown` |
+| `RWB_LLM_ANSWER` | on | `off` always uses the deterministic composer |
+| `cfg.llm.answer_brief_tokens` | 1500 | Ceiling on the brief |
+| `cfg.llm.num_predict_answer` | from effort | Token budget for the answer |
+| `cfg.llm.answer_retries` | 1 | Re-asks allowed when a check fails |
+| `cfg.presentation.max_supporting_rows` | 8 | Rows per supporting table under the prose |
+| `cfg.presentation.max_supporting_blocks` | 2 | Supporting blocks appended at all |
+
+Effort levels set `llm_answer`, `llm_followup` and `answer_words` (120 / 170 / 220 / 300 for
+low / medium / high / ultra). `low` never calls a model and uses the deterministic composer.
+
+## 6. Tests
+
+```
+tests/workbench/test_security.py     41  credentials, lockout, tokens, classification, policy,
+                                         the guard, the gate end to end, the HTTP surface
+tests/workbench/test_composer.py     25  prose not blocks, grounding, misnamed tags, preamble,
+                                         the released markdown, brief/full styles
+tests/workbench/test_followup.py     12  the four shapes, rewriting, through the pipeline
+tests/workbench/test_tag_matcher.py  17  parsing, scoring, suggesting, adopt-vs-ask
+```
+
+`python -m pytest tests -q` — 289 workbench + 132 knowledge-layer tests.
+`python -m workbench bench` — 70 prompts, LLM-free, currently 100% on every scored dimension.

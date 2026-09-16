@@ -65,6 +65,8 @@ class AgentServices:
     cfg: WorkbenchConfig
     events: EventBus = field(default_factory=EventBus)
     resources: Any = None
+    session: Any = None                                                   # SessionState of the conversation this run belongs to
+    principal: Any = None                                                 # who is asking (workbench.security.Principal)
     prior_results: dict[str, AgentResult] = field(default_factory=dict)   # step_id -> result of finished steps
 
     def result_of(self, agent: str | None = None, step_id: str | None = None) -> AgentResult | None:

@@ -1,6 +1,9 @@
 """Local HTTP API for the web front end (FastAPI).
 
-POST /ask                      run a request synchronously -> FinalResponse
+POST /auth/login               username + password -> {token, role, readable_documents}
+POST /auth/logout              revoke the bearer token
+GET  /auth/whoami              the caller's role, clearance and readable documents
+POST /ask                      run a request synchronously -> FinalResponse (401 when not cleared)
 POST /runs                     start a run in the background -> {run_id}
 GET  /runs/{id}                run state (phase, plan progress, final when done)
 GET  /runs/{id}/events         Server-Sent Events stream of progress (phase/agent/plan/final)
@@ -11,6 +14,11 @@ GET  /sessions/{id}            session memory (turns, uploads)
 GET  /reviews                  pending human-in-the-loop items;  POST /reviews/{response_id} to decide
 GET  /agents  GET /health  GET /schema   introspection for the frontend
 All responses are JSON built from the pydantic models in workbench/core (schemas in docs/schema/).
+
+Authentication is a bearer token: POST /auth/login, then send it back either as an
+``Authorization: Bearer <token>`` header or as ``auth_token`` in the request body. Without a
+token a caller is a guest, and a guest is cleared for nothing classified — which the CDU
+operating manual is.
 """
 from __future__ import annotations
 
@@ -25,7 +33,7 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, TypeAdapter
@@ -65,8 +73,23 @@ class AskBody(BaseModel):
     text: str
     session_id: str = "web"
     user_role: str = "engineer"
+    auth_token: str | None = Field(default=None, description="Token from POST /auth/login; an Authorization: Bearer header is used when this is absent")
     options: dict = Field(default_factory=dict)
     attachments: list[Attachment] = Field(default_factory=list)
+
+
+class LoginBody(BaseModel):
+    username: str = "lead"
+    password: str
+    label: str = "web"
+
+
+def bearer(authorization: str | None = Header(default=None)) -> str | None:
+    """The token from an ``Authorization: Bearer`` header, when one was sent."""
+    if not authorization:
+        return None
+    scheme, _, value = authorization.partition(" ")
+    return value.strip() or None if scheme.lower() == "bearer" else None
 
 
 class BtwBody(BaseModel):
@@ -93,7 +116,9 @@ def _fanout(run_id: str):
 def health() -> dict:
     o = orch()
     return {"status": "ok", "backend": o.backend_name, "llm": getattr(o.llm, "model", o.llm.name), "llm_available": o.llm.available(), "profile": o.cfg.profile.name, "effort": o.cfg.effort.name,
-            "documents": [d.document_id for d in o.knowledge.documents()], "resources": o.resources.status(), "active_runs": len(o.runs.active())}
+            "documents": [d.document_id for d in o.knowledge.documents()], "resources": o.resources.status(), "active_runs": len(o.runs.active()),
+            "access_control": o.cfg.security.enabled, "answer_style": o.cfg.presentation.style,
+            "compose_answers": o.cfg.llm.use_llm_for_answer}
 
 
 @app.get("/agents")
@@ -106,15 +131,52 @@ def schema() -> dict:
     return {"final_response": FinalResponse.model_json_schema(), "block": TypeAdapter(Block).json_schema(), "user_request": UserRequest.model_json_schema()}
 
 
+@app.post("/auth/login")
+def login(body: LoginBody) -> dict:
+    """Exchange a password for a session token. 401 on refusal; 423 while an account is locked."""
+    from workbench.security.auth import AuthError
+
+    o = orch()
+    try:
+        principal = o.login(body.username, body.password, label=body.label)
+    except AuthError as exc:
+        raise HTTPException(423 if exc.locked_until else 401, str(exc)) from exc
+    _, decision = o.access_for(principal.token)
+    return {"token": principal.token, "username": principal.username, "role": principal.role.value,
+            "clearance": principal.clearance.value, "expires": principal.expires,
+            "must_change_password": principal.must_change_password,
+            "readable_documents": decision.allowed, "withheld_documents": decision.denied}
+
+
+@app.post("/auth/logout")
+def logout(token: str | None = Depends(bearer)) -> dict:
+    return {"revoked": orch().logout(token)}
+
+
+@app.get("/auth/whoami")
+def whoami(token: str | None = Depends(bearer)) -> dict:
+    o = orch()
+    principal, decision = o.access_for(token)
+    return {"username": principal.username, "role": principal.role.value, "authenticated": principal.authenticated,
+            "clearance": principal.clearance.value, "access_control": o.cfg.security.enabled,
+            "readable_documents": decision.allowed, "withheld_documents": decision.denied,
+            "documents": o.restricted_documents()}
+
+
 @app.post("/ask", response_model=FinalResponse)
-def ask(body: AskBody) -> FinalResponse:
-    req = UserRequest(text=body.text, session_id=body.session_id, user_role=body.user_role, options=body.options, attachments=body.attachments)
-    return orch().ask(req)
+def ask(body: AskBody, token: str | None = Depends(bearer)) -> FinalResponse:
+    req = UserRequest(text=body.text, session_id=body.session_id, user_role=body.user_role,
+                      auth_token=body.auth_token or token, options=body.options, attachments=body.attachments)
+    resp = orch().ask(req)
+    if resp.status == "unauthorized":
+        raise HTTPException(401, resp.answer_markdown)
+    return resp
 
 
 @app.post("/runs")
-def start_run(body: AskBody) -> dict:
-    req = UserRequest(text=body.text, session_id=body.session_id, user_role=body.user_role, options=body.options, attachments=body.attachments)
+def start_run(body: AskBody, token: str | None = Depends(bearer)) -> dict:
+    req = UserRequest(text=body.text, session_id=body.session_id, user_role=body.user_role,
+                      auth_token=body.auth_token or token, options=body.options, attachments=body.attachments)
     o = orch()
     rs_holder: dict = {}
 

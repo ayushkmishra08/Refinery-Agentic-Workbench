@@ -22,12 +22,16 @@ AGENTS: dict[str, tuple[str, str]] = {
     "revision_conflict": ("workbench.agents.revision_conflict", "RevisionConflictAgent"),
     "report": ("workbench.agents.report", "ReportAgent"),
     "verification": ("workbench.agents.verification", "VerificationAgent"),
+    # Phase 5 composition
+    "answer_composer": ("workbench.agents.composer", "AnswerComposerAgent"),
     # cross-cutting / Phase 5
     "safety": ("workbench.agents.safety", "SafetyAgent"),
     "governance": ("workbench.agents.governance", "GovernanceAgent"),
 }
 
 TWELVE = ["task_classifier", "context_resolver", "planner", "procedure", "diagnostic", "calculation", "comparison", "safety", "revision_conflict", "report", "verification", "governance"]
+# Phase 5 runs the composer between verification and governance for every answered request;
+# it is not a plan step, so it is not part of TWELVE.
 
 
 def load_agent(key: str):

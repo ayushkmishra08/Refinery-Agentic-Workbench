@@ -70,6 +70,7 @@ AGENT_ICONS = {
     "lookup": "[val]", "graph": "[grf]", "procedure": "[prc]", "diagnostic": "[dia]", "calculation": "[cal]",
     "comparison": "[cmp]", "revision_conflict": "[rev]", "explanation": "[exp]", "cross_document": "[doc]",
     "safety": "[saf]", "report": "[rep]", "verification": "[ver]", "governance": "[gov]",
+    "answer_composer": "[ans]",
 }
 PHASE_TITLES = {
     "0/1 Understanding": "Phase 0/1 · Understanding",
@@ -258,3 +259,11 @@ class ThinkingDisplay:
     def _on_error(self, ev: ProgressEvent) -> None:
         print()
         self._wrap(ev.message, "  " + _c("red", "✗ error: "), "red")
+
+    def _on_access_denied(self, ev: ProgressEvent) -> None:
+        """The run stopped at the door; say who was asking and what would open it."""
+        data = ev.data or {}
+        print()
+        self._wrap(ev.message, "  " + _c("red", "🔒 access denied: "), "red", repeat_prefix=False)
+        roles = ", ".join(data.get("required_roles", [])) or "a cleared role"
+        print(BODY_INDENT + _c("dim", f"signed in as {data.get('role', 'guest')} · needs {roles} · sign in with 'workbench login'"))

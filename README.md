@@ -244,23 +244,39 @@ why-questions, safety, comparisons, conflicts/provenance, work plans, reports an
 evidence-cited render blocks for a web front end.
 
 ```powershell
+python -m workbench login                       # the CDU manual is classified; sign in first (default account: lead)
 python -m workbench status                      # hardware profile, models, backend, documents
+python -m workbench whoami                      # role, clearance, which documents it opens
 python -m workbench ask "What is the normal flow rate of the crude charge pump?"
 python -m workbench ask "What are all the equipments in the refinery?"   # survey the corpus, no entity needed
 python -m workbench ask "..." --effort low      # index only, no model; high/ultra widen retrieval and use the model
 python -m workbench ask "..." --no-thinking     # answer only; --json gives the raw FinalResponse
+python -m workbench ask "..." --detail          # every render block instead of the composed answer
 python -m workbench trace --show                # replay the newest saved thinking trace
-python -m workbench repl                        # type "btw what's going on?" while a request runs
+python -m workbench repl                        # follow-ups read in context; "btw what's going on?" while a request runs
 python -m workbench serve --port 8000           # FastAPI + SSE for the frontend (docs/API.md)
-python -m workbench -v bench                    # 70-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 0.5 s mean
+python -m workbench -v bench                    # 70-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 0.8 s mean
 ```
+
+**Access control.** Every document is classified and nothing is readable until a cleared user signs in: the CDU
+operating manual is `confidential`, which means a lead engineer or an administrator. The gate sits at the knowledge
+service itself, so no agent, search or tag lookup can reach around it. `RWB_AUTH=off` removes it for the benchmark
+and the test suite. See `docs/ACCESS_AND_ANSWERS.md`.
+
+**The answer is written, not assembled.** An Answer Composer turns the retrieved claims, edges, procedure steps and
+passages into prose — the knowledge is context, the reply is composed from it — and checks every figure, tag and
+equipment name in what comes back against that context before releasing it. Follow-ups are read in the context of the
+turns before them ("what if we use 11-E-01 instead?" knows what it is instead *of*), and a tag the documents do not
+contain is matched to the ones they do ("12-3-01" is answered as 12-P-01, or asked about when two candidates tie).
+The typed blocks are still on the response for the frontend, and `--detail` prints them.
 
 `ask` prints the agents' reasoning phase by phase as the run happens — which rules fired and what they scored,
 what each entity resolved to, why a retrieval route was chosen, the execution DAG with its dependencies, which
-model ran where, and how governance reached its verdict — then the answer, then the path of the JSON trace it
-saved under `data/workbench/thinking/`. The answer itself carries only engineering content and citations;
-confidence, grounding and audit ids stay in the thinking and in the JSON. `--effort low|medium|high|ultra`
-sizes the request, from index-only in milliseconds to model-refined plans. See `docs/HOW_IT_WORKS.md` §11-12,
+model ran where, how the answer was composed and checked, and how governance reached its verdict — then the answer,
+then the path of the JSON trace it saved under `data/workbench/thinking/`. The answer itself carries only engineering
+content and a source line; confidence, grounding and audit ids stay in the thinking and in the JSON.
+`--effort low|medium|high|ultra` sizes the request, from index-only in milliseconds to model-refined plans.
+See `docs/HOW_IT_WORKS.md` §11-12, `docs/ACCESS_AND_ANSWERS.md` for access control and answer composition,
 and `docs/DEMO.md` for a question per capability.
 
 Today it reads the knowledge layer's on-disk artefacts (files backend, no Neo4j needed); the Neo4j backend is the

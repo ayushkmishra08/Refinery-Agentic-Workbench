@@ -209,6 +209,26 @@ def verification(res: AgentResult) -> str:
     return "\n".join(lines)
 
 
+def composition(res) -> str:
+    """How the retrieved material became the released prose."""
+    content = res.content
+    if not content.get("composed"):
+        return "Composition produced nothing; the block rendering stands as the answer.\n" + "\n".join(res.trace[-2:])
+    sections = content.get("brief_sections") or []
+    lines = [f"Built a {content.get('brief_chars', 0)}-character brief from {len(sections)} section(s): " + _fmt_list(sections, 6) + "."]
+    if content.get("source") == "model":
+        lines.append("The model wrote the answer from that brief alone; every figure and tag in it was checked back against the brief.")
+    else:
+        lines.append("No model was available (or its attempt could not be grounded), so the answer was written from the same material by rule.")
+    if content.get("grounding_failed"):
+        lines.append("The model's wording was rejected for carrying a figure or tag the evidence does not contain.")
+    if content.get("not_documented"):
+        lines.append("Declared as not documented: " + _fmt_list(content["not_documented"], 3) + ".")
+    for t in res.trace[-2:]:
+        lines.append(t)
+    return "\n".join(lines)
+
+
 def governance(resp: FinalResponse) -> str:
     """How governance turned agent results into the released answer."""
     lines = [f"Aggregated confidence {resp.confidence.score:.2f} ({resp.confidence.level}) — {resp.confidence.basis}."]

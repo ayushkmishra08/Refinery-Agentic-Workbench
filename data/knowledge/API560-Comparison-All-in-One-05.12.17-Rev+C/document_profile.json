@@ -1,0 +1,1445 @@
+{
+  "document_id": "API560-Comparison-All-in-One-05.12.17-Rev+C",
+  "source_filename": "API560-Comparison-All-in-One-05.12.17-Rev+C.pdf",
+  "title": "Section 2",
+  "document_type": "unknown",
+  "document_number": "",
+  "revision": "",
+  "status": "",
+  "effective_date": "",
+  "refinery": "service api 560 standard - 1986-2016 by furnace improvements 1600 highway 6",
+  "plant": "",
+  "unit": "",
+  "block": "",
+  "area": "",
+  "chapters": [
+    {
+      "number": "",
+      "title": "Section 2",
+      "page_start": 5,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "2",
+      "title": "2 nd Edition",
+      "page_start": 9,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "3",
+      "title": "3 rd Edition",
+      "page_start": 9,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Section 3- Tubes",
+      "page_start": 9,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Section 12 Shop Fabrication and Field Erection",
+      "page_start": 51,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Section 13 Inspection and Testing",
+      "page_start": 55,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Section 3 References",
+      "page_start": 105,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    }
+  ],
+  "sections": [
+    {
+      "number": "",
+      "title": "Fired Heaters for General Refinery Service",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "API 560 Standard - 1986-2016",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "By FURNACE IMPROVEMENTS",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Table of Contents",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 4,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "API 560 Standard Comparison",
+      "page": 5,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 5,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 7,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 8,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Split Flow Technology",
+      "page": 8,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 9,
+      "parent_chapter": "3"
+    },
+    {
+      "number": "",
+      "title": "Safe and Reliable Draft Control System",
+      "page": 9,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 10,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CFD Modeling",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Furnace Improvements",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 12,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 13,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 14,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 15,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CFD Modeling to Improve Flame Profiles in Crude Heater",
+      "page": 15,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 16,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 17,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Alky Heater (H-2) NOx Reduction and Efficiency Improvement Project",
+      "page": 17,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 18,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 19,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 20,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 21,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 22,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 23,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 24,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "No. 4 Platformer Heater Capacity Improvement",
+      "page": 24,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 25,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 26,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 27,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Platformer Heaters Capacity Improvement and NOx Reduction Project",
+      "page": 27,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 28,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Hydrogen Heater Capacity Improvement Project",
+      "page": 29,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 30,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 31,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 32,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CDHDS Reboiler Heater (H-60) Efficiency Improvement Project",
+      "page": 32,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 33,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 34,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 35,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 36,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Capacity Improvement for Reactor Charge Heater (080-H-001)",
+      "page": 36,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 37,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 38,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 39,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 40,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 41,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 42,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 43,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 44,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 45,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 46,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 47,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CO Boiler Convection Replacement",
+      "page": 47,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 48,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 49,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Vacuum Heater Capacity Increase Project",
+      "page": 49,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 50,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 51,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Performance Improvement Project on 3 Platform Heaters",
+      "page": 51,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 52,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 53,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 54,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 55,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Capacity Increase for Naphtha Splitter Reboiler Service",
+      "page": 55,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 56,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 57,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "H-28 Vacuum Heater Performance Improvement Study",
+      "page": 57,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 58,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 59,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 60,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Capacity Increase and Efficiency Improvement in Naphtha Stabilizer Reboiler",
+      "page": 60,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 61,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 62,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 63,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 64,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 65,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 66,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "N 744 Boiler NOx Reduction Project",
+      "page": 66,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 67,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 68,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 69,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Convection Section Modification in CO (CCU-1 & CCU-2) Heater for SCR Installation",
+      "page": 69,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 70,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 71,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 72,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Combustion Modeling of Heater using CFD",
+      "page": 72,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 73,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 74,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 75,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 76,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CDHDS Reboiler Heater (H-60) Efficiency Improvement Project",
+      "page": 76,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Regenerative air preheaters",
+      "page": 76,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Regenerative APH",
+      "page": 76,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 77,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 78,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Hot Oil Heater",
+      "page": 78,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 79,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 80,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "NOx Reduction and Capacity Increase of H-102 and H-205 Heaters",
+      "page": 80,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 81,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 82,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "H-28 Vacuum Heater Performance Improvement Study",
+      "page": 82,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Exchanger performance guidelines",
+      "page": 82,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Exchanger performance guidelines",
+      "page": 82,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 83,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 84,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 85,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Crude Heater NOx Reduction Project",
+      "page": 85,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Selecting hot-end temperature for APH Systems",
+      "page": 85,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "APH  Hot-end temperatures",
+      "page": 85,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 86,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 87,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Platformer Heaters Capacity Improvement and NOx Reduction Project",
+      "page": 87,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "FD Fan- Design Conditions",
+      "page": 87,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Test-block flow rate",
+      "page": 87,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Test-block Flow Rate",
+      "page": 87,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 88,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Reactor Charge Heater (B-301) Capacity Increase Project",
+      "page": 88,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Design Static Pressure",
+      "page": 88,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Design static pressure",
+      "page": 88,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 89,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 90,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 91,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "No.2 Reformer Heater NOx Reduction Project",
+      "page": 91,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "ID fan Design static pressure",
+      "page": 91,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "ID fan Design Static Pressure",
+      "page": 91,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 92,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 93,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 94,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Reducing Pressure Losses for ID Fan- Suction and Discharge ducts",
+      "page": 94,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Forced-draught zone",
+      "page": 94,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Forced-draft Zone",
+      "page": 94,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 95,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 96,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Dual Draft System",
+      "page": 96,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Dual Draft System",
+      "page": 96,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Deleted",
+      "page": 96,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "CFD Modeling for design of Ammonia Injection Grid (AIG) and mixing baffles",
+      "page": 96,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 97,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 98,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 99,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Capacity Increase on CDU-2; Crude & Vacuum Heaters (11/12-F-01)",
+      "page": 99,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Miscellaneous construction details",
+      "page": 99,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 100,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 101,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 102,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 103,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 104,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.1",
+      "title": "3.1 API 560 Editions",
+      "page": 105,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "API 560 Standards Comparison",
+      "page": 105,
+      "parent_chapter": ""
+    }
+  ],
+  "total_pages": 105,
+  "abbreviations": [],
+  "equipment_naming_conventions": [
+    {
+      "pattern": "\\bF-\\d{2,4}[A-Z]?\\b",
+      "description": "Furnaces (F-xxx)",
+      "examples": [
+        "F-01"
+      ]
+    },
+    {
+      "pattern": "\\bH-\\d{2,4}[A-Z]?\\b",
+      "description": "Heaters (H-xxx)",
+      "examples": [
+        "H-001",
+        "H-70",
+        "H-205",
+        "H-102"
+      ]
+    }
+  ],
+  "process_terminology": [],
+  "safety_terminology": [],
+  "referenced_documents": [
+    {
+      "reference_text": "API 560",
+      "document_type": "Standard",
+      "document_number": "API 560",
+      "title": "",
+      "evidence": "API 560 Standard - 1986-2016",
+      "page": 1,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "API-560",
+      "document_type": "Standard",
+      "document_number": "API-560",
+      "title": "",
+      "evidence": "API-560 standard for fired heater for general refinery serv",
+      "page": 3,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 800",
+      "document_type": "Standard",
+      "document_number": "IS 800",
+      "title": "",
+      "evidence": "able 9: Maximum temperature of anchor tips for carbon steel is 800ºF | Table 10: Maximum temperature of anchor tips for carbon",
+      "page": 15,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 850",
+      "document_type": "Standard",
+      "document_number": "IS 850",
+      "title": "",
+      "evidence": "ble 10: Maximum temperature of anchor tips for carbon steel is 850ºF | Table 10: Maximum temperature of anchor tips for carbon",
+      "page": 15,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 32",
+      "document_type": "Standard",
+      "document_number": "IS 32",
+      "title": "",
+      "evidence": "Heaters design capacity is 32 MBPD. The client wanted to revamp the heaters for a higher",
+      "page": 27,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 14",
+      "document_type": "Standard",
+      "document_number": "IS 14",
+      "title": "",
+      "evidence": "d duty of 11.6 MMBtu/hr. The revamp heater design heat duty is 14.77 MMBtu/hr.",
+      "page": 29,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "API 936",
+      "document_type": "Standard",
+      "document_number": "API 936",
+      "title": "",
+      "evidence": "Edition For refer | installation of castable refractory to API 936. Added in 5 th Edition d) e) with (3 i) the | Added in 5 th",
+      "page": 30,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM C 27",
+      "document_type": "Standard",
+      "document_number": "ASTM C 27",
+      "title": "",
+      "evidence": "dditional corrosion protection is required. Fireclay brick, ASTM C 27 | Fireclay brick, ASTM C 64 | Fireclay brick, ASTM C 64 | F",
+      "page": 33,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM C 64",
+      "document_type": "Standard",
+      "document_number": "ASTM C 64",
+      "title": "",
+      "evidence": "on is required. Fireclay brick, ASTM C 27 | Fireclay brick, ASTM C 64 | Fireclay brick, ASTM C 64 | Fireclay brick, ASTM C 64 | F",
+      "page": 33,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM C401",
+      "document_type": "Standard",
+      "document_number": "ASTM C401",
+      "title": "",
+      "evidence": "m to following ASTM specifications- 1. Castable refractory, ASTM C401, Class O, P, or Q 2. Insulating block (mineral slag wool, n",
+      "page": 33,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM C612",
+      "document_type": "Standard",
+      "document_number": "ASTM C612",
+      "title": "",
+      "evidence": ", or Q 2. Insulating block (mineral slag wool, neutral pH), ASTM C612 CL3 | Materials shall conform to following ASTM specificati",
+      "page": 33,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 11",
+      "document_type": "Standard",
+      "document_number": "IS 11",
+      "title": "",
+      "evidence": "ss to fit in each radiant panel. The stack outside diameter is 11'-3 5/8' and the height is 97'-2'. This stack was shipped in",
+      "page": 34,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 97",
+      "document_type": "Standard",
+      "document_number": "IS 97",
+      "title": "",
+      "evidence": "el. The stack outside diameter is 11'-3 5/8' and the height is 97'-2'. This stack was shipped in two pieces, which were bolte",
+      "page": 34,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS-18",
+      "document_type": "Standard",
+      "document_number": "IS-18",
+      "title": "",
+      "evidence": "alues given in Table 14. If the minimum service temperature is -18 °C (0 °F) or higher, bolting material shall be in accordanc",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 36",
+      "document_type": "Standard",
+      "document_number": "ASTM A 36",
+      "title": "",
+      "evidence": "s approved equivalent specifications: a. Structural shapes, ASTM A 36; b. Plate, ASTM A 36, A 283 Grade C or A 285 Grade C; c. St",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 307",
+      "document_type": "Standard",
+      "document_number": "ASTM A 307",
+      "title": "",
+      "evidence": "A 36, A 283 Grade C or A 285 Grade C; c. Structural bolts, ASTM A 307, unfinished.; d. High-strength bolts, ASTM A 325 or ASTM A",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 325",
+      "document_type": "Standard",
+      "document_number": "ASTM A 325",
+      "title": "",
+      "evidence": "ral bolts, ASTM A 307, unfinished.; d. High-strength bolts, ASTM A 325 or ASTM A 490; e. Pipe for columns and davits, ASTM A 53 Gr",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 490",
+      "document_type": "Standard",
+      "document_number": "ASTM A 490",
+      "title": "",
+      "evidence": "M A 307, unfinished.; d. High-strength bolts, ASTM A 325 or ASTM A 490; e. Pipe for columns and davits, ASTM A 53 Grade B. | Mater",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 53",
+      "document_type": "Standard",
+      "document_number": "ASTM A 53",
+      "title": "",
+      "evidence": ", ASTM A 325 or ASTM A 490; e. Pipe for columns and davits, ASTM A 53 Grade B. | Materials used in the fabrication of fired heate",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A307",
+      "document_type": "Standard",
+      "document_number": "ASTM A307",
+      "title": "",
+      "evidence": "°F) or higher, bolting material shall be in accordance with ASTM A307, ASTM A325, ASTM A193-B7, or equivalent. Below -18 °C (0 °F",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A325",
+      "document_type": "Standard",
+      "document_number": "ASTM A325",
+      "title": "",
+      "evidence": "er, bolting material shall be in accordance with ASTM A307, ASTM A325, ASTM A193-B7, or equivalent. Below -18 °C (0 °F), A193-B7",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A193",
+      "document_type": "Standard",
+      "document_number": "ASTM A193",
+      "title": "",
+      "evidence": "material shall be in accordance with ASTM A307, ASTM A325, ASTM A193-B7, or equivalent. Below -18 °C (0 °F), A193-B7 bolts with",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A194-2",
+      "document_type": "Standard",
+      "document_number": "ASTM A194-2",
+      "title": "",
+      "evidence": "-B7, or equivalent. Below -18 °C (0 °F), A193-B7 bolts with ASTM A194-2H nuts, ASTM bolting, or equivalent A193-B7 materials. | be",
+      "page": 37,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A 193",
+      "document_type": "Standard",
+      "document_number": "ASTM A 193",
+      "title": "",
+      "evidence": "r ASTM A 307 material and 33,000 pounds per square inch for ASTM A 193 B7 or A 320 L7 material. | The tensile stress on anchor bol",
+      "page": 40,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 15",
+      "document_type": "Standard",
+      "document_number": "IS 15",
+      "title": "",
+      "evidence": "hen accompanying a high intensity burner whose heat release is 15 MMBTU/hr or greater 2. The pilot burner shall be provided w",
+      "page": 44,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A123",
+      "document_type": "Standard",
+      "document_number": "ASTM A123",
+      "title": "",
+      "evidence": "ed. Galvanizing shall conform to the applicable sections of ASTM A123, A143, A153, A384, and A385. Bolts joining galvanized secti",
+      "page": 52,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A153",
+      "document_type": "Standard",
+      "document_number": "ASTM A153",
+      "title": "",
+      "evidence": ". Bolts joining galvanized sections shall be galvanized per ASTM A153 or zinc coated per ASTM A164, Type LS coating. | Unless oth",
+      "page": 52,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A164",
+      "document_type": "Standard",
+      "document_number": "ASTM A164",
+      "title": "",
+      "evidence": "ctions shall be galvanized per ASTM A153 or zinc coated per ASTM A164, Type LS coating. | Unless otherwise specified, platforms,",
+      "page": 52,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASME B31",
+      "document_type": "Standard",
+      "document_number": "ASME B31",
+      "title": "",
+      "evidence": "Added in 2 nd Edition | Consistent with ASME B31.3 definitions, inspection applies to functions performed fo",
+      "page": 55,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 370-380",
+      "document_type": "Standard",
+      "document_number": "IS 370-380",
+      "title": "",
+      "evidence": "since startup. It has been fantastic! The stack temperature is 370-380°F and the fuel gas usage has dropped about 40% from the old",
+      "page": 57,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E 165",
+      "document_type": "Standard",
+      "document_number": "ASTM E 165",
+      "title": "",
+      "evidence": "xamined (ferritic). Testing shall be performed according to ASTM E 165 and ASTM A407, respectively. Acceptance levels shall be spe",
+      "page": 57,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A407",
+      "document_type": "Standard",
+      "document_number": "ASTM A407",
+      "title": "",
+      "evidence": "ic). Testing shall be performed according to ASTM E 165 and ASTM A407, respectively. Acceptance levels shall be specified per E43",
+      "page": 57,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E 433",
+      "document_type": "Standard",
+      "document_number": "ASTM E 433",
+      "title": "",
+      "evidence": "examination shall be performed according to ASME E 165 with ASTM E 433 as the referenced standard. Radiographic examination shall",
+      "page": 58,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E 446",
+      "document_type": "Standard",
+      "document_number": "ASTM E 446",
+      "title": "",
+      "evidence": "ndard. Radiographic examination shall be in accordance with ASTM E 446 or ASTM E 186, to severity level 3 in all categories Weld r",
+      "page": 58,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E 186",
+      "document_type": "Standard",
+      "document_number": "ASTM E 186",
+      "title": "",
+      "evidence": "aphic examination shall be in accordance with ASTM E 446 or ASTM E 186, to severity level 3 in all categories Weld repairs shall b",
+      "page": 58,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ANSI B31",
+      "document_type": "Standard",
+      "document_number": "ANSI B31",
+      "title": "",
+      "evidence": "phic examination of their entire surface in accordance with ANSI B31.3. Radiographic quality shall be in accordance with ASTME 4",
+      "page": 59,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTME 446",
+      "document_type": "Standard",
+      "document_number": "ASTME 446",
+      "title": "",
+      "evidence": "NSI B31.3. Radiographic quality shall be in accordance with ASTME 446, Security level 3 for each category defect. | Radiographic",
+      "page": 59,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E446",
+      "document_type": "Standard",
+      "document_number": "ASTM E446",
+      "title": "",
+      "evidence": "SME B31.3. Radiographic quality shall be in accordance with ASTM E446, Security level 2 as minimum, for each category defect. Sam",
+      "page": 59,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 672",
+      "document_type": "Standard",
+      "document_number": "IS 672",
+      "title": "",
+      "evidence": "D, 240° F. The total absorbed heat duty of the Crude Heater is 672.2 MMBtu/hr.",
+      "page": 85,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "API 534",
+      "document_type": "Standard",
+      "document_number": "API 534",
+      "title": "",
+      "evidence": "s with protective metal liners should be in accordance with API 534. Application of unlined ceramic-fibre- blanket refractory s",
+      "page": 102,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM C 612",
+      "document_type": "Standard",
+      "document_number": "ASTM C 612",
+      "title": "",
+      "evidence": "semi-rigid, respectively. Refractory should be specified as ASTM C 612, Class 3. If such refractory is not to be shielded by other",
+      "page": 103,
+      "present_in_corpus": false
+    }
+  ],
+  "cross_references": [],
+  "standing_instructions": [],
+  "table_categories_found": [
+    "unknown_table",
+    "operating_limit_table",
+    "process_data_table",
+    "header_table",
+    "equipment_table",
+    "abbreviation_table"
+  ],
+  "key_concepts": [],
+  "pages_analyzed": 20,
+  "profile_timestamp": "2026-09-16T12:31:11.574728+00:00",
+  "confidence": 0.6
+}

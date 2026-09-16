@@ -22,6 +22,8 @@ class RunState(BaseModel):
     phase: str = "queued"
     task_type: str | None = None
     safety_status: str | None = None
+    principal: str = "unauthenticated"
+    followup: str = "new"                                      # new | substitution | elaboration | continuation
     entities: list[str] = Field(default_factory=list)
     goal: str | None = None
     step_status: list[dict] = Field(default_factory=list)      # {step_id, agent, goal, depends_on, status, summary}

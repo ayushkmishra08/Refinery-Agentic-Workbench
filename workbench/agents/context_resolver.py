@@ -20,6 +20,7 @@ from workbench.core.context import ContextPackage
 from workbench.core.plan import PlanStep
 from workbench.core.request import (
     ClassifierOutput,
+    EntityCorrection,
     QuantityMention,
     ResolvedEntity,
     SafetyStatus,
@@ -32,6 +33,7 @@ from workbench.core.result import AgentResult
 from workbench.orchestration.router import SAFETY_REVIEWED
 from workbench.services.calculators.units import PARAMETER_FOR_FAMILY, family, find_quantities
 from workbench.services.index.builder import EQUIPMENT_WORDS, NAMED_EQUIPMENT_RE, SPECIFIC_SINGLE_WORDS, norm_alias
+from workbench.services.tag_matcher import adopt, looks_like_tag, suggest_names, suggest_tags, type_hint
 
 try:
     from knowledge_layer.entity_identity import find_tags
@@ -91,6 +93,10 @@ SCOPES = [
     (r"\bpreheat train\b", "preheat train"), (r"\bstabili[sz]er section\b", "stabilizer section"),
     (r"\b(this|the) (document|manual)\b|\bdocuments\b", "document"),
 ]
+# Two hyphens, digits at both ends: unmistakably an attempt at an equipment tag, even when the
+# middle field is not a letter. Dates ("2024-01-15") do not match: the leading group is at most
+# three digits and must start at a word boundary.
+TAG_SHAPED_RE = re.compile(r"\b\d{1,3}-[A-Za-z0-9]{1,4}-\d{1,5}[A-Za-z]?(?:\s*/\s*[A-Za-z])*\b")
 PRONOUN_RE = re.compile(r"\b(it|this|that|these|those|this (one|equipment|pump|column|heater|vessel|valve|exchanger|instrument|protection|chemical)|the same (equipment|pump)|which one|the (pump|heater|column|equipment|vessel|unit|section))\b", re.IGNORECASE)
 GENERIC_EQUIPMENT_RE = re.compile(r"\b(the|this|that) (pump|heater|column|vessel|drum|exchanger|valve|instrument|compressor|furnace|tower|equipment)\b", re.IGNORECASE)
 ENTITY_REQUIRED = {TaskType.LOOKUP, TaskType.PROCEDURE, TaskType.TROUBLESHOOTING, TaskType.LIMITS, TaskType.MULTI_HOP, TaskType.COMPARISON, TaskType.CONFLICT, TaskType.PROVENANCE}
@@ -132,11 +138,14 @@ class ContextResolverAgent(BaseAgent):
     description = "Resolves entities, scenario, values, symptom and ambiguity into a StructuredRequest."
 
     # ------------------------------------------------------------------ main API (called by the orchestrator)
-    def resolve(self, request: UserRequest, classification: ClassifierOutput, session, result: AgentResult) -> StructuredRequest:
+    def resolve(self, request: UserRequest, classification: ClassifierOutput, session, result: AgentResult,
+                followup=None) -> StructuredRequest:
         text = request.text
         req = StructuredRequest(original=request, task_type=classification.task_type, secondary_task_types=list(classification.secondary),
                                 intent=classification.intent, classifier=classification)
         req.entities, req.unresolved_mentions = self._resolve_entities(text, result)
+        self._correct_mentions(req, text, result)
+        self._apply_followup(req, followup, result)
         req.quantities = self._quantities(text)
         req.parameter, location = self._parameter(text)
         req.symptom = self._symptom(text)
@@ -149,8 +158,13 @@ class ContextResolverAgent(BaseAgent):
         req.scope = self._first(SCOPES, text)
         if location and req.parameter == "pressure":
             req.evidence_requirements.append(f"location = {location}")
-        # session fallback for pronouns / generic equipment words
-        if not req.entities and session is not None and (PRONOUN_RE.search(text) or GENERIC_EQUIPMENT_RE.search(text) or len(text.split()) <= 7):
+        # Session fallback for pronouns / generic equipment words. It must not fire when the
+        # sentence named a tag of its own that did not resolve: "what does pump 12-3-01 do" is
+        # a question about 12-3-01, not about whatever pump the previous turn was about, and
+        # answering it from the session would quietly substitute a different machine.
+        named_its_own_tag = any(not c.adopted for c in req.corrections) or any(looks_like_tag(m) for m in req.unresolved_mentions)
+        if (not req.entities and session is not None and not named_its_own_tag
+                and (PRONOUN_RE.search(text) or GENERIC_EQUIPMENT_RE.search(text) or len(text.split()) <= 7)):
             for prev in session.last_entities():
                 if GENERIC_EQUIPMENT_RE.search(text):
                     word = GENERIC_EQUIPMENT_RE.search(text).group(2).lower()
@@ -205,6 +219,89 @@ class ContextResolverAgent(BaseAgent):
                           + (f", {len(req.quantities)} value(s)" if req.quantities else "") + (f", ambiguous: {', '.join(req.ambiguities)}" if req.ambiguities else ""))
         return req
 
+    # ------------------------------------------------------------------ near-miss tags and names
+    def _correct_mentions(self, req: StructuredRequest, text: str, result: AgentResult) -> None:
+        """Match a tag or name the documents do not contain against the ones they do.
+
+        An engineer typing ``12-3-01`` has a real pump in mind. Answering "which equipment do
+        you mean?" when the manual holds exactly one plausible candidate wastes a turn, so a
+        close-enough match is adopted and said out loud; a genuine tie is offered back as
+        named options instead of the generic "give me a tag" question.
+        """
+        tagged = [m for m in req.unresolved_mentions if looks_like_tag(m)]
+        named = [m for m in req.unresolved_mentions if not looks_like_tag(m) and len(m.split()) >= 2]
+        if not tagged and not named:
+            return
+        pool = self.knowledge.list_entities(limit=2000)
+        if not pool:
+            return
+        expect = type_hint(text)
+        for mention in tagged[:2]:
+            suggestions = suggest_tags(mention, pool, expect_type=expect)
+            self._record_correction(req, result, mention, suggestions, record_when_empty=True)
+        for mention in named[:1]:
+            if req.entities:
+                break                          # the sentence already anchored somewhere; do not guess a second subject
+            self._record_correction(req, result, mention, suggest_names(mention, pool))
+
+    def _record_correction(self, req: StructuredRequest, result: AgentResult, mention: str, suggestions,
+                           record_when_empty: bool = False) -> None:
+        if not suggestions:
+            if record_when_empty:
+                # nothing in the documents resembles it. That is still an answer the engineer
+                # needs — better than quietly answering about whatever the text search returned.
+                req.corrections.append(EntityCorrection(mention=mention))
+                result.trace.append(f"'{mention}' is not in the documents and nothing there resembles it.")
+            return
+        chosen = adopt(suggestions)
+        correction = EntityCorrection(
+            mention=mention,
+            alternatives=[s.describe() for s in suggestions if s is not chosen][:3],
+            score=suggestions[0].score,
+            reasons=suggestions[0].reasons[:2],
+        )
+        if chosen is not None:
+            e = chosen.entity
+            correction.adopted_uid = e.entity_uid
+            correction.adopted_label = f"{e.canonical_tag} ({(e.name or '').split(' (')[0]})" if e.canonical_tag else (e.name or mention)
+            correction.adopted_type = e.entity_type
+            correction.reasons = chosen.reasons[:2]
+            if e.entity_uid not in req.entity_uids():
+                req.entities.append(ResolvedEntity(mention=mention, entity_uid=e.entity_uid, canonical_tag=e.canonical_tag,
+                                                   name=e.name, entity_type=e.entity_type, confidence=round(min(0.65, chosen.score), 2),
+                                                   method="near-miss", candidates=[s.label for s in suggestions[1:3]]))
+            req.unresolved_mentions = [m for m in req.unresolved_mentions if m != mention]
+            result.trace.append(f"'{mention}' is not in the documents; it was read as {correction.adopted_label} ({chosen.score:.2f}).")
+        else:
+            result.trace.append(f"'{mention}' is not in the documents and several items match it equally; the engineer is asked which.")
+        req.corrections.append(correction)
+
+    # ------------------------------------------------------------------ conversation
+    @staticmethod
+    def _apply_followup(req: StructuredRequest, followup, result: AgentResult) -> None:
+        """Carry the previous turn's subject into this one, as a baseline or as the subject itself."""
+        if followup is None or not getattr(followup, "is_followup", False):
+            return
+        req.followup_kind = followup.kind
+        req.followup_note = followup.note
+        req.baseline_entities = [ResolvedEntity(**{**e, "method": "session", "confidence": min(0.7, e.get("confidence", 0.7))})
+                                 for e in followup.baseline_entities]
+        req.resolved_from_session = True
+        if followup.kind == "substitution":
+            # a substitution is a comparison whether or not it is worded as one: the engineer is
+            # asking what changes, and "what changes" needs both sides present
+            for b in req.baseline_entities:
+                if b.entity_uid not in req.entity_uids():
+                    req.entities.append(b)
+            if req.task_type not in (TaskType.COMPARISON, TaskType.SAFETY, TaskType.AMBIGUOUS):
+                req.secondary_task_types = [req.task_type, *[t for t in req.secondary_task_types if t != TaskType.COMPARISON]]
+                req.task_type = TaskType.COMPARISON
+        elif not req.entities:
+            req.entities = list(req.baseline_entities[:1])
+        if followup.carried_parameter and not req.parameter:
+            req.parameter = followup.carried_parameter
+        result.trace.append(f"Follow-up ({followup.kind}): {followup.note}.")
+
     # ------------------------------------------------------------------ pieces
     def _resolve_entities(self, text: str, result: AgentResult, allow_fuzzy: bool = True) -> tuple[list[ResolvedEntity], list[str]]:
         found: list[ResolvedEntity] = []
@@ -213,7 +310,7 @@ class ContextResolverAgent(BaseAgent):
         covered: list[tuple[int, int]] = []
         positions: dict[str, int] = {}
 
-        def add(mention: str, recs, method: str, base_conf: float, pos: int = 10_000) -> bool:
+        def add(mention: str, recs, method: str, base_conf: float, pos: int = 10_000, exact_only: bool = False) -> bool:
             if not recs:
                 return False
             best = recs[0]
@@ -221,6 +318,11 @@ class ContextResolverAgent(BaseAgent):
                 return True
             key = norm_alias(mention)
             exact = key in {norm_alias(a) for a in best.aliases} or key == norm_alias(best.name.split(" (")[0]) or (best.canonical_tag and norm_alias(best.canonical_tag) == key)
+            if exact_only and not exact:
+                # the backend's fuzzy fallback is unranked and ignores the sentence; a tag that
+                # does not match exactly belongs to the near-miss matcher, which can weigh the
+                # unit, the item number and the equipment class the question named
+                return False
             conf = base_conf if exact else base_conf - 0.3
             cands = [r.name for r in recs[1:4] if norm_alias(mention) in {norm_alias(a) for a in r.aliases}]
             found.append(ResolvedEntity(mention=mention, entity_uid=best.entity_uid, canonical_tag=best.canonical_tag, name=best.name, entity_type=best.entity_type,
@@ -234,7 +336,7 @@ class ContextResolverAgent(BaseAgent):
             m = re.search(re.escape(tag).replace(r"\-", r"[\s\-]*"), text, re.IGNORECASE)
             if m:
                 covered.append(m.span())
-            if not add(tag, self.knowledge.resolve_entity(tag, limit=4), "tag", 0.98, m.start() if m else 10_000):
+            if not add(tag, self.knowledge.resolve_entity(tag, limit=4), "tag", 0.98, m.start() if m else 10_000, exact_only=True):
                 unresolved.append(tag)
         # 2. named equipment phrases (longest first)
         phrases = sorted({m.group(1).strip(): m.span() for m in NAMED_EQUIPMENT_RE.finditer(text)}.items(), key=lambda kv: -len(kv[0]))
@@ -257,6 +359,19 @@ class ContextResolverAgent(BaseAgent):
                         break
                 else:
                     unresolved.append(phrase)
+        # 2b. tokens shaped like a tag that the tag reader did not accept — "12-3-01" has a digit
+        # where the equipment letter belongs, so it is not a tag, but it is unmistakably an
+        # attempt at one. The backend will happily return its own fuzzy hits for such a token,
+        # unranked and blind to what the sentence was about (a heater first, for a question
+        # about a pump), so anything short of an exact alias goes to the near-miss matcher.
+        for m in TAG_SHAPED_RE.finditer(text):
+            token = m.group(0)
+            if any(s <= m.start() and m.end() <= e for s, e in covered) or token in unresolved:
+                continue
+            if add(token, self.knowledge.resolve_entity(token, limit=4), "tag", 0.98, m.start(), exact_only=True):
+                covered.append(m.span())
+            else:
+                unresolved.append(token)
         # 3. capitalised product / scenario subjects used by claims ("Light Naphtha", "RCO")
         for m in re.finditer(r"\b(RCO|VGO|HVGO|LVGO|ATF|SKO|LPG|naphtha|kerosene|diesel|reduced crude|vacuum residue|slop)\b", text, re.IGNORECASE):
             unresolved.append(m.group(0))
@@ -320,6 +435,10 @@ class ContextResolverAgent(BaseAgent):
     def _ambiguities(req: StructuredRequest) -> list[str]:
         amb: list[str] = []
         text = req.original.text
+        if not req.entities and any(not c.adopted for c in req.corrections):
+            # the engineer named something that is not in the documents and several documented
+            # items match it equally well: ask which, rather than answering about none of them
+            return ["entity"]
         unit_scope = bool(re.search(r"\b(the |whole |entire )?(unit|plant|cdu|vdu|cdu-ii|atmospheric section|vacuum section|stabilizer section|preheat train)\b", text, re.IGNORECASE))
         if not req.entities and not unit_scope and req.task_type in ENTITY_REQUIRED | {TaskType.SAFETY, TaskType.EXPLANATION}:
             claims_task = req.task_type in (TaskType.LOOKUP, TaskType.COMPARISON, TaskType.CONFLICT, TaskType.PROVENANCE)
@@ -345,6 +464,8 @@ class ContextResolverAgent(BaseAgent):
     @staticmethod
     def _must_clarify(req: StructuredRequest) -> bool:
         """Only stop for clarification when nothing at all anchors the request."""
+        if not req.entities and any(not c.adopted for c in req.corrections):
+            return True                                 # a named-but-undocumented tag with no clear winner
         if "entity" in req.ambiguities and not req.unresolved_mentions and not req.quantities and not req.symptom and not req.action:
             return True
         if "entity" in req.ambiguities and (req.symptom or req.action) and not req.unresolved_mentions:
@@ -358,6 +479,25 @@ class ContextResolverAgent(BaseAgent):
             return self._capabilities(result)
         options: list[str] = []
         text = request.original.text
+        near_miss = [c for c in request.corrections if not c.adopted]
+        if near_miss:
+            # the engineer named something; it simply is not in the manual under that name. Say
+            # what is, rather than asking the generic "which equipment do you mean?".
+            c = near_miss[0]
+            question = (f"There is no {c.mention} in the loaded documents. Several documented items are an equally "
+                        f"close match — which one did you mean?") if c.alternatives else \
+                       (f"There is no {c.mention} in the loaded documents and nothing in them resembles it. "
+                        f"Which equipment did you mean? Give a tag (e.g. 11-P-01) or a name (e.g. crude charge pump).")
+            options = c.alternatives[:6] or [e.name for e in self.knowledge.list_entities(limit=5)]
+            result.blocks.append(ClarificationBlock(id="clarify", title="That tag is not in the documents",
+                                                    question=question, missing=["entity"], options=options))
+            result.content["intended_task_type"] = request.secondary_task_types[0].value if request.secondary_task_types else "lookup"
+            result.content["corrections"] = [x.model_dump(mode="json") for x in request.corrections]
+            result.summary = (f"near-miss tag '{c.mention}': {len(c.alternatives)} equally close candidates"
+                              if c.alternatives else f"unknown tag '{c.mention}': nothing documented resembles it")
+            result.confidence = self.confidence(0.3, "the tag the engineer gave is not one the documents use",
+                                                [f"'{c.mention}' is not a documented tag"])
+            return
         if "entity" in missing:
             # suggest candidates only when the request names an equipment class ("the pump");
             # a full-text search on "How do I start it?" returns noise, and one odd suggestion

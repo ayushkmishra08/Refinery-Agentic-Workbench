@@ -109,12 +109,13 @@ class WorkbenchPaths(BaseModel):
     cache_dir: Path = PROJECT_ROOT / "data" / "workbench" / "cache"
     uploads_dir: Path = PROJECT_ROOT / "data" / "workbench" / "uploads"
     thinking_dir: Path = PROJECT_ROOT / "data" / "workbench" / "thinking"
+    security_dir: Path = PROJECT_ROOT / "data" / "workbench" / "security"
     prompts_dir: Path = PROJECT_ROOT / "workbench" / "prompts"
     fixtures_dir: Path = PROJECT_ROOT / "workbench" / "fixtures"
     benchmarks_dir: Path = PROJECT_ROOT / "workbench" / "benchmarks"
 
     def ensure_dirs(self) -> None:
-        for d in (self.sessions_dir, self.audit_dir, self.reports_dir, self.cache_dir, self.uploads_dir, self.thinking_dir):
+        for d in (self.sessions_dir, self.audit_dir, self.reports_dir, self.cache_dir, self.uploads_dir, self.thinking_dir, self.security_dir):
             d.mkdir(parents=True, exist_ok=True)
 
 
@@ -137,6 +138,12 @@ class LLMSettings(BaseModel):
     classifier_confidence_threshold: float = 0.72
     use_llm_for_narrative: bool = Field(default=True, description="Short natural-language summaries in answers")
     use_llm_for_extraction: bool = Field(default=True, description="Causes/checks extraction from upset chunks")
+    use_llm_for_answer: bool = Field(default=True, description="Let the Answer Composer write the released answer from the retrieved context")
+    use_llm_for_followup: bool = Field(default=True, description="Ask the model to rewrite an elliptical follow-up when the rules cannot")
+    num_predict_answer: int = Field(default=700, description="Token budget for the composed answer; the single longest generation in a run")
+    answer_temperature: float = Field(default=0.3, description="Slightly above the extraction temperature: the answer has to read like prose, not a record")
+    answer_brief_tokens: int = Field(default=1500, description="Ceiling on the evidence brief handed to the composer; prompt length, not context size, is what costs seconds on a 4 GB card")
+    answer_retries: int = Field(default=1, description="Re-asks allowed when the composed answer fails the grounding check")
 
 
 class EffortSettings(BaseModel):
@@ -161,30 +168,35 @@ class EffortSettings(BaseModel):
     llm_narrative: bool = False           # let the model write the prose summaries
     llm_extraction: bool = False          # let the model structure causes / checks / actions
     llm_plan_refinement: bool = False     # let the model add steps to a planning DAG
+    llm_answer: bool = True               # let the Answer Composer write the released answer
+    llm_followup: bool = True             # let the model rewrite an elliptical follow-up
+    answer_words: int = 180               # target length of the composed answer
     note: str = ""
 
 
 EFFORT_LEVELS: dict[str, EffortSettings] = {
     "low": EffortSettings(
         name="low", retrieval_k=5, graph_hops=1, procedure_candidates=4, inventory_limit=30, max_replan_iterations=0,
-        use_reranker=False, use_vectors=False, llm_classification=False,
+        use_reranker=False, use_vectors=False, llm_classification=False, llm_answer=False, llm_followup=False,
+        answer_words=120,
         note="Index only: rules, claims and BM25. No model call, no vectors — sub-second answers for values, tags and lists.",
     ),
     "medium": EffortSettings(
         name="medium", retrieval_k=8, graph_hops=1, procedure_candidates=6, inventory_limit=30, max_replan_iterations=2,
-        use_reranker=False, use_vectors=True, llm_classification=True,
-        note="Default: deterministic agents with vector retrieval; the model is asked only when the rules are unsure.",
+        use_reranker=False, use_vectors=True, llm_classification=True, llm_answer=True, llm_followup=True,
+        answer_words=170,
+        note="Default: deterministic agents with vector retrieval; the model is asked only when the rules are unsure, and it writes the released answer.",
     ),
     "high": EffortSettings(
         name="high", retrieval_k=12, graph_hops=2, procedure_candidates=10, inventory_limit=120, max_replan_iterations=2,
         use_reranker=True, use_vectors=True, llm_classification=True, llm_entity_guess=True, llm_narrative=True,
-        llm_plan_refinement=True,
+        llm_plan_refinement=True, llm_answer=True, llm_followup=True, answer_words=220,
         note="Wider retrieval with the reranker; the model resolves missed equipment, writes the narrative and may add plan steps.",
     ),
     "ultra": EffortSettings(
         name="ultra", retrieval_k=20, graph_hops=3, procedure_candidates=16, inventory_limit=400, max_replan_iterations=3,
         use_reranker=True, use_vectors=True, llm_classification=True, llm_entity_guess=True, llm_narrative=True,
-        llm_extraction=True, llm_plan_refinement=True,
+        llm_extraction=True, llm_plan_refinement=True, llm_answer=True, llm_followup=True, answer_words=300,
         note="Everything on: widest retrieval, model-structured diagnosis and model-refined plans. Minutes, not seconds, on a 4 GB card.",
     ),
 }
@@ -224,12 +236,51 @@ class GovernanceSettings(BaseModel):
     )
 
 
+class SecuritySettings(BaseModel):
+    """Role-based access control over the documents.
+
+    Access is on by default: the CDU operating manual is classified ``confidential`` and only
+    a lead engineer (or an administrator) may read it, so the first request of a session asks
+    for the lead engineer password. ``RWB_AUTH=off`` disables the gate entirely — for the
+    benchmark and the test suite, never for a shared install.
+    """
+    enabled: bool = True
+    default_role: str = Field(default="guest", description="Role assumed before anyone signs in")
+    token_ttl_seconds: int = 8 * 3600
+    prompt_on_denial: bool = Field(default=True, description="The CLI asks for the password in place instead of only reporting the denial")
+    allow_unauthenticated_capabilities: bool = Field(
+        default=True, description="A signed-out user still gets the 'what can this answer' reply and the login instruction, not a bare 401",
+    )
+
+
+class PresentationSettings(BaseModel):
+    """How the released answer is shaped.
+
+    ``brief`` is the default: the Answer Composer's prose plus a one-line source trail. The
+    typed blocks are still on the response for a frontend to render, and ``--detail`` prints
+    them. ``full`` prepends the prose to the whole block set — the pre-composer behaviour.
+    """
+    style: str = Field(default="brief", description="brief | full")
+    show_sources_line: bool = True
+    max_sources_in_line: int = 6
+    keep_blocks_in_markdown: list[str] = Field(
+        default_factory=lambda: ["steps", "limit_gauge", "comparison", "table"],
+        description="Block types that carry information prose cannot: they are appended under the answer even in brief style",
+    )
+    max_supporting_rows: int = Field(
+        default=8, description="Rows shown per supporting table or comparison; a 30-row spec dump under a five-sentence answer is the thing this replaces",
+    )
+    max_supporting_blocks: int = Field(default=2, description="How many supporting blocks the brief rendering appends at all")
+
+
 class WorkbenchConfig(BaseModel):
     paths: WorkbenchPaths = Field(default_factory=WorkbenchPaths)
     profile: HardwareProfile = Field(default_factory=select_profile)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     retrieval: RetrievalSettings = Field(default_factory=RetrievalSettings)
     governance: GovernanceSettings = Field(default_factory=GovernanceSettings)
+    security: SecuritySettings = Field(default_factory=SecuritySettings)
+    presentation: PresentationSettings = Field(default_factory=PresentationSettings)
     effort: EffortSettings = Field(default_factory=select_effort)
     knowledge_backend: str = Field(default="auto", description="auto | files | mock | neo4j")
     document_ids: list[str] = Field(default_factory=list, description="Knowledge-layer documents to load; empty = all found")
@@ -268,6 +319,11 @@ class WorkbenchConfig(BaseModel):
         self.llm.use_llm_for_classification = e.llm_classification
         self.llm.use_llm_for_narrative = e.llm_narrative
         self.llm.use_llm_for_extraction = e.llm_extraction
+        self.llm.use_llm_for_answer = e.llm_answer
+        self.llm.use_llm_for_followup = e.llm_followup
+        # the composed answer is the one generation the user actually reads, so it gets the
+        # long budget plus room for the target length the level asks for
+        self.llm.num_predict_answer = max(self.profile.num_predict_long, int(e.answer_words * 2.2) + 120)
 
     def discovered_documents(self) -> list[str]:
         """Document ids whose knowledge-layer artefacts exist (normalized + chunks)."""
@@ -310,5 +366,11 @@ def load_config(effort: str | None = None) -> WorkbenchConfig:
         cfg.knowledge_backend = v
     if v := env("RWB_DOCS"):
         cfg.document_ids = [x.strip() for x in v.split(",") if x.strip()]
+    if (v := env("RWB_AUTH")) and v.lower() in ("0", "off", "false", "no"):
+        cfg.security.enabled = False
+    if v := env("RWB_ANSWER_STYLE"):
+        cfg.presentation.style = v.lower()
+    if (v := env("RWB_LLM_ANSWER")) is not None and v.lower() in ("0", "off", "false", "no"):
+        cfg.llm.use_llm_for_answer = False
     cfg.paths.ensure_dirs()
     return cfg

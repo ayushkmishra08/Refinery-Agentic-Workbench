@@ -15,14 +15,17 @@ from pydantic import BaseModel, Field
 
 class Turn(BaseModel):
     ts: float = Field(default_factory=time.time)
-    request: str
+    request: str                                          # what the engineer typed
+    rewritten_request: str = ""                           # what it was read as, when it was a follow-up
     task_type: str = ""
     entities: list[dict] = Field(default_factory=list)    # ResolvedEntity dumps
     parameter: str | None = None
     scenario: str | None = None
     response_id: str | None = None
     status: str = ""
-    answer_preview: str = ""
+    followup_kind: str = "new"
+    corrections: list[dict] = Field(default_factory=list)  # EntityCorrection dumps: tags that were not documented
+    answer_preview: str = Field(default="", description="The composed answer, long enough that the next turn can refer back to it")
 
 
 class SessionState(BaseModel):

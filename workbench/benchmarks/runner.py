@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from workbench.config import load_config
 from workbench.core.request import UserRequest
 from workbench.orchestration.orchestrator import Orchestrator
 
@@ -43,7 +44,12 @@ def run_benchmark(categories: list[str] | None = None, limit: int | None = None,
     items = load_prompts(categories)
     if limit:
         items = items[:limit]
-    orch = Orchestrator()
+    # The benchmark measures routing and retrieval, not the door. It runs with access control
+    # off rather than holding a standing admin account open for 62 prompts; a real session
+    # still signs in. Nothing is written to the credential store by this path.
+    cfg = load_config()
+    cfg.security.enabled = False
+    orch = Orchestrator(cfg)
     rows = []
     t_all = time.time()
     for i, it in enumerate(items):
