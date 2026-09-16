@@ -173,7 +173,7 @@ class Orchestrator:
             phases.append(AuditPhase(name="retrieval", agent="context_builder", status="done", duration_ms=ctx_res.duration_ms, note=ctx_res.summary))
             events.emit("agent_finished", phase="2 Specialist retrieval", agent="context_builder", step_id="retrieval", message=ctx_res.summary,
                         thinking=narration.retrieval(req, context),
-                        decision=f"route '{context.route}' returned {len(context.claims) + len(context.relations) + len(context.procedures) + len(context.chunks)} item(s)",
+                        decision=f"route '{context.route}' returned {len(context.claims) + len(context.relations) + len(context.procedures) + len(context.chunks) + len(context.entities) + len(context.sections)} item(s)",
                         data=_counts(ctx_res))
             events.emit("phase_finished", phase="2 Specialist retrieval", message=ctx_res.summary, data={"route": context.route, "gaps": context.gaps})
             for gap in context.gaps:

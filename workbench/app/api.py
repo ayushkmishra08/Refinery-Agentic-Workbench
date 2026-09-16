@@ -92,7 +92,7 @@ def _fanout(run_id: str):
 @app.get("/health")
 def health() -> dict:
     o = orch()
-    return {"status": "ok", "backend": o.backend_name, "llm": getattr(o.llm, "model", o.llm.name), "llm_available": o.llm.available(), "profile": o.cfg.profile.name,
+    return {"status": "ok", "backend": o.backend_name, "llm": getattr(o.llm, "model", o.llm.name), "llm_available": o.llm.available(), "profile": o.cfg.profile.name, "effort": o.cfg.effort.name,
             "documents": [d.document_id for d in o.knowledge.documents()], "resources": o.resources.status(), "active_runs": len(o.runs.active())}
 
 

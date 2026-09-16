@@ -50,11 +50,12 @@ class PhaseTrace:
 class ThinkingTraceCollector:
     """Accumulates the full thinking trace of one run from its ProgressEvents."""
 
-    def __init__(self, query: str, *, llm_model: str = "", backend: str = "", profile: str = "") -> None:
+    def __init__(self, query: str, *, llm_model: str = "", backend: str = "", profile: str = "", effort: str = "") -> None:
         self.query = query
         self.llm_model = llm_model
         self.backend = backend
         self.profile = profile
+        self.effort = effort
         self.start_ts = time.time()
         self.phases: list[PhaseTrace] = []
         self.llm_calls_detail: list[dict[str, Any]] = []
@@ -166,7 +167,8 @@ class ThinkingTraceCollector:
             "status": self.status,
             "entities": self.entities,
             "total_duration_ms": int((time.time() - self.start_ts) * 1000),
-            "runtime": {"llm_model": self.llm_model, "backend": self.backend, "profile": self.profile, "llm_calls": self.llm_calls, "evidence": self.evidence_count},
+            "runtime": {"llm_model": self.llm_model, "backend": self.backend, "profile": self.profile, "effort": self.effort,
+                        "llm_calls": self.llm_calls, "evidence": self.evidence_count},
             "phases": [p.to_dict() for p in self.phases],
             "plan": self.plan,
             "llm_calls_detail": self.llm_calls_detail,

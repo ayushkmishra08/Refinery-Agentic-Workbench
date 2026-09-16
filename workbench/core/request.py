@@ -25,6 +25,7 @@ class TaskType(str, Enum):
     PLANNING = "planning"                # work plan / checklist / investigation plan
     REPORT = "report"                    # engineering report generation
     CROSS_DOCUMENT = "cross_document"    # which documents / sections / referenced procedure / standing instructions
+    INVENTORY = "inventory"              # what equipment exists, how many, what the documents cover (no single subject)
     AMBIGUOUS = "ambiguous"              # missing entity / parameter / unit -> clarification
 
 
@@ -92,6 +93,8 @@ class StructuredRequest(BaseModel):
     unresolved_mentions: list[str] = Field(default_factory=list)
     action: str | None = None         # startup | shutdown | changeover | isolation | restart | inspection | maintenance
     parameter: str | None = None      # flow_rate | pressure | temperature | level | ...
+    subject_type: str | None = None   # equipment class the request is about (Pump, Column, Instrument ...), for inventory questions
+    scope: str | None = None          # refinery | unit | section named by the request, when it asks about a whole scope
     quantities: list[QuantityMention] = Field(default_factory=list)
     symptom: Symptom | None = None
     scenario: str | None = None       # Basrah | Bombay High | BH mode | PG mode | ...

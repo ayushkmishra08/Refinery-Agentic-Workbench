@@ -36,6 +36,7 @@ class ContextPackage(BaseModel):
     standing_instructions: list[StandingInstructionRecord] = Field(default_factory=list)
     document_references: list[DocumentReferenceRecord] = Field(default_factory=list)
     cross_references: list[CrossReferenceRecord] = Field(default_factory=list)
+    entity_counts: dict[str, int] = Field(default_factory=dict, description="Entities per equipment class, for inventory / survey answers")
     gaps: list[str] = Field(default_factory=list)          # evidence requirements not met
     notes: list[str] = Field(default_factory=list)         # retrieval decisions, for the audit trail
     timing_ms: int = 0

@@ -208,13 +208,32 @@ Request: **"The crude charge pump is operating at 520 m3/h. Is this acceptable?"
 | planning | lookup, procedure, lookup limits, diagnostic, safety, planner gaps, planner assemble | hybrid | 7 |
 | report | lookup ×2, graph, explanation, procedure, revision_conflict, report | hybrid | 7 |
 | cross_document | cross_document ×2 (find, follow) | hybrid | 2 |
-| ambiguous | context_resolver (clarify) | none | 1 |
+| inventory | lookup inventory, cross_document scope | inventory | 2 |
+| ambiguous | context_resolver (clarify, or the capability reply when out of scope) | none | 1 |
 
 The plan size follows the question: a lookup needs one retrieval and one conflict check; troubleshooting needs
 identification, normal range, upset section, causes, checks, actions, topology, related procedures and a safety
 review, each depending on the previous ones. Compound requests ("investigate the causes ... and give me the
 changeover procedure ... with supporting documents") get extra steps from `extend_for_secondary` in
 `agents/planner.py`. Verification and governance are always appended by the orchestrator, never by the planner.
+
+### 5.1 Survey questions
+
+"What are all the equipments in the refinery?", "List all the pumps", "How many columns are there?" and "What
+does this manual cover?" have no single subject, so demanding one would be wrong. They classify as `inventory`
+and take the `inventory` retrieval route, which lists the knowledge layer's entity index instead of searching
+it: a class table (how many of each kind, with the most-referenced tags), the items themselves with their tag
+and page range, then the documents, chapters and standing instructions in scope.
+
+Counting and listing share one filter, so the summary never contradicts the table, and the filter is the
+manual's own tag convention: an item is equipment when its tag is plant-numbered (`11-C-01`), not when a tag
+pattern merely matches. That keeps checklist rows (`C-1`) and standard names (`D-86`, the ASTM distillation
+method) out of the equipment count — 6 columns and 6 heaters rather than 13 and 12. A named plant section
+filters further on the plant number itself (11- atmospheric, 12- vacuum).
+
+A request the documents cannot serve at all — a greeting, a general-knowledge question, "write me a poem", or
+text with nothing recognisable in it — is not sent to clarification either. The resolver marks it out of scope
+and the answer says what the workbench does answer, with examples built from the documents actually loaded.
 
 ---
 
@@ -424,7 +443,44 @@ the deterministic rendering and the reason is recorded in the step's trace.
 
 ---
 
-## 12. The "btw" side channel
+## 12. Effort levels: how much work one request may do
+
+`--effort low|medium|high|ultra` (or `RWB_EFFORT`) sizes the request. Every level answers from the same
+evidence and the same agents; the higher ones simply look at more of it and let the model do more.
+`EffortSettings` in `workbench/config.py` holds the knobs, and `WorkbenchConfig.apply_effort()` re-points
+retrieval, governance and the LLM switches at the chosen level. The hardware profile keeps the last word: a
+level cannot switch on a reranker the profile has no model for, nor the LLM when it is off or absent.
+
+| | low | medium (default) | high | ultra |
+|---|---|---|---|---|
+| passages per hybrid search | 5 | 8 | 12 | 20 |
+| graph hops | 1 | 1 | 2 | 3 |
+| procedure candidates | 4 | 6 | 10 | 16 |
+| rows in a survey answer | 30 | 30 | 120 | 400 |
+| replan budget | 0 | 2 | 2 | 3 |
+| vector search | — | yes | yes | yes |
+| reranker | — | — | yes | yes |
+| model: unsure classification | — | yes | yes | yes |
+| model: missed equipment | — | — | yes | yes |
+| model: narrative prose | — | — | yes | yes |
+| model: causes / checks structuring | — | — | — | yes |
+| model: plan refinement | — | — | yes | yes |
+
+Measured on the GTX 1650, same three questions at each level:
+
+| question | low | medium | high |
+|---|---|---|---|
+| "The crude charge pump discharge pressure is dropping..." | 0.7 s, 10 citations | 17.8 s, 10 citations | 22.3 s, 20 citations |
+| "What are all the equipments in the refinery?" | 17 ms | 19 ms | 41 ms |
+| "Why is the crude heated before entering the atmospheric column?" | 9 ms, no model | 29 ms, no model | 31.8 s, 1 model call |
+
+`low` is the one to reach for during a live demo when the GPU is busy: it answers every question type from the
+indexes alone. `ultra` is minutes per request on a 4 GB card, because the model structures the diagnosis and
+refines the plan.
+
+---
+
+## 13. The "btw" side channel
 
 While a request runs, the user can type "btw, what is going on?" in the REPL (`python -m workbench repl`) or
 call `POST /runs/{id}/btw` from the UI. A small status agent (`orchestration/status_agent.py`) answers from the
@@ -434,7 +490,7 @@ run. The same run state feeds the SSE progress stream.
 
 ---
 
-## 13. The benchmark set
+## 14. The benchmark set
 
 `workbench/benchmarks/prompts.yaml` holds the canonical prompts from the design brief in categories: lookup,
 multi_hop, procedure, troubleshooting, limits, explanation, safety, comparison, cross_document, provenance,
@@ -451,7 +507,7 @@ python -m workbench bench --category troubleshooting limits --verbose
 The runner (`workbench/benchmarks/runner.py`) prints task accuracy, agent coverage, entity resolution, block
 coverage, safety handling, mean confidence and latency, and writes `data/workbench/reports/benchmark-<ts>.md`.
 
-### 13.1 Result on 2026-09-15 (deterministic mode, files backend, GTX 1650, no LLM)
+### 14.1 Result on 2026-09-15 (deterministic mode, files backend, GTX 1650, no LLM)
 
 | metric | value | meaning |
 |---|---|---|
@@ -476,7 +532,7 @@ agent, and stronger weights for "which documents", "compare", "trace", "plan" an
 
 ---
 
-## 14. Done and pending
+## 15. Done and pending
 
 **Done:** the two-layer architecture with a swappable knowledge service; the files backend on the real manual;
 all sixteen agents; plan templates for all fourteen task types with compound extensions and a bounded replan
@@ -491,7 +547,7 @@ itself. The step-by-step plan for the Neo4j switch and the remaining work is in
 
 ---
 
-## 15. Glossary
+## 16. Glossary
 
 | term | meaning |
 |---|---|

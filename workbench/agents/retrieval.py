@@ -57,6 +57,14 @@ def describe_instrument(tag: str) -> str:
     return f"{var} {' '.join(funcs)}".strip()
 
 
+def class_label(entity_type: str | None, plural: bool = False) -> str:
+    """Human wording for an index entity_type: ReliefValve -> "relief valve(s)"."""
+    if not entity_type:
+        return "item" + ("s" if plural else "")
+    words = re.sub(r"(?<!^)(?=[A-Z])", " ", entity_type).lower()
+    return words + ("s" if plural else "")
+
+
 def context_label(c: ClaimRecord) -> str:
     parts = [p for p in [c.parameter_role, c.location, c.operating_mode, c.scenario, c.pressure_basis] if p]
     if c.qualifier and c.qualifier.lower() not in " ".join(parts).lower():
@@ -73,6 +81,8 @@ class LookupAgent(BaseAgent):
         mode = step.inputs.get("mode", "default")
         if mode == "identify":
             return self._identify(request, context, result)
+        if mode == "inventory":
+            return self._inventory(request, context, result)
         entity = request.primary_entity
         claims = context.claims_for(entity.entity_uid) if entity and entity.entity_uid else list(context.claims)
         if not claims and entity and entity.entity_uid:
@@ -201,6 +211,59 @@ class LookupAgent(BaseAgent):
         result.content["entities"] = [e.model_dump(mode="json") for e in request.entities]
         result.summary = ", ".join(r[0] for r in rows) or "entity identified"
         result.confidence = self.confidence(max((e.confidence for e in request.entities), default=0.5), "entity resolution")
+
+    # ------------------------------------------------------------------ inventory / survey
+    def _inventory(self, request: StructuredRequest, context: ContextPackage, result: AgentResult) -> None:
+        """Answer "what is in here" from the entity index rather than from a text search.
+
+        Every row is a tagged entity the knowledge layer extracted, with the pages it appears
+        on, so the list is auditable in the same way a single value is.
+        """
+        docs = self.knowledge.documents()
+        counts = context.entity_counts or self.knowledge.entity_type_counts()
+        entities = context.entities or self.knowledge.list_entities(entity_type=request.subject_type, limit=self.cfg.effort.inventory_limit)
+        wanted = request.subject_type
+
+        if not entities:
+            result.missing.append(f"no tagged {class_label(wanted, plural=True) if wanted else 'equipment'} in the documents")
+            result.blocks.append(self.callout(
+                f"The documents contain no tagged {class_label(wanted, plural=True) if wanted else 'equipment'}." +
+                (f" Recorded classes are: {', '.join(class_label(c) for c in counts)}." if counts else ""), "warning"))
+            result.summary = "nothing to list"
+            result.confidence = self.confidence(0.3, "the entity index holds no item of that class")
+            return
+
+        total = sum(counts.values())
+        doc_names = ", ".join(d.title or d.document_id for d in docs) or "the loaded documents"
+
+        if not wanted and counts:
+            rows = [[class_label(cls).title(), n, ", ".join(e.canonical_tag or e.name for e in self.knowledge.list_entities(entity_type=cls, limit=3))]
+                    for cls, n in counts.items()]
+            result.blocks.append(TableBlock(id="inventory-classes", title="Equipment classes on record",
+                                            caption=f"Every tag the knowledge layer extracted from {doc_names}, grouped by class.",
+                                            columns=["Class", "Tagged items", "Most referenced"], rows=rows))
+
+        rows, cits = [], []
+        for e in entities:
+            pages = f"{min(e.pages)}–{max(e.pages)}" if e.pages else "—"
+            rows.append([e.canonical_tag or "—", e.name, e.entity_type or "—", e.mention_count, pages])
+            if e.pages:
+                cits.append(self.cite(result, Evidence(document_id=e.document_ids[0] if e.document_ids else "", page=min(e.pages),
+                                                       text=f"{e.canonical_tag or e.name}: {e.name}" + (f" — {e.description}" if e.description else ""),
+                                                       source="graph")))
+        title = f"{class_label(wanted, plural=True).title() if wanted else 'Equipment'} on record" + (f" — {len(rows)} shown" if len(rows) < counts.get(wanted, total) else "")
+        result.blocks.append(TableBlock(id="inventory", title=title, columns=["Tag", "Name", "Class", "Mentions", "Pages"],
+                                        rows=rows, citations=cits[:12]))
+        if len(rows) < counts.get(wanted, total):
+            result.blocks.append(self.callout(
+                f"{counts.get(wanted, total) - len(rows)} further tagged item(s) are on record. Ask for a class "
+                f"(\"list all the pumps\") or raise the effort level to see more.", "info"))
+        result.content["entity_counts"] = counts
+        result.content["listed"] = [e.canonical_tag or e.name for e in entities]
+        where = f" in the {request.scope}" if request.scope and request.scope != "document" else ""
+        result.summary = (f"{counts.get(wanted, len(entities))} tagged {class_label(wanted, plural=True)}{where or ' in ' + doc_names}" if wanted
+                          else f"{total} tagged items across {len(counts)} equipment classes{where or ' in ' + doc_names}")
+        result.confidence = self.confidence(0.88, "counted from the knowledge layer's entity index, each row carrying its pages")
 
 
 class GraphAgent(BaseAgent):
@@ -493,6 +556,8 @@ class CrossDocumentAgent(BaseAgent):
         mode = step.inputs.get("mode", "find")
         if mode in ("for_procedure", "for_safety"):
             return self._for_prior(request, context, step, result)
+        if mode == "scope":
+            return self._scope(result)
         query = request.original.text
         uids = request.entity_uids()
         chunks = context.chunks or self.knowledge.search_chunks(query, k=10, entity_uids=uids or None)
@@ -577,6 +642,30 @@ class CrossDocumentAgent(BaseAgent):
         result.content["standing_instructions"] = [s.number for s in sis[:12]]
         result.summary = f"{len(rows)} cross reference(s), {len(drefs)} referenced document(s), {len(sis)} standing instruction(s)"
         result.confidence = self.confidence(0.65 if (rows or drefs or sis) else 0.2, "document-structure data from the knowledge layer profile")
+
+    def _scope(self, result: AgentResult) -> None:
+        """What is loaded: the documents, their chapters and the standing instructions on top of them."""
+        docs = self.knowledge.documents()
+        rows = [[d.title or d.document_id, d.document_type or "—", d.unit or "—", d.revision or "—", d.effective_date or "—", d.total_pages or "—"] for d in docs]
+        result.blocks.append(TableBlock(id="scope-documents", title="Documents in scope",
+                                        columns=["Document", "Type", "Unit", "Revision", "Effective", "Pages"], rows=rows))
+        for d in docs:
+            key = self.cite(result, Evidence(document_id=d.document_id, page=1, source="rule",
+                                             text=f"{d.title or d.document_id} — {d.document_type or 'document'}, unit {d.unit or 'n/a'}, "
+                                                  f"revision {d.revision or 'n/a'} of {d.effective_date or 'n/a'}, {d.total_pages or 0} pages", revision=d.revision))
+            self.statement(result, f"{d.title or d.document_id} is a {d.document_type or 'document'} for unit {d.unit or 'n/a'}", [key])
+        chapters = [c for c in (self.knowledge.chapters() or []) if not c.get("is_administrative")]
+        if chapters:
+            rows = [[c.get("number"), c.get("title", ""), f"{c.get('page_start')}–{c.get('page_end')}"] for c in chapters[:24]]
+            result.blocks.append(TableBlock(id="scope-chapters", title=f"Engineering chapters ({len(chapters)} of {len(self.knowledge.chapters() or [])})",
+                                            columns=["#", "Chapter", "Pages"], rows=rows))
+        si = self.knowledge.standing_instructions(None)[:6]
+        if si:
+            result.blocks.append(TableBlock(id="scope-si", title="Standing instructions on record",
+                                            columns=["Number", "Title", "Status"], rows=[[s.number, s.title[:70], s.status or "—"] for s in si]))
+        result.content["documents"] = [d.model_dump(mode="json") for d in docs]
+        result.summary = f"{len(docs)} document(s), {len(chapters)} engineering chapter(s), {len(si)} standing instruction(s)"
+        result.confidence = self.confidence(0.9, "document structure from the knowledge layer profile")
 
     def _for_prior(self, request, context, step, result) -> None:
         proc_res = self.s.result_of("procedure") or self.s.result_of("safety")

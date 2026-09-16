@@ -17,7 +17,7 @@ python -m workbench serve --host 127.0.0.1 --port 8000
 - Health check: `GET /health` returns
 
 ```json
-{"status":"ok","backend":"files","llm":"qwen3:4b","llm_available":true,"profile":"gpu_4gb",
+{"status":"ok","backend":"files","llm":"qwen3:4b","llm_available":true,"profile":"gpu_4gb","effort":"medium",
  "documents":["CDU operating manual"],"resources":{"active_requests":0,"llm":"qwen3:4b","llm_loaded":false,
  "keep_warm":false,"idle_unload_seconds":45,"embedder_loaded":true,"reranker_loaded":true,"recent":[]},
  "active_runs":0}
@@ -31,7 +31,7 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/health` | liveness, backend, model, resource state |
+| GET | `/health` | liveness, backend, model, effort level, resource state |
 | GET | `/agents` | list of agents (key, class, phase, description) |
 | GET | `/schema` | JSON schemas of `FinalResponse`, `Block`, `UserRequest` |
 | POST | `/ask` | run a request synchronously, returns `FinalResponse` |

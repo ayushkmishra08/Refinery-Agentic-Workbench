@@ -96,12 +96,13 @@ def _ms(value: int) -> str:
 class ThinkingDisplay:
     """Renders the thinking of one run to the terminal and records it for the JSON trace."""
 
-    def __init__(self, query: str, *, llm_model: str = "", backend: str = "", profile: str = "") -> None:
+    def __init__(self, query: str, *, llm_model: str = "", backend: str = "", profile: str = "", effort: str = "") -> None:
         self.query = query
         self.llm_model = llm_model
         self.backend = backend
         self.profile = profile
-        self.collector = ThinkingTraceCollector(query, llm_model=llm_model, backend=backend, profile=profile)
+        self.effort = effort
+        self.collector = ThinkingTraceCollector(query, llm_model=llm_model, backend=backend, profile=profile, effort=effort)
         self.width = _width()
         self._phase_start = 0.0
         self._step_no = 0
@@ -145,7 +146,8 @@ class ThinkingDisplay:
     # ------------------------------------------------------------------ header / footer
     def print_header(self) -> None:
         self._header_printed = True
-        runtime = " · ".join(x for x in [f"backend {self.backend}" if self.backend else "", f"llm {self.llm_model}" if self.llm_model else "", f"profile {self.profile}" if self.profile else ""] if x)
+        runtime = " · ".join(x for x in [f"effort {self.effort}" if self.effort else "", f"backend {self.backend}" if self.backend else "",
+                                         f"llm {self.llm_model}" if self.llm_model else "", f"profile {self.profile}" if self.profile else ""] if x)
         print()
         self._rule(char="━", style="cyan")
         print(_c("bold", "  Refinery Engineering AI Workbench"))
@@ -155,7 +157,12 @@ class ThinkingDisplay:
         self._rule(char="━", style="cyan")
 
     def print_answer(self, resp, answer_markdown: str) -> None:
-        """Print the released answer, then the one-line run summary."""
+        """Print the released answer, then the one-line run summary.
+
+        The footer carries what an operator must act on — the status and whether a human has
+        to sign off. Confidence, grounding scores and the audit id live in the thinking above
+        and in the saved trace, so the answer itself reads like an answer.
+        """
         print()
         self._rule(char="━", style="green")
         print(_c("bold", "  ANSWER"))
@@ -165,16 +172,15 @@ class ThinkingDisplay:
         print()
         self._rule()
         style = STATUS_STYLE.get(resp.status, "dim")
-        parts = [
-            _c(style, _c("bold", resp.status.upper())),
-            f"confidence {resp.confidence.score:.2f} ({resp.confidence.level})",
-            "human review " + (_c("yellow", "required") if resp.requires_human_review else "not required"),
-            _ms(resp.timing_ms),
-        ]
+        parts = [_c(style, _c("bold", resp.status.upper()))]
+        if resp.requires_human_review:
+            parts.append(_c("yellow", "human review required"))
+        if resp.safety_flags:
+            parts.append(f"{len(resp.safety_flags)} safety flag(s)")
+        parts += [f"{len(resp.evidence)} citation(s)", _ms(resp.timing_ms)]
         print("  " + " · ".join(parts))
-        print(_c("dim", f"  {resp.llm_calls} LLM call(s) · {len(resp.evidence)} evidence item(s) · {len(resp.safety_flags)} safety flag(s) · audit {resp.audit_trail_id}"))
         if resp.review_reason:
-            self._wrap(f"Review reason: {resp.review_reason}", "  ", "yellow")
+            self._wrap(f"Review reason: {resp.review_reason}", "  ", "yellow", repeat_prefix=False)
 
     def print_trace_saved(self, path) -> None:
         print(_c("dim", f"  Thinking trace: {path}"))

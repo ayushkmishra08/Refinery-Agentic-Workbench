@@ -248,3 +248,36 @@
     - text: Is this safe?
       expected_task: ambiguous
       min_blocks: [clarification]
+- category: inventory
+  prompts:
+    - text: What are all the equipments in the refinery?
+      expected_task: inventory
+      expected_agents: [lookup]
+      min_blocks: [table]
+    - text: List all the pumps
+      expected_task: inventory
+      expected_agents: [lookup]
+      min_blocks: [table]
+    - text: How many columns are there?
+      expected_task: inventory
+      expected_agents: [lookup]
+      min_blocks: [table]
+    - text: What does this manual cover?
+      expected_task: inventory
+      expected_agents: [lookup, cross_document]
+      min_blocks: [table]
+    - text: What equipment is in the vacuum section?
+      expected_task: inventory
+      expected_agents: [lookup]
+      min_blocks: [table]
+- category: out_of_scope
+  prompts:
+    - text: What is the capital of France?
+      expected_task: ambiguous
+      allow_ambiguous: true
+    - text: Write me a poem about pumps
+      expected_task: ambiguous
+      allow_ambiguous: true
+    - text: hello
+      expected_task: ambiguous
+      allow_ambiguous: true

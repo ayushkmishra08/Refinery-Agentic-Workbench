@@ -40,6 +40,13 @@ class KnowledgeService(Protocol):
         """Tag / alias / name / fuzzy resolution, best first."""
     def get_entity(self, entity_uid: str) -> EntityRecord | None: ...
     def search_entities(self, query: str, entity_type: str | None = None, limit: int = 10) -> list[EntityRecord]: ...
+    def list_entities(self, entity_type: str | None = None, tagged_only: bool = True, min_mentions: int = 1,
+                      limit: int = 500) -> list[EntityRecord]:
+        """Every known entity, most-mentioned first — the corpus inventory, not a search."""
+    def entity_type_counts(self, tagged_only: bool = True, min_mentions: int = 1) -> dict[str, int]:
+        """How many entities of each type the corpus holds, largest group first.
+
+        Same filters as ``list_entities`` so the counts and the listing agree."""
 
     # claims ----------------------------------------------------------------
     def entity_claims(self, entity_uid: str, predicate: str | None = None, context: dict | None = None) -> list[ClaimRecord]:

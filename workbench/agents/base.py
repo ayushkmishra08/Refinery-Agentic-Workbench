@@ -205,11 +205,24 @@ class BaseAgent:
         return snippet
 
 
-def blocks_to_markdown(blocks: list[Block]) -> str:
-    """Plain-text fallback rendering used for answer_markdown and the CLI."""
+# Blocks whose content is reasoning about the answer rather than the answer. The CLI hides
+# them because the thinking display and the saved trace already carry that information; a
+# frontend shows them in their own panels.
+REASONING_BLOCKS = {"confidence", "audit", "plan", "verification"}
+
+
+def blocks_to_markdown(blocks: list[Block], skip: set[str] | None = None) -> str:
+    """Plain-text fallback rendering used for answer_markdown and the CLI.
+
+    ``skip`` drops whole block types. The CLI passes the governance blocks (confidence,
+    plan, audit) because the thinking display already shows that reasoning; the API and
+    ``answer_markdown`` keep everything, since a frontend renders each block in its own panel.
+    """
     out: list[str] = []
     for b in blocks:
         t = b.type
+        if skip and (t in skip or b.id in skip):
+            continue
         if t in ("text", "callout"):
             prefix = {"warning": "**Warning:** ", "danger": "**DANGER:** ", "success": "", "info": ""}.get(getattr(b, "level", "info"), "")
             out.append((f"### {b.title}\n" if b.title else "") + prefix + b.markdown)

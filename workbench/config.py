@@ -139,6 +139,62 @@ class LLMSettings(BaseModel):
     use_llm_for_extraction: bool = Field(default=True, description="Causes/checks extraction from upset chunks")
 
 
+class EffortSettings(BaseModel):
+    """How much work one request is allowed to do.
+
+    Low answers from the cheapest index and never calls a model; medium (the default) is the
+    deterministic pipeline with a model only where the rules are unsure; high widens retrieval
+    and lets the agents write narrative; ultra adds the reranker, LLM plan refinement and a
+    larger replan budget. Higher levels cost seconds, not accuracy — every level answers from
+    the same evidence, the deeper ones just look at more of it.
+    """
+    name: str = "medium"
+    retrieval_k: int = 8                  # passages kept per hybrid search
+    graph_hops: int = 1                   # relationship hops for topology questions
+    procedure_candidates: int = 6         # procedures pulled per retrieval route
+    inventory_limit: int = 60             # rows in a survey / inventory answer
+    max_replan_iterations: int = 2
+    use_reranker: bool = False
+    use_vectors: bool = True
+    llm_classification: bool = True       # ask the model only when the rules are unsure
+    llm_entity_guess: bool = False        # ask the model to name equipment the resolver missed
+    llm_narrative: bool = False           # let the model write the prose summaries
+    llm_extraction: bool = False          # let the model structure causes / checks / actions
+    llm_plan_refinement: bool = False     # let the model add steps to a planning DAG
+    note: str = ""
+
+
+EFFORT_LEVELS: dict[str, EffortSettings] = {
+    "low": EffortSettings(
+        name="low", retrieval_k=5, graph_hops=1, procedure_candidates=4, inventory_limit=30, max_replan_iterations=0,
+        use_reranker=False, use_vectors=False, llm_classification=False,
+        note="Index only: rules, claims and BM25. No model call, no vectors — sub-second answers for values, tags and lists.",
+    ),
+    "medium": EffortSettings(
+        name="medium", retrieval_k=8, graph_hops=1, procedure_candidates=6, inventory_limit=30, max_replan_iterations=2,
+        use_reranker=False, use_vectors=True, llm_classification=True,
+        note="Default: deterministic agents with vector retrieval; the model is asked only when the rules are unsure.",
+    ),
+    "high": EffortSettings(
+        name="high", retrieval_k=12, graph_hops=2, procedure_candidates=10, inventory_limit=120, max_replan_iterations=2,
+        use_reranker=True, use_vectors=True, llm_classification=True, llm_entity_guess=True, llm_narrative=True,
+        llm_plan_refinement=True,
+        note="Wider retrieval with the reranker; the model resolves missed equipment, writes the narrative and may add plan steps.",
+    ),
+    "ultra": EffortSettings(
+        name="ultra", retrieval_k=20, graph_hops=3, procedure_candidates=16, inventory_limit=400, max_replan_iterations=3,
+        use_reranker=True, use_vectors=True, llm_classification=True, llm_entity_guess=True, llm_narrative=True,
+        llm_extraction=True, llm_plan_refinement=True,
+        note="Everything on: widest retrieval, model-structured diagnosis and model-refined plans. Minutes, not seconds, on a 4 GB card.",
+    ),
+}
+
+
+def select_effort(name: str | None = None) -> EffortSettings:
+    chosen = (name or os.getenv("RWB_EFFORT") or "medium").lower()
+    return EFFORT_LEVELS.get(chosen, EFFORT_LEVELS["medium"]).model_copy(deep=True)
+
+
 class RetrievalSettings(BaseModel):
     bm25_k: int = 30
     vector_k: int = 30
@@ -174,6 +230,7 @@ class WorkbenchConfig(BaseModel):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     retrieval: RetrievalSettings = Field(default_factory=RetrievalSettings)
     governance: GovernanceSettings = Field(default_factory=GovernanceSettings)
+    effort: EffortSettings = Field(default_factory=select_effort)
     knowledge_backend: str = Field(default="auto", description="auto | files | mock | neo4j")
     document_ids: list[str] = Field(default_factory=list, description="Knowledge-layer documents to load; empty = all found")
     knowledge_layer: PipelineConfig = Field(default_factory=load_kl_config)
@@ -195,6 +252,23 @@ class WorkbenchConfig(BaseModel):
             self.retrieval.use_reranker = False
         self.llm.use_llm_for_extraction = p.llm_extraction
 
+    def apply_effort(self, name: str | None = None) -> None:
+        """Re-point the retrieval, governance and LLM switches at one effort level.
+
+        The hardware profile still has the last word: a level may not switch on a reranker the
+        profile has no model for, nor the LLM when it is disabled or absent.
+        """
+        e = select_effort(name)
+        self.effort = e
+        self.retrieval.final_k = e.retrieval_k
+        self.retrieval.fused_k = max(e.retrieval_k * 2, 20)
+        self.retrieval.use_vectors = e.use_vectors
+        self.retrieval.use_reranker = e.use_reranker and self.retrieval.reranker_model is not None
+        self.governance.max_replan_iterations = e.max_replan_iterations
+        self.llm.use_llm_for_classification = e.llm_classification
+        self.llm.use_llm_for_narrative = e.llm_narrative
+        self.llm.use_llm_for_extraction = e.llm_extraction
+
     def discovered_documents(self) -> list[str]:
         """Document ids whose knowledge-layer artefacts exist (normalized + chunks)."""
         kl = self.knowledge_layer.paths
@@ -213,9 +287,10 @@ class WorkbenchConfig(BaseModel):
         return "files" if (self.document_ids or self.discovered_documents()) else "mock"
 
 
-def load_config() -> WorkbenchConfig:
+def load_config(effort: str | None = None) -> WorkbenchConfig:
     cfg = WorkbenchConfig()
     cfg.apply_profile()
+    cfg.apply_effort(effort)
     env = os.getenv
     if v := env("RWB_LLM_MODEL"):
         cfg.llm.model = v

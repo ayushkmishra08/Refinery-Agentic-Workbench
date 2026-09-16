@@ -70,6 +70,29 @@ class CompositeKnowledgeService:
     def search_entities(self, query: str, entity_type: str | None = None, limit: int = 10):
         return self._concat("search_entities", query, entity_type, limit)[:limit]
 
+    def list_entities(self, entity_type: str | None = None, tagged_only: bool = True, min_mentions: int = 1,
+                      limit: int = 500, plant_only: bool = True):
+        rows = self._concat("list_entities", entity_type, tagged_only, min_mentions, limit, plant_only)
+        seen: set[str] = set()
+        out = []
+        for e in rows:
+            if e.entity_uid in seen:
+                continue
+            seen.add(e.entity_uid)
+            out.append(e)
+        out.sort(key=lambda e: (-e.mention_count, e.canonical_tag or e.name))
+        return out[:limit]
+
+    def entity_type_counts(self, tagged_only: bool = True, min_mentions: int = 1, plant_only: bool = True) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for s in self.services:
+            fn = getattr(s, "entity_type_counts", None)
+            if fn is None:
+                continue
+            for k, v in fn(tagged_only, min_mentions, plant_only).items():
+                counts[k] = counts.get(k, 0) + v
+        return dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
+
     def entity_claims(self, entity_uid: str, predicate: str | None = None, context: dict | None = None):
         return self._concat("entity_claims", entity_uid, predicate, context)
 

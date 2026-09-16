@@ -74,6 +74,7 @@ RULES: dict[TaskType, list[tuple[str, float]]] = {
     TaskType.REPORT: [
         (r"\b(prepare|generate|create|write|produce|make) (me )?(a |an |the )?(\w+ ){0,3}(report|summary of all|engineering report|troubleshooting report|comparison report)\b", 4.2),
         (r"\breport (on|about|explaining|for)\b", 2.0), (r"\bsummary of (all )?(major )?equipment\b|\bsummar(y|ize|ise) (the|all)\b", 1.6),
+        (r"\b(everything|all the information|all details|the full picture|a complete picture) (about|on|for)\b", 3.0),
     ],
     TaskType.CROSS_DOCUMENT: [
         (r"\bwhich documents?\b|\bwhat documents?\b", 4.5), (r"\bfind all (the )?sections\b|\bwhich sections\b|\bsections that (mention|describe|cover)\b|\ball sections\b", 4.5),
@@ -92,15 +93,35 @@ RULES: dict[TaskType, list[tuple[str, float]]] = {
         (r"\bwhy is .* (heated|cooled|installed|routed|used|required|needed|provided|placed|located|before|after)\b", 2.4), (r"\bpurpose of\b|\bwhat is the (role|function|purpose|reason)\b|\bwhat does .* do\b", 2.0),
         (r"\bexplain (why|how .* works?|the (working|principle|operation) of)\b|\bprinciple of\b", 2.0), (r"\bwhy (is|are) (steam|reflux|stripping steam|chemical|caustic|ammonia|demulsifier|corrosion inhibitor) (used|injected|added)\b", 2.4),
     ],
+    TaskType.INVENTORY: [
+        # scope-wide questions with no single subject: what exists, how much of it, what the manual covers
+        (r"\b(what|which) (are|is) (all )?(the )?(equipment|equipments|machinery|assets)\b", 3.6),
+        (r"\b(list|show|give|tell) (me )?(all|every|each)\b", 3.0), (r"\ball (of )?(the )?(equipment|equipments|pumps|columns|heaters|furnaces|exchangers|vessels|drums|tanks|instruments|valves|strippers|coolers|condensers|controllers)\b", 3.0),
+        (r"\bhow many\b", 3.2), (r"\b(equipment|asset|tag) (list|inventory|register)\b|\binventory\b", 3.4),
+        (r"\b(list|enumerate) (the |all )?(equipment|pumps|columns|heaters|exchangers|vessels|instruments|valves|tags|units|sections)\b", 3.4),
+        (r"\b(overview|summary|scope) of (the )?(unit|units|plant|refinery|document|documents|manual|cdu|vdu|process)\b", 3.2),
+        (r"\bwhat (does|do) (this|the) (document|manual|documents?) (cover|contain|describe|include)\b", 3.6),
+        (r"\bwhat (can|could) (you|it) (tell me|do|answer|help)\b|\bwhat do you know\b\s*\??\s*$", 3.6),
+        (r"\bwhat (equipment|pumps|columns|heaters|exchangers|vessels|instruments) (are|is) (there|in|available|present|installed)\b", 3.4),
+    ],
     TaskType.LOOKUP: [
         (r"\bwhat (is|are) the (normal|design|rated|maximum|minimum|operating|mechanical|allowable|trip|alarm)? ?(flow ?rate|flow|pressure|temperature|capacity|rating|speed|level|duty|head|npsh|power)\b", 2.4),
         (r"\bwhat (is|are) (the )?(design|normal|rated) (pressure|temperature|flow|capacity)\b", 2.4), (r"\bwhat products? (are|is) (produced|made)\b|\bwhat does .* produce\b", 2.0),
         (r"\bwhich pumps? (are|is) available\b|\bwhat pumps? (are|is) (available|used)\b|\bavailable for\b", 2.6), (r"^\s*what is [0-9]{1,3}-[a-z]{1,4}-[0-9]{1,5}[a-z/]*\s*\??\s*$", 3.0),
         (r"\bwhat (is|are) (its|the) (normal|design)\b", 2.2), (r"\b(tag|name|type|service|duty|capacity|specifications?|spec|datasheet|data sheet) (of|for)\b", 1.4),
         (r"^\s*what (is|are) (the |an? )?[\w /-]{3,40}\??\s*$", 1.0),
+        (r"\btell me about\b|\bwhat do you know about\b|\bgive me the details (of|for)\b|^\s*describe (the )?\w", 1.8),
     ],
 }
 COMPILED = {t: [(re.compile(p, re.IGNORECASE), w) for p, w in rules] for t, rules in RULES.items()}
+# Requests the documents cannot serve: general knowledge, creative writing, or a greeting.
+# Recognised here so the run never pays for an LLM opinion on a question that is out of scope.
+OUT_OF_SCOPE_RE = re.compile(
+    r"\b(poem|haiku|joke|song|lyrics|story|novel|essay|recipe|weather|capital of|president of|prime minister|"
+    r"translate|translation|stock price|football|cricket|movie|who won|what year (was|did)|horoscope)\b", re.IGNORECASE)
+GREETING_RE = re.compile(
+    r"^\s*(hi|hello|hey|yo|thanks|thank you|help|test|ping|what can you do|who are you|what are you|"
+    r"what do you do|how do you work)\b[\s!?.]*$", re.IGNORECASE)
 SAFETY_HINT_RE = re.compile(r"\b(safety|isolat|hazard|ppe|interlock|trip|bypass|permit|maintenance|open(ing)? (the |this )?equipment|emergency|fire|toxic|h2s|relief)\b", re.IGNORECASE)
 
 
@@ -160,6 +181,9 @@ class TaskClassifierAgent(BaseAgent):
                 out.confidence = 0.55
             except ValueError:
                 pass
+        if OUT_OF_SCOPE_RE.search(text) or GREETING_RE.match(text):
+            out.signals.append("outside what the loaded documents cover")
+            out.confidence = max(out.confidence, 0.9)        # decided; no LLM opinion needed
         use_llm = self.cfg.llm.use_llm_for_classification and out.confidence < self.cfg.llm.classifier_confidence_threshold
         if use_llm:
             llm = self.llm_json("task_classifier", LLMClassification, result, max_tokens=160, purpose="classify",
@@ -193,5 +217,6 @@ def _default_intent(t: TaskType, text: str) -> str:
         TaskType.TROUBLESHOOTING: "Diagnose a deviation from documented causes and checks", TaskType.LIMITS: "Compare against the documented operating envelope",
         TaskType.EXPLANATION: "Explain the documented reasoning", TaskType.SAFETY: "Retrieve documented safety requirements", TaskType.COMPARISON: "Compare documented values side by side",
         TaskType.CONFLICT: "Resolve differing documented values", TaskType.PROVENANCE: "Show sources and revisions", TaskType.PLANNING: "Build a work / investigation plan",
-        TaskType.REPORT: "Generate an engineering report", TaskType.CROSS_DOCUMENT: "Locate documents and sections", TaskType.AMBIGUOUS: "Clarify the request",
+        TaskType.REPORT: "Generate an engineering report", TaskType.CROSS_DOCUMENT: "Locate documents and sections",
+        TaskType.INVENTORY: "What the documents cover", TaskType.AMBIGUOUS: "Clarify the request",
     }.get(t, text[:80])

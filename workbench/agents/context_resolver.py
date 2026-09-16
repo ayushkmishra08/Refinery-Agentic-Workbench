@@ -14,6 +14,7 @@ import re
 from pydantic import BaseModel, Field
 
 from workbench.agents.base import BaseAgent
+from workbench.agents.task_classifier import GREETING_RE, OUT_OF_SCOPE_RE
 from workbench.core.blocks import ClarificationBlock
 from workbench.core.context import ContextPackage
 from workbench.core.plan import PlanStep
@@ -74,6 +75,22 @@ SIMPLE_SYMPTOMS = [
     (r"\brepeated trips?\b|\bkeeps tripping\b|\btripped\b|\btripping\b", "trip", "trip"), (r"\blosing suction\b|\bloss of suction\b|\bcavitat", "suction", "lost"),
     (r"\bfailures?\b", "failure", "failure"), (r"\bleak(s|ing|age)?\b", "leak", "leak"), (r"\bvibration\b", "vibration", "high"),
 ]
+# plural / class words -> the entity_type the index uses, for inventory questions ("list all the pumps")
+SUBJECT_TYPES = [
+    (r"\bpumps?\b", "Pump"), (r"\bcolumns?\b|\btowers?\b", "Column"), (r"\bstrippers?\b", "Stripper"),
+    (r"\b(heaters?|furnaces?)\b", "Heater"), (r"\b(exchangers?|heat exchangers?)\b", "Exchanger"),
+    (r"\bvessels?\b", "Vessel"), (r"\bdrums?\b", "Drum"), (r"\btanks?\b", "Tank"), (r"\bdesalters?\b", "Desalter"),
+    (r"\b(relief|safety) valves?\b|\bpsvs?\b|\btsvs?\b", "ReliefValve"), (r"\bcontrol valves?\b", "ControlValve"),
+    (r"\bcontrollers?\b", "Controller"), (r"\binstruments?\b|\btransmitters?\b|\bindicators?\b", "Instrument"),
+    (r"\bcoolers?\b", "Cooler"), (r"\bcondensers?\b", "Condenser"), (r"\bejectors?\b", "Ejector"),
+    (r"\breboilers?\b", "Reboiler"), (r"\banaly[sz]ers?\b", "Analyzer"),
+]
+SCOPES = [
+    (r"\brefinery\b|\bwhole (plant|unit|refinery)\b|\bentire (plant|unit|refinery)\b", "refinery"),
+    (r"\bvacuum (section|unit)\b|\bvdu\b", "vacuum section"), (r"\batmospheric section\b|\bcdu\b", "atmospheric section"),
+    (r"\bpreheat train\b", "preheat train"), (r"\bstabili[sz]er section\b", "stabilizer section"),
+    (r"\b(this|the) (document|manual)\b|\bdocuments\b", "document"),
+]
 PRONOUN_RE = re.compile(r"\b(it|this|that|these|those|this (one|equipment|pump|column|heater|vessel|valve|exchanger|instrument|protection|chemical)|the same (equipment|pump)|which one|the (pump|heater|column|equipment|vessel|unit|section))\b", re.IGNORECASE)
 GENERIC_EQUIPMENT_RE = re.compile(r"\b(the|this|that) (pump|heater|column|vessel|drum|exchanger|valve|instrument|compressor|furnace|tower|equipment)\b", re.IGNORECASE)
 ENTITY_REQUIRED = {TaskType.LOOKUP, TaskType.PROCEDURE, TaskType.TROUBLESHOOTING, TaskType.LIMITS, TaskType.MULTI_HOP, TaskType.COMPARISON, TaskType.CONFLICT, TaskType.PROVENANCE}
@@ -91,6 +108,7 @@ EVIDENCE_REQUIREMENTS = {
     TaskType.PLANNING: ["relevant procedures", "operating envelope", "safety constraints", "missing data"],
     TaskType.REPORT: ["documented facts with citations", "topology", "procedures"],
     TaskType.CROSS_DOCUMENT: ["matching sections", "cross references", "standing instructions", "referenced documents"],
+    TaskType.INVENTORY: ["the documents in scope", "entities grouped by equipment class", "a tag and page for each item"],
     TaskType.AMBIGUOUS: [],
 }
 
@@ -99,6 +117,13 @@ class LLMEntityGuess(BaseModel):
     equipment_mentions: list[str] = Field(default_factory=list, description="Equipment names or tags mentioned, verbatim")
     parameter: str | None = None
     action: str | None = None
+
+
+def _class_words(entity_type: str) -> set[str]:
+    """The plural / singular words that mean this equipment class, normalised for comparison."""
+    base = entity_type.lower()
+    spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", entity_type).lower()   # ReliefValve -> relief valve
+    return {norm_alias(w) for w in {base, base + "s", spaced, spaced + "s"}}
 
 
 class ContextResolverAgent(BaseAgent):
@@ -120,6 +145,8 @@ class ContextResolverAgent(BaseAgent):
         req.action = self._first(ACTIONS, text)
         req.scenario = self._first(SCENARIOS, text)
         req.operating_mode = self._first(OPERATING_MODES, text)
+        req.subject_type = self._first(SUBJECT_TYPES, text)
+        req.scope = self._first(SCOPES, text)
         if location and req.parameter == "pressure":
             req.evidence_requirements.append(f"location = {location}")
         # session fallback for pronouns / generic equipment words
@@ -135,8 +162,11 @@ class ContextResolverAgent(BaseAgent):
                 break
         if not req.parameter and session is not None and req.task_type == TaskType.LIMITS and req.quantities and not req.quantities[0].unit:
             req.parameter = session.last_parameter()
-        # LLM assist only when nothing resolved and an equipment word is present
-        if not req.entities and self.llm.available() and re.search("|".join(w for w in EQUIPMENT_WORDS if " " not in w), text, re.IGNORECASE):
+        # LLM assist only when nothing resolved and an equipment word is present. A survey question
+        # ("list all the pumps") has no single subject by design, so the model is not asked for one.
+        if (not req.entities and req.task_type != TaskType.INVENTORY and self.llm.available()
+                and self.cfg.effort.llm_entity_guess
+                and re.search("|".join(w for w in EQUIPMENT_WORDS if " " not in w), text, re.IGNORECASE)):
             guess = self.llm_json("context_resolver", LLMEntityGuess, result, max_tokens=120, purpose="entity_guess", request=text)
             if guess:
                 for m in guess.equipment_mentions[:3]:
@@ -151,8 +181,21 @@ class ContextResolverAgent(BaseAgent):
         if req.safety_status == SafetyStatus.RESTRICTED and req.task_type != TaskType.SAFETY:
             req.secondary_task_types = [req.task_type, *[t for t in req.secondary_task_types if t != TaskType.SAFETY]]
             req.task_type = TaskType.SAFETY
+        # a survey question is about a class, not an item: "pumps" is the scope, not an entity
+        if req.task_type == TaskType.INVENTORY and req.subject_type:
+            req.entities = [e for e in req.entities if norm_alias(e.mention) not in _class_words(req.subject_type)]
         req.ambiguities = self._ambiguities(req)
-        if req.ambiguities and req.task_type in ENTITY_REQUIRED | {TaskType.SAFETY, TaskType.EXPLANATION} and self._must_clarify(req):
+        unrecognised = (classification.confidence <= 0.25 and not req.entities and not req.unresolved_mentions
+                        and not req.parameter and not req.action and not req.quantities and not req.subject_type)
+        if GREETING_RE.match(text) or OUT_OF_SCOPE_RE.search(text) or unrecognised:
+            # nothing in the documents can answer this; say what the workbench does instead of
+            # asking which pump the user means.
+            req.ambiguities = ["out_of_scope"]
+            req.secondary_task_types = [req.task_type, *req.secondary_task_types]
+            req.task_type = TaskType.AMBIGUOUS
+            req.intent = "Explain what the loaded documents can answer"
+            req.entities = []
+        elif req.ambiguities and req.task_type in ENTITY_REQUIRED | {TaskType.SAFETY, TaskType.EXPLANATION} and self._must_clarify(req):
             req.secondary_task_types = [req.task_type, *req.secondary_task_types]
             req.task_type = TaskType.AMBIGUOUS
         req.evidence_requirements = EVIDENCE_REQUIREMENTS.get(req.task_type, []) + req.evidence_requirements
@@ -311,6 +354,8 @@ class ContextResolverAgent(BaseAgent):
     # ------------------------------------------------------------------ plan step: clarify
     def execute(self, request: StructuredRequest, context: ContextPackage, step: PlanStep, result: AgentResult) -> None:
         missing = list(request.ambiguities) or ["entity"]
+        if missing == ["out_of_scope"]:
+            return self._capabilities(result)
         options: list[str] = []
         text = request.original.text
         if "entity" in missing:
@@ -322,6 +367,8 @@ class ContextResolverAgent(BaseAgent):
                 options += [e.name for e in self.knowledge.search_entities(word_m.group(2), limit=6)]
             elif request.unresolved_mentions:
                 options += [e.name for m in request.unresolved_mentions[:2] for e in self.knowledge.search_entities(m, limit=3)]
+            if not options:
+                options += [e.name for e in self.knowledge.list_entities(limit=5)]   # the most-referenced equipment
         questions = {
             "entity": "Which equipment do you mean? Give the tag (e.g. 11-P-01) or the name (e.g. crude charge pump).",
             "parameter": "Which parameter is the value for (flow rate, pressure, temperature, level ...)?",
@@ -335,3 +382,31 @@ class ContextResolverAgent(BaseAgent):
         result.content["intended_task_type"] = intended
         result.summary = f"clarification requested: {', '.join(missing)}"
         result.confidence = self.confidence(0.2, "request could not be anchored to a documented entity", [f"missing {m}" for m in missing])
+
+    # ------------------------------------------------------------------ out of scope
+    def _capabilities(self, result: AgentResult) -> None:
+        """Say what the workbench answers, instead of guessing at a request the documents cannot serve.
+
+        Reached for greetings, "what can you do" and general-knowledge or creative requests. The
+        examples are generated from the documents actually loaded, so they always work.
+        """
+        docs = self.knowledge.documents()
+        scope = "; ".join(f"**{d.title or d.document_id}** ({d.unit or 'unit n/a'}, {d.total_pages or '?'} pages, revision {d.revision or 'n/a'})" for d in docs)
+        example = next((e.name.split(" (")[0] for e in self.knowledge.list_entities(entity_type="Pump", limit=1)), "the crude charge pump")
+        result.blocks.append(self.callout(
+            f"I answer engineering questions from the documents loaded here — {scope or 'no document is loaded'}. "
+            "I quote those documents and cite the page; I do not answer from general knowledge and I do not write "
+            "anything the documents do not say.", "info"))
+        result.blocks.append(self.text_block(
+            "\n".join([
+                f"- **A documented value** — \"What is the normal flow rate of the {example.lower()}?\"",
+                f"- **A limit check** — \"The {example.lower()} is operating at 520 m3/h. Is this acceptable?\"",
+                "- **A procedure** — \"What is the recommended way to start the CDU?\"",
+                "- **Troubleshooting** — \"The crude charge pump discharge pressure is dropping. What should I check?\"",
+                "- **Safety** — \"What safety precautions are required before working on the crude charge pump?\"",
+                "- **A flow path** — \"Trace the crude flow from the crude charge pump to the atmospheric column.\"",
+                "- **What exists** — \"What are all the equipments in the refinery?\" or \"List all the pumps\".",
+            ]), title="Try one of these"))
+        result.content["intended_task_type"] = "inventory"
+        result.summary = "out of scope: answered with the workbench's capabilities"
+        result.confidence = self.confidence(0.9, "the request is outside what the loaded documents can answer")

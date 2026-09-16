@@ -31,6 +31,7 @@ ROUTING_MATRIX: dict[TaskType, list[str]] = {
     TaskType.PLANNING: ["planner"],
     TaskType.REPORT: ["report"],
     TaskType.CROSS_DOCUMENT: ["cross_document"],
+    TaskType.INVENTORY: ["lookup", "cross_document"],
     TaskType.AMBIGUOUS: ["context_resolver"],
 }
 
@@ -38,7 +39,7 @@ RETRIEVAL_ROUTE: dict[TaskType, str] = {
     TaskType.LOOKUP: "claims", TaskType.LIMITS: "claims", TaskType.COMPARISON: "claims", TaskType.CONFLICT: "claims",
     TaskType.PROVENANCE: "claims", TaskType.MULTI_HOP: "graph", TaskType.PROCEDURE: "proc", TaskType.TROUBLESHOOTING: "hybrid",
     TaskType.EXPLANATION: "hybrid", TaskType.SAFETY: "hybrid", TaskType.CROSS_DOCUMENT: "hybrid", TaskType.REPORT: "hybrid",
-    TaskType.PLANNING: "hybrid", TaskType.AMBIGUOUS: "none",
+    TaskType.PLANNING: "hybrid", TaskType.INVENTORY: "inventory", TaskType.AMBIGUOUS: "none",
 }
 
 # Task types whose answers may lead to an operational action -> Safety agent reviews the result
@@ -146,6 +147,12 @@ def template_plan(req: StructuredRequest, plan_id: str) -> Plan:
             _s("procs", "procedure", "Collect related procedures", ["scope"], optional=True, mode="find"),
             _s("conflicts", "revision_conflict", "Check for conflicting values", ["facts"], optional=True, mode="check"),
             _s("report", "report", "Assemble the report", ["facts", "topology", "text", "procs", "conflicts"], mode="assemble"),
+        ]
+
+    elif t == TaskType.INVENTORY:
+        steps = [
+            _s("inventory", "lookup", "List what the documents cover, grouped by equipment class", mode="inventory"),
+            _s("scope", "cross_document", "Add the documents, chapters and standing instructions in scope", ["inventory"], optional=True, mode="scope"),
         ]
 
     elif t == TaskType.CROSS_DOCUMENT:

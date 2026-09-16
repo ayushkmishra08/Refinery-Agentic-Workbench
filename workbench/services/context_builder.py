@@ -44,6 +44,13 @@ CHUNK_TYPE_PREFS: dict[TaskType, list[str]] = {
     TaskType.MULTI_HOP: ["narrative", "equipment", "control", "procedure"],
 }
 ABBREV_RE = re.compile(r"\b[A-Z]{2,6}\b")
+# The manual numbers its plant sections in the tag itself (11-P-01 is atmospheric, 12-P-01 vacuum),
+# so a scoped survey ("what equipment is in the vacuum section") filters on the tag prefix.
+SCOPE_TAG_PREFIXES: dict[str, tuple[str, ...]] = {
+    "vacuum section": ("12-",),
+    "atmospheric section": ("11-",),
+    "stabilizer section": ("11-C-05", "11-V-03", "11-E-19", "11-E-20", "11-E-25"),
+}
 
 
 class ContextBuilder:
@@ -88,6 +95,31 @@ class ContextBuilder:
             pkg.timing_ms = int((time.time() - t0) * 1000)
             return pkg
 
+        if route == "inventory":
+            # A survey question has no single subject: list the corpus instead of searching it.
+            pkg.entity_counts = self.knowledge.entity_type_counts()
+            limit = self.cfg.effort.inventory_limit
+            prefixes = SCOPE_TAG_PREFIXES.get(req.scope or "")
+            if prefixes:
+                # plant-number prefixes are the manual's own section numbering (11- atmospheric,
+                # 12- vacuum), so the whole list is pulled and filtered rather than truncated first
+                rows = self.knowledge.list_entities(entity_type=req.subject_type, limit=2000)
+                pkg.entities = [e for e in rows if (e.canonical_tag or "").startswith(prefixes)][:limit]
+                pkg.entity_counts = {t: sum(1 for e in self.knowledge.list_entities(entity_type=t, limit=2000)
+                                            if (e.canonical_tag or "").startswith(prefixes))
+                                     for t in pkg.entity_counts}
+                pkg.entity_counts = {t: n for t, n in pkg.entity_counts.items() if n}
+                pkg.notes.append(f"scope filter: tags starting {', '.join(prefixes)} ({req.scope})")
+            else:
+                pkg.entities = self.knowledge.list_entities(entity_type=req.subject_type, limit=limit)
+            pkg.sections = self.knowledge.sections(req.original.text, limit=6)
+            pkg.standing_instructions = self.knowledge.standing_instructions(None)[:5]
+            if req.subject_type and not pkg.entities:
+                pkg.gaps.append(f"no tagged {req.subject_type.lower()} is recorded in the documents")
+            pkg.notes.append(f"inventory: type={req.subject_type or 'all'}, limit={self.cfg.effort.inventory_limit}")
+            pkg.timing_ms = int((time.time() - t0) * 1000)
+            return pkg
+
         if route in ("claims", "hybrid") or req.task_type in (TaskType.MULTI_HOP, TaskType.PLANNING, TaskType.REPORT):
             for uid in group_uids:
                 pkg.claims.extend(self.knowledge.entity_claims(uid))
@@ -104,7 +136,7 @@ class ContextBuilder:
                 pkg.notes.append(f"parameter filter available: {req.parameter}")
 
         if route in ("graph",) or req.task_type in (TaskType.TROUBLESHOOTING, TaskType.EXPLANATION, TaskType.PLANNING, TaskType.REPORT):
-            hops = 2 if req.task_type == TaskType.MULTI_HOP else 1
+            hops = self.cfg.effort.graph_hops + (1 if req.task_type == TaskType.MULTI_HOP else 0)
             for uid in group_uids:
                 pkg.relations.extend(self.knowledge.entity_neighbors(uid, hops=hops))
             if route == "graph":
@@ -117,7 +149,7 @@ class ContextBuilder:
             query = " ".join(x for x in [req.action or "", req.original.text] if x)
             seen: set[str] = set()
             for uid in (group_uids or [None]):
-                for p in self.knowledge.procedures(entity_uid=uid, query=query, procedure_type=None, limit=6):
+                for p in self.knowledge.procedures(entity_uid=uid, query=query, procedure_type=None, limit=self.cfg.effort.procedure_candidates):
                     if p.procedure_id not in seen:
                         seen.add(p.procedure_id)
                         pkg.procedures.append(p)

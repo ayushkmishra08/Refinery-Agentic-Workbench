@@ -205,6 +205,8 @@ class GovernanceAgent(BaseAgent):
         if not primary:
             missing = [m for r in ordered for m in r.missing]
             return CalloutBlock(id="lead", level="warning", title="No documented answer", markdown="The documents do not contain what was asked" + (": " + "; ".join(missing[:3]) if missing else "") + ". UNKNOWN is reported rather than a guess.")
+        if primary.blocks[0].type == "callout" and not primary.blocks[0].title:
+            return None                     # the agent already opened with its own one-line lead
         ents = ", ".join(e.name for e in request.entities if e.name)
         summary = primary.summary or ""
         if request.task_type in (TaskType.LOOKUP, TaskType.LIMITS) and primary.agent in ("lookup", "calculation"):

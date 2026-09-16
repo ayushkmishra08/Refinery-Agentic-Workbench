@@ -246,18 +246,22 @@ evidence-cited render blocks for a web front end.
 ```powershell
 python -m workbench status                      # hardware profile, models, backend, documents
 python -m workbench ask "What is the normal flow rate of the crude charge pump?"
+python -m workbench ask "What are all the equipments in the refinery?"   # survey the corpus, no entity needed
+python -m workbench ask "..." --effort low      # index only, no model; high/ultra widen retrieval and use the model
 python -m workbench ask "..." --no-thinking     # answer only; --json gives the raw FinalResponse
 python -m workbench trace --show                # replay the newest saved thinking trace
 python -m workbench repl                        # type "btw what's going on?" while a request runs
 python -m workbench serve --port 8000           # FastAPI + SSE for the frontend (docs/API.md)
-python -m workbench -v bench                    # 62-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 2.2 s mean
+python -m workbench -v bench                    # 70-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 0.5 s mean
 ```
 
 `ask` prints the agents' reasoning phase by phase as the run happens — which rules fired and what they scored,
 what each entity resolved to, why a retrieval route was chosen, the execution DAG with its dependencies, which
 model ran where, and how governance reached its verdict — then the answer, then the path of the JSON trace it
-saved under `data/workbench/thinking/`. See `docs/HOW_IT_WORKS.md` §11, and `docs/DEMO.md` for a question per
-capability.
+saved under `data/workbench/thinking/`. The answer itself carries only engineering content and citations;
+confidence, grounding and audit ids stay in the thinking and in the JSON. `--effort low|medium|high|ultra`
+sizes the request, from index-only in milliseconds to model-refined plans. See `docs/HOW_IT_WORKS.md` §11-12,
+and `docs/DEMO.md` for a question per capability.
 
 Today it reads the knowledge layer's on-disk artefacts (files backend, no Neo4j needed); the Neo4j backend is the
 pending integration step described in `docs/HANDOFF_KNOWLEDGE_LAYER_INTEGRATION.md`. Presentation-level explanation:

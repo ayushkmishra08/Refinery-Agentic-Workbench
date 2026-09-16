@@ -18,7 +18,7 @@ from workbench.orchestration.router import RETRIEVAL_ROUTE, ROUTING_MATRIX, SAFE
 def test_routing_matrix_and_routes_cover_every_task_type():
     assert set(ROUTING_MATRIX) == set(TaskType)
     assert set(RETRIEVAL_ROUTE) == set(TaskType)
-    assert set(RETRIEVAL_ROUTE.values()) <= {"claims", "graph", "proc", "hybrid", "none"}
+    assert set(RETRIEVAL_ROUTE.values()) <= {"claims", "graph", "proc", "hybrid", "inventory", "none"}
     assert SAFETY_REVIEWED <= set(TaskType)
 
 

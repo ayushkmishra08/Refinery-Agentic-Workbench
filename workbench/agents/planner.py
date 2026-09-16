@@ -86,7 +86,7 @@ class PlannerAgent(BaseAgent):
         if req.task_type != TaskType.AMBIGUOUS:
             extend_for_secondary(plan, req)
         prune(plan, req)
-        if req.task_type == TaskType.PLANNING and self.llm.available():
+        if req.task_type == TaskType.PLANNING and self.cfg.effort.llm_plan_refinement and self.llm.available():
             self._refine(plan, req, result)
         problems = plan.validate_dag()
         if problems:

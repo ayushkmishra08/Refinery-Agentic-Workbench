@@ -272,6 +272,55 @@ class IndexStore:
         hits.sort(key=lambda x: -x[0])
         return [e for _, e in hits[:limit]]
 
+    def _is_plant_item(self, e: EntityRecord) -> bool:
+        """True when the tag follows the plant convention ``<plant>-<class>-<serial>`` (11-C-01).
+
+        Two-part tags (C-1, T-68, D-86) come from checklist rows and standard names that the tag
+        pattern happens to match — "D-86" is the ASTM distillation method, not a drum. They stay
+        resolvable by name, but they are not equipment to list or count.
+        """
+        if not e.canonical_tag:
+            return False
+        ident = parse_tag(e.canonical_tag)
+        return bool(ident and ident.plant)
+
+    def _inventory_rows(self, entity_type: str | None, tagged_only: bool, min_mentions: int, plant_only: bool):
+        want = (entity_type or "").lower()
+        for e in self._entities.values():
+            if want and (e.entity_type or "").lower() != want:
+                continue
+            if tagged_only and not e.canonical_tag:
+                continue
+            if plant_only and not self._is_plant_item(e):
+                continue
+            if e.mention_count < min_mentions:
+                continue
+            yield e
+
+    def list_entities(self, entity_type: str | None = None, tagged_only: bool = True, min_mentions: int = 1,
+                      limit: int = 500, plant_only: bool = True) -> list[EntityRecord]:
+        """Every known entity, most-mentioned first — the corpus inventory, not a search.
+
+        ``tagged_only`` keeps the ones with a canonical tag, which is what an engineer means by
+        "the equipment"; untagged drafts are mention fragments. ``plant_only`` additionally
+        requires the plant-numbered tag convention.
+        """
+        rows = list(self._inventory_rows(entity_type, tagged_only, min_mentions, plant_only))
+        rows.sort(key=lambda e: (-e.mention_count, e.canonical_tag or e.name))
+        return rows[:limit]
+
+    def entity_type_counts(self, tagged_only: bool = True, min_mentions: int = 1, plant_only: bool = True) -> dict[str, int]:
+        """Counts must match what ``list_entities`` would return, or the summary contradicts the table.
+
+        Tag variants the extractor produced but never saw referenced (11-F-01A, 11-F-01I) have a
+        zero mention count; they are suffixed forms of a tag already listed, not extra equipment.
+        """
+        counts: dict[str, int] = {}
+        for e in self._inventory_rows(None, tagged_only, min_mentions, plant_only):
+            key = e.entity_type or "Unclassified"
+            counts[key] = counts.get(key, 0) + 1
+        return dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])))
+
     # ------------------------------------------------------------------ claims
     def entity_claims(self, entity_uid: str, predicate: str | None = None, context: dict | None = None) -> list[ClaimRecord]:
         rows = list(self._claims_by_subject.get(entity_uid, []))

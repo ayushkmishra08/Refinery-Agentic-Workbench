@@ -22,6 +22,7 @@ ROUTE_REASON = {
     "graph":  "the question is about connections, so the engineering graph is traversed before any text is read",
     "proc":   "the procedure index holds ordered steps with pages, so no vector search is needed",
     "hybrid": "the answer is in prose, so BM25 + vectors + reranker search the manual text",
+    "inventory": "the question is about what exists rather than about one item, so the entity index is listed instead of searched",
     "none":   "the request is ambiguous, so nothing is retrieved until it is clarified",
 }
 ACTION_MEANING = {
@@ -76,10 +77,16 @@ def resolution(req: StructuredRequest) -> str:
                 lines.append(f"  Other candidates sharing that name: {_fmt_list(e.candidates, 3)}.")
     elif req.unresolved_mentions:
         lines.append(f"No equipment tag resolved; treating {_fmt_list(req.unresolved_mentions, 3)} as a claim subject instead.")
+    elif req.subject_type:
+        lines.append(f"No single item named; the request is about the {req.subject_type.lower()} class as a whole.")
     else:
         lines.append("No specific equipment named — the request is scoped to the unit as a whole.")
     if req.resolved_from_session:
         lines.append("The pronoun was bound to the equipment from the previous turn in this session.")
+    if req.subject_type and req.entities:
+        lines.append(f"Equipment class in the wording: {req.subject_type}.")
+    if req.scope:
+        lines.append(f"Scope of the question: {req.scope}.")
     if req.parameter:
         lines.append(f"Parameter of interest: {req.parameter}.")
     if req.quantities:
@@ -113,6 +120,7 @@ def retrieval(req: StructuredRequest, pkg: ContextPackage) -> str:
         (len(pkg.claims), "claim(s)"), (len(pkg.relations), "relationship(s)"), (len(pkg.procedures), "procedure(s)"),
         (len(pkg.chunks), "text passage(s)"), (len(pkg.sections), "section(s)"), (len(pkg.conflicts), "conflict(s)"),
         (len(pkg.standing_instructions), "standing instruction(s)"), (len(pkg.glossary), "glossary term(s)"),
+        (len(pkg.entities) if pkg.route == "inventory" else 0, "listed entity(ies)"),
     ]
     got = [f"{n} {label}" for n, label in found if n]
     lines.append("Retrieved " + (", ".join(got) if got else "nothing") + f" in {pkg.timing_ms} ms.")

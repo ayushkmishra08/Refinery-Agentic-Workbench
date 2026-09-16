@@ -51,26 +51,27 @@ def _make_display(orch, text: str):
     from workbench.app.thinking_display import ThinkingDisplay
 
     return ThinkingDisplay(query=text, llm_model=getattr(orch.llm, "model", None) or orch.llm.name,
-                           backend=orch.backend_name, profile=orch.cfg.profile.name)
+                           backend=orch.backend_name, profile=orch.cfg.profile.name, effort=orch.cfg.effort.name)
 
 
 def _finish(orch, display, resp) -> None:
     """Print the answer below the thinking and save the trace as JSON."""
-    from workbench.agents.base import blocks_to_markdown
+    from workbench.agents.base import REASONING_BLOCKS, blocks_to_markdown
     from workbench.services.thinking_store import ThinkingStore
 
-    display.print_answer(resp, blocks_to_markdown(resp.blocks))
+    display.print_answer(resp, blocks_to_markdown(resp.blocks, skip=REASONING_BLOCKS))
     path = ThinkingStore(orch.cfg.paths.thinking_dir).save(display.collector.record_response(resp))
     display.print_trace_saved(path)
 
 
 def cmd_ask(args) -> None:
     from workbench.agents.base import blocks_to_markdown
+    from workbench.config import load_config
     from workbench.core.request import UserRequest
     from workbench.orchestration.orchestrator import Orchestrator
 
     show_thinking = not (args.no_thinking or args.json)
-    orch = Orchestrator()
+    orch = Orchestrator(load_config(args.effort))
     display = _make_display(orch, args.text) if show_thinking else None
     on_event = display.on_event if display else (_print_events if args.verbose else None)
 
@@ -88,12 +89,13 @@ def cmd_ask(args) -> None:
 
 def cmd_repl(args) -> None:
     from workbench.agents.base import blocks_to_markdown
+    from workbench.config import load_config
     from workbench.core.request import UserRequest
     from workbench.orchestration.orchestrator import Orchestrator
 
     show_thinking = not args.no_thinking
-    orch = Orchestrator(warm_start=True)
-    print(f"Refinery workbench REPL \u2014 backend {orch.backend_name}, llm {getattr(orch.llm, 'model', orch.llm.name)}, profile {orch.cfg.profile.name}.")
+    orch = Orchestrator(load_config(args.effort), warm_start=True)
+    print(f"Refinery workbench REPL \u2014 effort {orch.cfg.effort.name}, backend {orch.backend_name}, llm {getattr(orch.llm, 'model', orch.llm.name)}, profile {orch.cfg.profile.name}.")
     print("Type a question. While a run is in progress type 'btw <question>' to ask the status agent. 'quit' to exit.\n")
     current = {"run": None}
 
@@ -180,7 +182,7 @@ def cmd_status(args) -> None:
 
     cfg = load_config()
     llm = build_llm(cfg)
-    print(json.dumps({"vram_mb": detect_vram_mb(), "profile": cfg.profile.name, "llm_model": cfg.llm.model, "vision_model": cfg.llm.vision_model, "llm_available": llm.available(),
+    print(json.dumps({"vram_mb": detect_vram_mb(), "profile": cfg.profile.name, "effort": cfg.effort.model_dump(), "llm_model": cfg.llm.model, "vision_model": cfg.llm.vision_model, "llm_available": llm.available(),
                       "backend": cfg.resolve_backend(), "documents": cfg.discovered_documents(), "reranker": cfg.retrieval.reranker_model if cfg.retrieval.use_reranker else None}, indent=2))
 
 
@@ -213,11 +215,15 @@ def cmd_trace(args) -> None:
 
 
 def main() -> None:
+    from workbench.config import EFFORT_LEVELS
+
     p = argparse.ArgumentParser(prog="workbench", description="Refinery Engineering AI Workbench")
     p.add_argument("-v", "--verbose", action="store_true")
     sub = p.add_subparsers(dest="cmd", required=True)
-    a = sub.add_parser("ask"); a.add_argument("text"); a.add_argument("--session", default="cli"); a.add_argument("--json", action="store_true"); a.add_argument("--no-thinking", action="store_true", help="hide the phase-by-phase thinking and print only the answer"); a.set_defaults(fn=cmd_ask)
-    r = sub.add_parser("repl"); r.add_argument("--session", default="repl"); r.add_argument("--no-thinking", action="store_true", help="hide the phase-by-phase thinking and print only the answer"); r.set_defaults(fn=cmd_repl)
+    effort_help = ("how much work one request may do: low = index only, no model; medium = default; "
+                   "high = wider retrieval + reranker + model narrative; ultra = everything on (minutes on a 4 GB card)")
+    a = sub.add_parser("ask"); a.add_argument("text"); a.add_argument("--session", default="cli"); a.add_argument("--json", action="store_true"); a.add_argument("--effort", choices=list(EFFORT_LEVELS), default=None, help=effort_help); a.add_argument("--no-thinking", action="store_true", help="hide the phase-by-phase thinking and print only the answer"); a.set_defaults(fn=cmd_ask)
+    r = sub.add_parser("repl"); r.add_argument("--session", default="repl"); r.add_argument("--effort", choices=list(EFFORT_LEVELS), default=None, help=effort_help); r.add_argument("--no-thinking", action="store_true", help="hide the phase-by-phase thinking and print only the answer"); r.set_defaults(fn=cmd_repl)
     s = sub.add_parser("serve"); s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port", type=int, default=8000); s.set_defaults(fn=cmd_serve)
     b = sub.add_parser("bench"); b.add_argument("--category", nargs="*"); b.add_argument("--limit", type=int); b.add_argument("--llm", action="store_true"); b.set_defaults(fn=cmd_bench)
     sc = sub.add_parser("schema"); sc.add_argument("--out", default="docs/schema"); sc.set_defaults(fn=cmd_schema)
