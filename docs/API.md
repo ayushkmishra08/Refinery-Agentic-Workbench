@@ -58,7 +58,9 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | GET | `/runs/{run_id}/events` | Server-Sent Events stream of progress |
 | POST | `/runs/{run_id}/btw` | ask the status agent about one run |
 | POST | `/btw` | ask the status agent about the latest run of a session |
-| GET | `/sessions/{session_id}` | session memory (turns, uploads, pending clarification) |
+| GET | `/sessions` | the caller's own conversations, newest first (title, turns, when, attachments) |
+| GET | `/sessions/{session_id}` | one conversation: turns with the full released answer and its security envelope, attachments |
+| DELETE | `/sessions/{session_id}` | forget one of the caller's conversations, attachments included |
 | POST | `/upload` | attach a PDF or an image to **this conversation** (parsed, indexed, session-only) |
 | DELETE | `/upload?session_id=` | forget everything attached to this conversation |
 | POST | `/knowledge/documents/{id}/promote` | move an attachment into the shared knowledge layer (manager+) |
@@ -297,6 +299,18 @@ still says how sensitive the material is, and the banners, refusals and audit tr
 `GET /audit/{session_id}` (optionally `?audit_id=`) returns the JSONL records written during runs: `request`,
 `structured_request`, `plan`, `replan`, `step_result`, `final`, `error`. The `audit_trail_id` in every
 `FinalResponse` selects one run.
+
+### 2.8 Conversations — kept on the server, listed per person
+
+Every exchange is written to the session file as it lands, with the **full released answer** and
+the **security envelope it was released with**, so a conversation can be redrawn later exactly as
+it was — banner included — without recomputing anything against what the caller may read *now*.
+
+`GET /sessions` lists the caller's own conversations (owner is read from inside each record, not
+from the filename), newest first, with a title taken from the first question. `GET /sessions/{id}`
+returns the turns; touching a conversation also brings its attachments back into memory if the
+process that indexed them has since restarted (`attached_documents` says which are live). The
+client keeps only *which* conversation a tab has open (`?c=<id>`, mirrored to `sessionStorage`).
 
 ## 3. Sessions and follow-ups
 

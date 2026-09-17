@@ -361,6 +361,42 @@ export interface SessionTurn {
   answer_preview?: string; response_id?: string; entities?: unknown[];
 }
 
+// ---------------------------------------------------------------- conversations
+
+/** One row in the sidebar: enough to recognise a conversation and pick it up again. */
+export interface ConversationSummary {
+  session_id: string;
+  title: string;
+  turns: number;
+  created: number | null;
+  updated: number | null;
+  attachments: string[];
+  last_status: string;
+}
+
+/** One exchange as the server remembers it — what is needed to redraw it, no more. */
+export interface StoredTurn {
+  ts: number;
+  request: string;
+  rewritten_request?: string;
+  task_type?: string;
+  status?: string;
+  response_id?: string | null;
+  answer_markdown?: string;
+  answer_preview?: string;
+  security?: Partial<SecurityEnvelope> | null;
+}
+
+/** `GET /sessions/{id}`: the whole conversation, plus which attachments are live for it now. */
+export interface SessionSnapshot {
+  session_id: string;
+  owner: string;
+  created: number;
+  turns: StoredTurn[];
+  uploaded_documents: { document_id: string; name: string; kind: string; added: number }[];
+  attached_documents?: string[];
+}
+
 export interface UploadResult {
   document_id: string; pages?: number; chunks?: number; note?: string; filename?: string;
   detail?: string;

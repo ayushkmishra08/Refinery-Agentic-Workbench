@@ -20,6 +20,7 @@ import { countdown } from "@/lib/format";
 import type { Role } from "@/lib/types";
 import { ROLE_TITLE, TAG_TONE, useAuth } from "@/store/auth";
 import { Badge, Button } from "@/ui";
+import { RecentConversations } from "@/components/RecentConversations";
 
 interface NavItem { to: string; label: string; icon: ReactNode; minRole?: Role; hint?: string }
 
@@ -136,8 +137,9 @@ export default function AppShell() {
 
       {/* ---------------------------------------------------------------- body */}
       <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-52 shrink-0 border-r border-border/70 bg-white/40 p-3 lg:block">
+        <aside className="hidden w-60 shrink-0 flex-col border-r border-border/70 bg-white/40 p-3 lg:flex">
           {nav}
+          <RecentConversations username={session.username} />
           <div className="mt-4 rounded-lg border border-border/70 bg-white/50 p-2.5">
             <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">Clearance</p>
             <div className="mt-1.5 flex flex-wrap gap-1">

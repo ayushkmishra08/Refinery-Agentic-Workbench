@@ -13,9 +13,9 @@
  * and auth problems throw.
  */
 import type {
-  AccessRequest, AgentDescription, ApprovalResult, Block, DocumentRolesResult, FinalResponse,
+  AccessRequest, AgentDescription, ApprovalResult, Block, ConversationSummary, DocumentRolesResult, FinalResponse,
   Health, IngestRun, KnowledgeTree, LoginResult, MfaChallenge, MfaEnrolment, MfaStatus, Role,
-  SecurityOverview, UploadResult, WhoAmI, WorkspaceStats,
+  SecurityOverview, SessionSnapshot, UploadResult, WhoAmI, WorkspaceStats,
 } from "@/lib/types";
 
 const BASE = import.meta.env.VITE_WORKBENCH_URL ? String(import.meta.env.VITE_WORKBENCH_URL) : "/api";
@@ -165,6 +165,14 @@ export const api = {
           method: "POST",
           body: JSON.stringify({ text, session_id: opts.sessionId ?? null }),
         }),
+
+  // ---------------------------------------------------------------- conversations
+  /** The caller's own conversations, newest first. */
+  conversations: () => request<ConversationSummary[]>("/sessions"),
+  /** One conversation's turns and attachments, to redraw it and carry on. */
+  conversation: (sessionId: string) => request<SessionSnapshot>(`/sessions/${encodeURIComponent(sessionId)}`),
+  deleteConversation: (sessionId: string) =>
+    request<{ deleted: boolean }>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" }),
 
   /** Follow an ingest run: phase, final_status, error. */
   ingestStatus: (runId: string) => request<IngestRun>(`/runs/${runId}`),

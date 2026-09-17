@@ -46,10 +46,16 @@ its own, so typing a URL you are not cleared for gets you an error, not data.
 
 ## The three things worth knowing before reading the code
 
-**Nothing is stored.** The session token lives in a module variable and a React state hook —
-never `localStorage`, never a cookie, never `sessionStorage`. Reloading the page signs you out,
-by design. That is why the app navigates with the router rather than with `location.href`: a full
-page load is a sign-out.
+**The tab is the session.** The token is mirrored to `sessionStorage` — never `localStorage`,
+never a cookie — so a reload or a navigation picks the same signed-in session back up, and closing
+the tab ends it. On start-up the stored token is presented to the API and dropped the moment the
+server stops recognising it; it decides nothing on its own.
+
+**Conversations live on the server.** Each exchange is written as it lands, with the full answer
+and the security envelope it was released with. The sidebar lists your conversations
+(`GET /sessions`); opening one redraws it from the server (`GET /sessions/{id}`), attachments
+included, and you carry on in it. The browser keeps only *which* conversation a tab has open —
+`?c=<id>` in the URL, mirrored to `sessionStorage`.
 
 **The security model is data, not prose.** Every answer carries a `security` envelope —
 classification, source documents, what was withheld, which role can release it, the request id,

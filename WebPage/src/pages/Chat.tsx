@@ -17,7 +17,7 @@ import {
   ArrowUp, FileUp, Gauge, MessageCircleQuestion, Paperclip, RefreshCw, Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { AnswerBlock, EvidenceList } from "@/components/AnswerBlocks";
 import { Markdown } from "@/components/Markdown";
@@ -26,8 +26,9 @@ import { ThinkingTrace } from "@/components/ThinkingTrace";
 import { ApiError, api, streamRun } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { ms } from "@/lib/format";
-import { REASONING_BLOCKS, type Block, type Effort, type FinalResponse, type ProgressEvent } from "@/lib/types";
+import { REASONING_BLOCKS, type Block, type Effort, type FinalResponse, type ProgressEvent, type StoredTurn } from "@/lib/types";
 import { useAuth } from "@/store/auth";
+import { announceConversationsChanged, newConversationId, recallConversation, rememberConversation } from "@/store/conversations";
 import { Badge, Button, EmptyState, Panel, ProgressBar, Spinner, Textarea, useToast } from "@/ui";
 
 interface Turn {
@@ -43,6 +44,33 @@ interface Turn {
   usedKey: string | null;
   /** answers to "btw" asked while this turn was running */
   asides: { question: string; blocks: Block[] }[];
+  /** Redrawn from the server's record of an earlier visit: no live trace, no key affordance. */
+  restored?: boolean;
+}
+
+/**
+ * The server keeps the released answer and its security envelope for every exchange. That is
+ * enough to redraw the exchange as it was — the prose, the classification banner, what was
+ * withheld — without the blocks, the trace or the evidence list, which are not stored. The result
+ * is shaped like a FinalResponse so the same card draws both; the fields the card never reads for
+ * a restored turn are left at their empty defaults.
+ */
+function restoredResponse(t: StoredTurn): FinalResponse {
+  const security = {
+    access_control: true, principal: "", role: "guest", authenticated: true, classification: null,
+    source_documents: [], readable_documents: [], withheld_documents: [], withheld_summary: "",
+    withheld_records: 0, escalation_target: null, access_request_id: null, grant_id: null,
+    released_records: 0, release_blocked: false, attached_documents: [],
+    ...(t.security ?? {}),
+  };
+  return {
+    response_id: t.response_id ?? "", session_id: "", created_at: new Date((t.ts || 0) * 1000).toISOString(),
+    task_type: t.task_type ?? "lookup", secondary_task_types: [], status: t.status ?? "answered",
+    answer_markdown: t.answer_markdown || t.answer_preview || "", blocks: [], evidence: [],
+    confidence: { score: 0, level: "low", basis: "", uncertainties: [] }, safety_flags: [],
+    requires_human_review: false, review_reason: null, plan: null, warnings: [],
+    audit_trail_id: "", timing_ms: 0, llm_calls: 0, backend: "", security,
+  } as unknown as FinalResponse;
 }
 
 const EFFORTS: { id: Effort; label: string; hint: string }[] = [
@@ -89,8 +117,45 @@ export default function Chat() {
   const stopRef = useRef<(() => void) | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // sessions are namespaced per principal on the server too; this keeps one tab's thread together
-  const sessionId = useMemo(() => `web-${session?.username ?? "guest"}`, [session?.username]);
+  // One conversation per id, the id in the URL. A new tab or a click in the sidebar changes it;
+  // the server namespaces it under the signed-in user, so two people never share one by accident.
+  // With no id in the URL, go back to the one this tab had open, or start a fresh one.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const username = session?.username ?? "guest";
+  const sessionId = searchParams.get("c") ?? "";
+  useEffect(() => {
+    if (sessionId) { rememberConversation(username, sessionId); return; }
+    const next = recallConversation(username) ?? newConversationId();
+    setSearchParams({ c: next }, { replace: true });
+  }, [sessionId, username, setSearchParams]);
+
+  // Redraw the conversation from what the server kept, and pick up its attachments. Runs when the
+  // id changes, and after a reload — the turns are the server's, not this tab's.
+  const [restoring, setRestoring] = useState(false);
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    stopRef.current?.();
+    setTurns([]);
+    setAttachments([]);
+    setRestoring(true);
+    api.conversation(sessionId)
+      .then((snap) => {
+        if (cancelled) return;
+        setTurns(snap.turns.map((t, i) => ({
+          id: `restored-${i}-${t.ts}`, question: t.request, events: [], response: restoredResponse(t),
+          error: null, running: false, startedAt: (t.ts || 0) * 1000, elapsedMs: 0, runId: null,
+          usedKey: null, asides: [], restored: true,
+        })));
+        const attached = snap.attached_documents?.length
+          ? snap.attached_documents
+          : snap.uploaded_documents.filter((d) => d.kind === "pdf").map((d) => d.document_id);
+        setAttachments(attached);
+      })
+      .catch(() => { /* a brand-new id has nothing yet; that is not an error */ })
+      .finally(() => { if (!cancelled) setRestoring(false); });
+    return () => { cancelled = true; };
+  }, [sessionId]);
   const running = turns.some((t) => t.running);
   /** A document is being read; questions have to wait for it or they will not see it. */
   const ingesting = uploading || ingest !== null;
@@ -150,6 +215,7 @@ export default function Chat() {
         stopRef.current = streamRun(run_id, {
           onEvent: (ev) => patch(id, (t) => ({ events: [...t.events, ev] })),
           onFinal: async () => {
+            announceConversationsChanged();
             try {
               const state = await api.getRun(run_id);
               patch(id, {
@@ -230,6 +296,7 @@ export default function Chat() {
         }
 
         setAttachments((prev) => (prev.includes(name) ? prev : [...prev, name]));
+        announceConversationsChanged();
         toast.push({
           tone: "success",
           message: `${name} is ready`,
@@ -253,6 +320,7 @@ export default function Chat() {
     try {
       await api.dropUploads(sessionId);
       setAttachments([]);
+      announceConversationsChanged();
       toast.push({ tone: "info", message: "Removed", detail: "Those documents are no longer part of this conversation." });
     } catch (err) {
       toast.push({ tone: "danger", message: "Could not remove them", detail: err instanceof ApiError ? err.message : String(err) });
@@ -271,7 +339,7 @@ export default function Chat() {
       {/* ---------------------------------------------------------------- transcript */}
       <div className="thin-scroll min-h-0 flex-1 overflow-y-auto px-4 py-5 lg:px-8">
         <div className="mx-auto w-full max-w-3xl space-y-6">
-          {!turns.length ? (
+          {!turns.length && !restoring ? (
             <div className="pt-6">
               <EmptyState
                 icon={<MessageCircleQuestion className="size-8" />}
@@ -473,8 +541,10 @@ function TurnView({
         </div>
       </div>
 
-      {/* the reasoning */}
-      <ThinkingTrace events={turn.events} running={turn.running} elapsedMs={turn.elapsedMs} />
+      {/* the reasoning — a restored exchange has none to show; the trace was not kept */}
+      {turn.restored ? null : (
+        <ThinkingTrace events={turn.events} running={turn.running} elapsedMs={turn.elapsedMs} />
+      )}
 
       {/* anything asked while it ran */}
       {turn.asides.map((a, i) => (
@@ -510,7 +580,7 @@ function TurnView({
           <WithheldNotice security={response.security} className="mt-4" onTrack={onTrackRequest} />
 
           {/* re-ask with an approved key */}
-          {response.security.withheld_documents.length && !response.security.grant_id ? (
+          {!turn.restored && response.security.withheld_documents.length && !response.security.grant_id ? (
             <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-white/55 px-3 py-2">
               <span className="text-[0.7rem] text-muted-foreground">Have an approved key?</span>
               <input

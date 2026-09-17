@@ -3,10 +3,12 @@
  *
  * Two things this deliberately does **not** do.
  *
- * *It does not persist a session.* The token lives in memory for the life of the tab. A reload
- * signs you out. That was asked for, and it is also the safer default for a shared control-room
- * terminal: closing the tab ends the session, and nothing sensitive is left in `localStorage`
- * for the next person or for any script on the page to read.
+ * *It persists a session for the life of the tab, and no longer.* The token is mirrored to
+ * `sessionStorage`, so a reload or a navigation picks the same session back up — that is what
+ * lets a conversation be continued where it was left. It is not `localStorage`: closing the tab
+ * ends the session, and nothing is left behind on a shared control-room terminal for the next
+ * person to find. The stored copy is presented to the API on start-up and dropped the moment the
+ * server stops recognising it; it never decides anything on its own.
  *
  * *It does not decide what you may read.* `role` here drives navigation and labels only. Every
  * document, claim and passage is filtered by the server before it is sent; if this file were
@@ -72,6 +74,30 @@ function toSession(r: LoginResult): Session {
   };
 }
 
+const STORAGE_KEY = "rwb:session";
+
+function storeSession(s: Session): void {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch { /* private mode or quota; the tab just will not survive a reload */ }
+}
+
+function readStoredSession(): Session | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Session;
+    if (!parsed || typeof parsed.token !== "string" || !parsed.token) return null;
+    // an expired token is not worth presenting; the server would refuse it anyway
+    if (parsed.expires && parsed.expires * 1000 <= Date.now()) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function forgetStoredSession(): void {
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* nothing to forget */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
@@ -87,10 +113,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearing.current = true;
       setToken(null);
       setSession(null);
+      forgetStoredSession();
       window.setTimeout(() => { clearing.current = false; }, 0);
     });
-    setReady(true);
     return () => setUnauthorizedHandler(null);
+  }, []);
+
+  // Pick the session back up after a reload. The token lives in *sessionStorage*: it survives a
+  // refresh and a navigation, and it dies with the tab — not localStorage, which would keep a
+  // clearance signed in on a shared machine after the browser was closed. The stored copy is not
+  // trusted on its own; it is presented to the API, and if the server no longer recognises it
+  // (expired, revoked, restarted with a new secret) the screen goes back to sign-in cleanly.
+  useEffect(() => {
+    const stored = readStoredSession();
+    if (!stored) { setReady(true); return; }
+    let cancelled = false;
+    setToken(stored.token);
+    api.whoami()
+      .then((who) => {
+        if (cancelled) return;
+        if (!who.authenticated) throw new Error("token no longer recognised");
+        setSession({
+          ...stored,
+          role: who.role,
+          level: who.level,
+          readableTags: who.readable_tags ?? stored.readableTags,
+          readableDocuments: who.readable_documents ?? stored.readableDocuments,
+          withheldDocuments: who.withheld_documents ?? stored.withheldDocuments,
+          mfaEnrolled: who.mfa_enrolled ?? stored.mfaEnrolled,
+          mfaEnrolmentPending: who.mfa_enrolment_pending ?? stored.mfaEnrolmentPending,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setToken(null);
+        setSession(null);
+        forgetStoredSession();
+      })
+      .finally(() => { if (!cancelled) setReady(true); });
+    return () => { cancelled = true; };
   }, []);
 
   // one ticking clock for the whole app, so the expiry countdown does not need a timer per view
@@ -106,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const next = toSession(result);
       setToken(next.token);
       setSession(next);
+      storeSession(next);
       return { kind: "signed-in", session: next };
     } catch (err) {
       if (err instanceof MfaRequiredError) return { kind: "mfa-required", challenge: err.challenge };
@@ -124,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setToken(null);
       setSession(null);
+      forgetStoredSession();
     }
   }, []);
 
@@ -155,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session && expiresInSeconds === 0) {
       setToken(null);
       setSession(null);
+      forgetStoredSession();
     }
   }, [session, expiresInSeconds]);
 
