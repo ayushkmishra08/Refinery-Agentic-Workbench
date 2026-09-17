@@ -101,6 +101,27 @@ RULES: dict[TaskType, list[tuple[str, float]]] = {
         (r"\b(list|enumerate) (the |all )?(equipment|pumps|columns|heaters|exchangers|vessels|instruments|valves|tags|units|sections)\b", 3.4),
         (r"\b(overview|summary|scope) of (the )?(unit|units|plant|refinery|document|documents|manual|cdu|vdu|process)\b", 3.2),
         (r"\bwhat (does|do) (this|the) (document|manual|documents?) (cover|contain|describe|include)\b", 3.6),
+        # "what equipment does this catalogue cover", "what is in the attached pdf" — the same
+        # question with a noun in the middle and a word for the document other than "document".
+        # A file someone attaches to a chat is a catalogue or a datasheet far more often than it
+        # is a "manual", and asking what is in it is the first thing anyone does with it.
+        (r"\bwhat\b[^?]{0,40}\b(does|do)\s+(this|that|the)\s+(document|manual|catalogue|catalog|file|pdf|attachment|upload|report|datasheet|brochure|spec|specification|book)\b[^?]{0,24}\b(cover|contain|describe|include|list|have|show)\b", 3.6),
+        # "what is in the attached pdf", "what's inside this catalogue". The preposition has to
+        # follow the verb directly: with a subject in between — "what is the design pressure *in*
+        # the CDU operating manual" — it is an ordinary lookup that happens to name its document,
+        # not a request to survey one.
+        (r"\bwhat(?:'s|\s+is|\s+are)\s+(in|inside|within)\s+(this|that|the)\s+(\w+\s+){0,2}(document|documents|manual|catalogue|catalog|file|pdf|attachment|upload|report|datasheet|brochure)\b", 3.4),
+        # "tell me about this document", "summarise the attached pdf", "what is this file about",
+        # "the contents of this catalogue". Asking a document to introduce itself is the first
+        # thing anyone does after attaching one, and it is not a question about any one pump — so
+        # it must not fall through to entity resolution, which answers it by asking which pump.
+        (r"\b(tell me about|tell me what is in|describe|summari[sz]e|give me (a|an) (summary|overview|rundown)( of)?|walk me through|what (is|are)) *"
+         r"[^?]{0,30}\b(this|that|the)\s+(\w+\s+){0,2}"
+         r"(document|documents|manual|catalogue|catalog|file|pdf|attachment|upload|report|datasheet|brochure|spec|specification|book)\b", 3.6),
+        (r"\b(contents?|overview|summary|scope|gist|subject|topics?)\s+of\s+(this|that|the)\s+(\w+\s+){0,2}"
+         r"(document|documents|manual|catalogue|catalog|file|pdf|attachment|upload|report|datasheet|brochure|spec|specification|book)\b", 3.6),
+        (r"\bwhat\s+(is|are)\s+(this|that|the)\s+(\w+\s+){0,2}"
+         r"(document|documents|manual|catalogue|catalog|file|pdf|attachment|upload|report|datasheet|brochure|spec|specification|book)\s+about\b", 3.6),
         (r"\bwhat (can|could) (you|it) (tell me|do|answer|help)\b|\bwhat do you know\b\s*\??\s*$", 3.6),
         (r"\bwhat (equipment|pumps|columns|heaters|exchangers|vessels|instruments) (are|is) (there|in|available|present|installed)\b", 3.4),
     ],

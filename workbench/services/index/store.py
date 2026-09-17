@@ -639,3 +639,21 @@ class IndexStore:
             "procedures": len(self._procedures), "vectors": int(self._vecs.shape[0]) if self._vecs is not None else 0,
             "reranker": bool(self._reranker and not self._reranker._failed),
         }
+
+    def stats_for(self, document_ids: list[str] | set[str] | None) -> dict:
+        """The same counts, over named documents only.
+
+        A statistics panel is a side channel: "the corpus holds 1,530 claims" tells a user how
+        much is in the tier above theirs. Counting per document and summing only what the caller
+        may read closes it. ``None`` means every document, for callers with no restriction.
+        """
+        wanted = set(self.indexes) if document_ids is None else {d for d in document_ids if d in self.indexes}
+        out = {"documents": len(wanted), "chunks": 0, "entities": 0, "claims": 0, "relations": 0, "procedures": 0}
+        for doc_id in wanted:
+            ix = self.indexes[doc_id]
+            out["chunks"] += len(ix.chunk_order)
+            out["entities"] += len(ix.entities)
+            out["claims"] += len(ix.claims)
+            out["relations"] += len(ix.relations)
+            out["procedures"] += len(ix.procedures)
+        return out

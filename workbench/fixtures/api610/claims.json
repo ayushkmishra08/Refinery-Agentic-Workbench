@@ -1,0 +1,30 @@
+[
+  {
+    "claim_id": "a1",
+    "entity_uid": "e-api610-pump",
+    "predicate": "temperature",
+    "value": 82,
+    "unit": "degC",
+    "parameter_role": "maximum",
+    "qualifier": "bearing housing oil temperature rise limit",
+    "document_id": "API 610 pump standard",
+    "page": 47,
+    "chunk_id": "ach-bearings",
+    "evidence": "Bearing housing oil temperature shall not exceed 82 degC",
+    "source": "specification"
+  },
+  {
+    "claim_id": "a2",
+    "entity_uid": "e-api610-pump",
+    "predicate": "vibration",
+    "value": 3.0,
+    "unit": "mm/s",
+    "parameter_role": "maximum",
+    "qualifier": "unfiltered velocity at rated flow",
+    "document_id": "API 610 pump standard",
+    "page": 52,
+    "chunk_id": "ach-vibration",
+    "evidence": "Unfiltered vibration shall not exceed 3.0 mm/s rms at rated flow",
+    "source": "specification"
+  }
+]

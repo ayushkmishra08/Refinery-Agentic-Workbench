@@ -1,0 +1,18 @@
+[
+  {
+    "source_uid": "e-11-X-01",
+    "target_uid": "e-11-V-02",
+    "type": "FEEDS",
+    "page": 14,
+    "evidence": "Wash water is injected upstream of the vortex mixer 11-X-01 and passes into the desalter 11-V-02.",
+    "source": "rule"
+  },
+  {
+    "source_uid": "e-11-PIC-1105",
+    "target_uid": "e-11-V-02",
+    "type": "CONTROLS",
+    "page": 14,
+    "evidence": "Pressure is held by 11-PIC-1105 across the desalter vessel.",
+    "source": "rule"
+  }
+]

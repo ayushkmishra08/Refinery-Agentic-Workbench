@@ -1,0 +1,117 @@
+{
+  "document_id": "Crude desalter",
+  "source_filename": "Crude desalter.pdf",
+  "entries": [
+    {
+      "term": "-",
+      "canonical_meaning": "S i - S o S i x 100",
+      "aliases": [],
+      "abbreviation": "-",
+      "full_form": "S i - S o S i x 100",
+      "evidence": "- = S i - S o S i x 100",
+      "page": 70,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "A",
+      "canonical_meaning": "W W o S i + 0.01 W w S w ( ) W w + W i",
+      "aliases": [],
+      "abbreviation": "A",
+      "full_form": "W W o S i + 0.01 W w S w ( ) W w + W i",
+      "evidence": "A = W W o S i + 0.01 W w S w ( ) W w + W i",
+      "page": 70,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "MI",
+      "canonical_meaning": "A S o",
+      "aliases": [],
+      "abbreviation": "MI",
+      "full_form": "A S o",
+      "evidence": "MI = A S o",
+      "page": 70,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "E",
+      "canonical_meaning": "S i - S o S i - A x 100",
+      "aliases": [],
+      "abbreviation": "E",
+      "full_form": "S i - S o S i - A x 100",
+      "evidence": "E = S i - S o S i - A x 100",
+      "page": 70,
+      "section": "",
+      "confidence": 0.95,
+      "source": "abbreviation_table",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "PEDP",
+      "canonical_meaning": "Professional Engineering Development Program",
+      "aliases": [],
+      "abbreviation": "PEDP",
+      "full_form": "Professional Engineering Development Program",
+      "evidence": "Professional Engineering Development Program (PEDP)",
+      "page": 1,
+      "section": "CRUDE OIL DESALTING",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "BSW",
+      "canonical_meaning": "Centrifuge",
+      "aliases": [],
+      "abbreviation": "BSW",
+      "full_form": "Centrifuge",
+      "evidence": "Centrifuge (BSW)",
+      "page": 9,
+      "section": "Laboratory Test",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "Crude desalter"
+    },
+    {
+      "term": "MPMS",
+      "canonical_meaning": "Manual of Petroleum Measurement Standards",
+      "aliases": [],
+      "abbreviation": "MPMS",
+      "full_form": "Manual of Petroleum Measurement Standards",
+      "evidence": "Manual of Petroleum Measurement Standards (MPMS)",
+      "page": 59,
+      "section": "Analytical Procedures",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "Crude desalter"
+    }
+  ],
+  "total_entries": 7,
+  "abbreviation_map": {
+    "-": "S i - S o S i x 100",
+    "A": "W W o S i + 0.01 W w S w ( ) W w + W i",
+    "MI": "A S o",
+    "E": "S i - S o S i - A x 100",
+    "PEDP": "Professional Engineering Development Program",
+    "BSW": "Centrifuge",
+    "MPMS": "Manual of Petroleum Measurement Standards"
+  },
+  "term_map": {
+    "-": "S i - S o S i x 100",
+    "A": "W W o S i + 0.01 W w S w ( ) W w + W i",
+    "MI": "A S o",
+    "E": "S i - S o S i - A x 100",
+    "PEDP": "Professional Engineering Development Program",
+    "BSW": "Centrifuge",
+    "MPMS": "Manual of Petroleum Measurement Standards"
+  },
+  "build_timestamp": "2026-09-16T13:41:15.544276+00:00"
+}

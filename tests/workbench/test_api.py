@@ -19,7 +19,7 @@ def client(orch):
 
 def test_health_agents_schema(client):
     h = client.get("/health").json()
-    assert h["status"] == "ok" and h["backend"] == "mock" and h["documents"] == ["CDU operating manual"] and h["llm_available"] is False
+    assert h["status"] == "ok" and h["backend"] == "mock" and "CDU operating manual" in h["documents"] and h["llm_available"] is False
     agents = client.get("/agents").json()
     assert {a["key"] for a in agents} >= {"task_classifier", "planner", "governance", "lookup"}
     schema = client.get("/schema").json()

@@ -108,6 +108,12 @@ they are NOT values to copy. Every value must come from the SOURCE TEXT below.
   "references": ["<document / drawing / standard identifiers exactly as written, e.g. a P&ID number>"]
 }}
 
+<!-- DOCUMENT-DISCOVERED VOCABULARY (managed by OntologyManager, do not edit) -->
+ADDITIONAL TYPES DISCOVERED IN THIS CORPUS (use them when they fit better than the lists above):
+  Relationship types: RULE_FEEDS, RULE_PARTIAL_FEEDS, RULE_PARTIAL_PART_OF, RULE_PART_OF
+  Claim predicates: spec_design_pressure, spec_design_temperature, spec_pressure, spec_temperature
+<!-- END DOCUMENT-DISCOVERED VOCABULARY -->
+
 ═══════════════════════════════════════════════════════════
 SOURCE TEXT TO ANALYZE:
 ═══════════════════════════════════════════════════════════

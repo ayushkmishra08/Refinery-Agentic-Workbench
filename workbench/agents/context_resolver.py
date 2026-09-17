@@ -345,7 +345,16 @@ class ContextResolverAgent(BaseAgent):
                 continue
             words = phrase.lower().split()
             if len(words) == 1 and words[0] in EQUIPMENT_WORDS and words[0] not in SPECIFIC_SINGLE_WORDS:
-                continue                      # "the pump" alone is not a mention (handled by session fallback); "the desalter" is
+                # "the pump" alone is not a mention (the session fallback handles it); "the
+                # desalter" is. But the phrase reader only knows plant-style names, so in a
+                # standard or a vendor manual — where equipment is described rather than tagged —
+                # "centrifugal pump" and "mechanical seal" arrive here as a bare "pump"/"seal".
+                # Look back a word or two and see whether the documents know the longer phrase.
+                widened = self._widen_left(text, span)
+                if widened and add(widened, self.knowledge.resolve_entity(widened, limit=4), "name", 0.88, span[0],
+                                   exact_only=True):
+                    covered.append(span)
+                continue
             recs = self.knowledge.resolve_entity(phrase, limit=4)
             if add(phrase, recs, "name", 0.92, span[0]):
                 covered.append(span)
@@ -472,6 +481,57 @@ class ContextResolverAgent(BaseAgent):
             return True
         return set(req.ambiguities) >= {"unit", "parameter"} or ("entity" in req.ambiguities and "unit" in req.ambiguities)
 
+    # ------------------------------------------------------------------ phrase widening
+    @staticmethod
+    def _widen_left(text: str, span: tuple[int, int], max_words: int = 2) -> str | None:
+        """"... the centrifugal pump" seen as "pump" -> "centrifugal pump".
+
+        Returns the longest candidate of up to ``max_words`` extra words to the left, stopping at
+        an article or a preposition so the phrase stays a noun phrase. Only used when the bare
+        word was going to be discarded anyway, and the result still has to match an alias
+        exactly, so widening can add a mention but never change one.
+        """
+        head = text[:span[0]].rstrip()
+        if not head:
+            return None
+        preceding = re.findall(r"[A-Za-z][A-Za-z0-9/-]*", head)[-max_words:]
+        stop = {"the", "a", "an", "this", "that", "of", "for", "in", "on", "to", "and", "or", "is",
+                "are", "with", "about", "does", "do", "what", "which", "any", "each", "every"}
+        while preceding and preceding[0].lower() in stop:
+            preceding.pop(0)
+        if not preceding:
+            return None
+        word = text[span[0]:span[1]].strip()
+        return " ".join([*preceding, word])
+
+    # ------------------------------------------------------------------ examples the caller may see
+    def _example_entity(self, entity_type: str | None = None) -> tuple[str, str]:
+        """A (tag, name) pair drawn from what *this caller* can read.
+
+        The clarification prompts used to carry a worked example baked into the source — a CDU
+        tag and the crude charge pump. Shown to someone not cleared for the CDU manual, that is a
+        small leak: it discloses that a tag exists and what it is called. The example is
+        therefore taken from the guarded view, so it is always something the reader may see, and
+        falls back to a generic shape when they can see nothing at all.
+        """
+        try:
+            rows = self.knowledge.list_entities(entity_type=entity_type, limit=3) or self.knowledge.list_entities(limit=3)
+        except Exception:
+            rows = []
+        for e in rows:
+            name = (e.name or "").split(" (")[0]
+            if e.canonical_tag or name:
+                return e.canonical_tag or "", name
+        return "", ""
+
+    def _entity_question(self) -> str:
+        tag, name = self._example_entity()
+        if tag and name:
+            return f"Which equipment do you mean? Give the tag (e.g. {tag}) or the name (e.g. {name})."
+        if name:
+            return f"Which equipment do you mean? Give its name (e.g. {name})."
+        return "Which equipment do you mean? Give its tag or its name as the documents write it."
+
     # ------------------------------------------------------------------ plan step: clarify
     def execute(self, request: StructuredRequest, context: ContextPackage, step: PlanStep, result: AgentResult) -> None:
         missing = list(request.ambiguities) or ["entity"]
@@ -487,7 +547,7 @@ class ContextResolverAgent(BaseAgent):
             question = (f"There is no {c.mention} in the loaded documents. Several documented items are an equally "
                         f"close match — which one did you mean?") if c.alternatives else \
                        (f"There is no {c.mention} in the loaded documents and nothing in them resembles it. "
-                        f"Which equipment did you mean? Give a tag (e.g. 11-P-01) or a name (e.g. crude charge pump).")
+                        + self._entity_question())
             options = c.alternatives[:6] or [e.name for e in self.knowledge.list_entities(limit=5)]
             result.blocks.append(ClarificationBlock(id="clarify", title="That tag is not in the documents",
                                                     question=question, missing=["entity"], options=options))
@@ -510,7 +570,7 @@ class ContextResolverAgent(BaseAgent):
             if not options:
                 options += [e.name for e in self.knowledge.list_entities(limit=5)]   # the most-referenced equipment
         questions = {
-            "entity": "Which equipment do you mean? Give the tag (e.g. 11-P-01) or the name (e.g. crude charge pump).",
+            "entity": self._entity_question(),
             "parameter": "Which parameter is the value for (flow rate, pressure, temperature, level ...)?",
             "unit": "What unit is the value in (m3/h, kg/cm2 g/a, °C ...)?",
             "comparison subjects": "What should be compared (two pieces of equipment, two operating cases such as Basrah vs Bombay High, or two procedures)?",
@@ -532,20 +592,24 @@ class ContextResolverAgent(BaseAgent):
         """
         docs = self.knowledge.documents()
         scope = "; ".join(f"**{d.title or d.document_id}** ({d.unit or 'unit n/a'}, {d.total_pages or '?'} pages, revision {d.revision or 'n/a'})" for d in docs)
-        example = next((e.name.split(" (")[0] for e in self.knowledge.list_entities(entity_type="Pump", limit=1)), "the crude charge pump")
+        example = self._example_entity("Pump")[1] or self._example_entity()[1] or "the equipment you are working on"
         result.blocks.append(self.callout(
             f"I answer engineering questions from the documents loaded here — {scope or 'no document is loaded'}. "
             "I quote those documents and cite the page; I do not answer from general knowledge and I do not write "
             "anything the documents do not say.", "info"))
+        # every example names equipment this caller may actually read: a worked example is a
+        # disclosure, and one baked into the source would name the same tag to everybody
+        subject = example.lower()
+        second = (self._example_entity("Column")[1] or self._example_entity("Vessel")[1] or example).lower()
         result.blocks.append(self.text_block(
             "\n".join([
-                f"- **A documented value** — \"What is the normal flow rate of the {example.lower()}?\"",
-                f"- **A limit check** — \"The {example.lower()} is operating at 520 m3/h. Is this acceptable?\"",
-                "- **A procedure** — \"What is the recommended way to start the CDU?\"",
-                "- **Troubleshooting** — \"The crude charge pump discharge pressure is dropping. What should I check?\"",
-                "- **Safety** — \"What safety precautions are required before working on the crude charge pump?\"",
-                "- **A flow path** — \"Trace the crude flow from the crude charge pump to the atmospheric column.\"",
-                "- **What exists** — \"What are all the equipments in the refinery?\" or \"List all the pumps\".",
+                f"- **A documented value** — \"What is the normal flow rate of the {subject}?\"",
+                f"- **A limit check** — \"The {subject} is operating at 520 m3/h. Is this acceptable?\"",
+                f"- **A procedure** — \"How do I start the {subject}?\"",
+                f"- **Troubleshooting** — \"The {subject} discharge pressure is dropping. What should I check?\"",
+                f"- **Safety** — \"What safety precautions are required before working on the {subject}?\"",
+                f"- **A flow path** — \"Trace the flow from the {subject} to the {second}.\"",
+                "- **What exists** — \"What equipment is covered by the documents I can read?\"",
             ]), title="Try one of these"))
         result.content["intended_task_type"] = "inventory"
         result.summary = "out of scope: answered with the workbench's capabilities"

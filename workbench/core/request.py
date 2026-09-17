@@ -46,6 +46,7 @@ class UserRequest(BaseModel):
     session_id: str = "default"
     user_role: str = "engineer"
     auth_token: str | None = Field(default=None, description="Bearer token from POST /auth/login; the role it names is what the access policy uses, not user_role")
+    access_key: str | None = Field(default=None, description="An approved one-time key (RGK.…) opening the named records of one approved request, for this question only")
     asked_text: str = Field(default="", description="What the engineer actually typed, when ``text`` is a follow-up the resolver rewrote to stand alone")
     attachments: list[Attachment] = Field(default_factory=list)
     options: dict = Field(default_factory=dict, description="Frontend hints: {'want_report': true, 'max_steps': 12}")

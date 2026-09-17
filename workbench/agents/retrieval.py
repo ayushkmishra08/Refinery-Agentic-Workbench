@@ -212,6 +212,10 @@ class LookupAgent(BaseAgent):
         result.summary = ", ".join(r[0] for r in rows) or "entity identified"
         result.confidence = self.confidence(max((e.confidence for e in request.entities), default=0.5), "entity resolution")
 
+    # Below this many plant-tagged items, a document is probably not a plant manual and the
+    # inventory should be listed by whatever names it does use.
+    _THIN_INVENTORY = 5
+
     # ------------------------------------------------------------------ inventory / survey
     def _inventory(self, request: StructuredRequest, context: ContextPackage, result: AgentResult) -> None:
         """Answer "what is in here" from the entity index rather than from a text search.
@@ -223,6 +227,23 @@ class LookupAgent(BaseAgent):
         counts = context.entity_counts or self.knowledge.entity_type_counts()
         entities = context.entities or self.knowledge.list_entities(entity_type=request.subject_type, limit=self.cfg.effort.inventory_limit)
         wanted = request.subject_type
+        by_model_number = False
+
+        # The strict listing counts plant tags — 11-P-01, 080-H-001 — which is right for a unit
+        # manual and wrong for everything else. A vendor catalogue, a standard or a datasheet names
+        # its equipment by model number (AVG-100, CPU-5.4, KhGN-1), and those are not plant tags. On
+        # such a document the strict pass finds one or two stragglers and the answer becomes
+        # "the catalogue covers one reactor" — confident, citable and wrong about the document as a
+        # whole. So when the strict pass is thin and a looser one is not, list what is actually
+        # there and say that these are names rather than plant tags.
+        #
+        # On a unit manual the strict pass returns hundreds and none of this runs.
+        if len(entities) < self._THIN_INVENTORY:
+            loose = self.knowledge.list_entities(entity_type=wanted, limit=self.cfg.effort.inventory_limit,
+                                                 tagged_only=False, plant_only=False)
+            if len(loose) > len(entities):
+                entities, by_model_number = loose, True
+                counts = self.knowledge.entity_type_counts(tagged_only=False, plant_only=False) or counts
 
         if not entities:
             result.missing.append(f"no tagged {class_label(wanted, plural=True) if wanted else 'equipment'} in the documents")
@@ -240,7 +261,9 @@ class LookupAgent(BaseAgent):
             rows = [[class_label(cls).title(), n, ", ".join(e.canonical_tag or e.name for e in self.knowledge.list_entities(entity_type=cls, limit=3))]
                     for cls, n in counts.items()]
             result.blocks.append(TableBlock(id="inventory-classes", title="Equipment classes on record",
-                                            caption=f"Every tag the knowledge layer extracted from {doc_names}, grouped by class.",
+                                            caption=(f"Every item the knowledge layer extracted from {doc_names}, grouped by class."
+                                                     if by_model_number else
+                                                     f"Every tag the knowledge layer extracted from {doc_names}, grouped by class."),
                                             columns=["Class", "Tagged items", "Most referenced"], rows=rows))
 
         rows, cits = [], []
@@ -643,17 +666,37 @@ class CrossDocumentAgent(BaseAgent):
         result.summary = f"{len(rows)} cross reference(s), {len(drefs)} referenced document(s), {len(sis)} standing instruction(s)"
         result.confidence = self.confidence(0.65 if (rows or drefs or sis) else 0.2, "document-structure data from the knowledge layer profile")
 
+    @staticmethod
+    def _tidy(value: str | None, limit: int = 40) -> str:
+        """A document field fit to print.
+
+        The profiler infers ``title`` and ``unit`` from page headers, and on a PDF without clean
+        ones it lands a sentence fragment there. Printing that verbatim produced lines like
+        "Steam Jet Ejectors is a unknown for unit now covers a range that previously required two
+        ejectors...". A field that reads like prose rather than a label is dropped.
+        """
+        text = re.sub(r"\s+", " ", (value or "")).strip(" .,;:")
+        if not text or len(text) > limit or len(text.split()) > 6:
+            return ""
+        return text
+
     def _scope(self, result: AgentResult) -> None:
         """What is loaded: the documents, their chapters and the standing instructions on top of them."""
         docs = self.knowledge.documents()
-        rows = [[d.title or d.document_id, d.document_type or "—", d.unit or "—", d.revision or "—", d.effective_date or "—", d.total_pages or "—"] for d in docs]
+        rows = [[d.document_id, self._tidy(d.document_type, 24) or "—", self._tidy(d.unit) or "—",
+                 d.revision or "—", d.effective_date or "—", d.total_pages or "—"] for d in docs]
         result.blocks.append(TableBlock(id="scope-documents", title="Documents in scope",
                                         columns=["Document", "Type", "Unit", "Revision", "Effective", "Pages"], rows=rows))
         for d in docs:
+            kind = self._tidy(d.document_type, 24).replace("_", " ") or "document"
+            unit = self._tidy(d.unit)
+            pages = f"{d.total_pages} pages" if d.total_pages else "an unrecorded number of pages"
             key = self.cite(result, Evidence(document_id=d.document_id, page=1, source="rule",
-                                             text=f"{d.title or d.document_id} — {d.document_type or 'document'}, unit {d.unit or 'n/a'}, "
-                                                  f"revision {d.revision or 'n/a'} of {d.effective_date or 'n/a'}, {d.total_pages or 0} pages", revision=d.revision))
-            self.statement(result, f"{d.title or d.document_id} is a {d.document_type or 'document'} for unit {d.unit or 'n/a'}", [key])
+                                             text=f"{d.document_id} — {kind}"
+                                                  + (f", unit {unit}" if unit else "")
+                                                  + f", revision {d.revision or 'n/a'}, {pages}", revision=d.revision))
+            self.statement(result, f"{d.document_id} is a {kind}" + (f" for unit {unit}" if unit else "")
+                           + f", {pages} long", [key])
         chapters = [c for c in (self.knowledge.chapters() or []) if not c.get("is_administrative")]
         if chapters:
             rows = [[c.get("number"), c.get("title", ""), f"{c.get('page_start')}–{c.get('page_end')}"] for c in chapters[:24]]

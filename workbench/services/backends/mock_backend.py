@@ -1,6 +1,11 @@
 """MockKnowledgeBackend: a tiny hand-written index (workbench/fixtures/*.json) for machines without artefacts.
 
 It reuses IndexStore so retrieval behaves exactly like the real backend, only the data is small.
+
+``documents.json`` may list more than one document. The first reads the fixture files at the top
+level; any later entry names a subdirectory in its ``fixtures`` key and reads the same five files
+from there. That is what lets the access-control tests exercise three classification tiers
+against three genuinely separate documents, rather than asserting about a filter in isolation.
 """
 from __future__ import annotations
 
@@ -24,11 +29,16 @@ def _load(path: Path) -> list[dict]:
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
 
 
-def build_mock_index(fixtures_dir: Path) -> DocumentIndex:
+def build_mock_index(fixtures_dir: Path, spec: dict | None = None) -> DocumentIndex:
+    """One document's index. ``spec`` is an entry from documents.json; None means the first."""
     docs = _load(fixtures_dir / "documents.json")
-    doc_id = docs[0]["document_id"] if docs else "fixture"
-    info = DocumentInfo(document_id=doc_id, title=doc_id, document_type="operating_manual", revision=(docs[0].get("revision") if docs else None),
-                        total_pages=(docs[0].get("pages") if docs else None), unit=(docs[0].get("unit") if docs else None))
+    spec = spec if spec is not None else (docs[0] if docs else {})
+    doc_id = spec.get("document_id", "fixture")
+    if spec.get("fixtures"):
+        fixtures_dir = fixtures_dir / spec["fixtures"]
+    info = DocumentInfo(document_id=doc_id, title=spec.get("title", doc_id),
+                        document_type=spec.get("document_type", "operating_manual"), revision=spec.get("revision"),
+                        total_pages=spec.get("pages"), unit=spec.get("unit"))
     entities: dict[str, EntityRecord] = {}
     alias_index: dict[str, list[str]] = {}
     for e in _load(fixtures_dir / "entities.json"):
@@ -71,4 +81,6 @@ class MockKnowledgeBackend(IndexStore):
     name = "mock"
 
     def __init__(self, fixtures_dir: Path) -> None:
-        super().__init__([build_mock_index(fixtures_dir)], embeddings=None, use_vectors=False, use_reranker=False)
+        specs = _load(fixtures_dir / "documents.json") or [{}]
+        super().__init__([build_mock_index(fixtures_dir, s) for s in specs],
+                         embeddings=None, use_vectors=False, use_reranker=False)

@@ -92,7 +92,7 @@ def test_a_substitution_becomes_a_comparison_with_both_subjects_present(orch):
 def test_the_session_records_what_the_engineer_typed_and_what_it_was_read_as(orch):
     orch.ask(UserRequest(text="What is the normal flow rate of the crude charge pump?", session_id="fu-2"))
     orch.ask(UserRequest(text="and at start-up?", session_id="fu-2"))
-    last = orch.sessions.load("fu-2").turns[-1]
+    last = orch.session_for("fu-2").turns[-1]
     assert last.request == "and at start-up?"
     assert last.rewritten_request and "start-up" in last.rewritten_request
     assert last.followup_kind == "elaboration"
@@ -113,5 +113,5 @@ def test_an_undocumented_tag_is_not_quietly_replaced_by_the_previous_subject(orc
 def test_a_self_contained_question_is_left_exactly_as_typed(orch):
     orch.ask(UserRequest(text="What is the normal flow rate of the crude charge pump?", session_id="fu-3"))
     orch.ask(UserRequest(text="What is the design pressure of the vacuum column?", session_id="fu-3"))
-    last = orch.sessions.load("fu-3").turns[-1]
+    last = orch.session_for("fu-3").turns[-1]
     assert last.rewritten_request == "" and last.followup_kind == "new"

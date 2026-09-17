@@ -82,7 +82,7 @@ def test_e2e_ambiguous_request_asks_for_clarification(orch):
     resp = orch.ask(UserRequest(text="Can I run this at 500?", session_id="e2e-amb"))
     assert resp.status == "clarification" and resp.blocks[0].type == "clarification"
     assert {"entity", "unit"} <= set(resp.blocks[0].missing)
-    st = orch.sessions.load("e2e-amb")
+    st = orch.session_for("e2e-amb")
     assert st.pending_clarification and st.pending_clarification["intended"] == "limits"
 
 

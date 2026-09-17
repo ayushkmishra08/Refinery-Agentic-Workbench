@@ -1,0 +1,55 @@
+[
+  {
+    "claim_id": "d1",
+    "entity_uid": "e-11-V-02",
+    "predicate": "pressure",
+    "value": 8.5,
+    "unit": "kg/cm2",
+    "parameter_role": "normal",
+    "document_id": "Crude desalter",
+    "page": 14,
+    "chunk_id": "dch-operation",
+    "evidence": "Normal desalter operating pressure 8.5 kg/cm2 g",
+    "source": "table"
+  },
+  {
+    "claim_id": "d2",
+    "entity_uid": "e-11-V-02",
+    "predicate": "temperature",
+    "value": 130,
+    "unit": "degC",
+    "parameter_role": "normal",
+    "document_id": "Crude desalter",
+    "page": 14,
+    "chunk_id": "dch-operation",
+    "evidence": "Desalting temperature is maintained at 130 degC",
+    "source": "table"
+  },
+  {
+    "claim_id": "d3",
+    "entity_uid": "e-11-V-02",
+    "predicate": "design_pressure",
+    "value": 15.5,
+    "unit": "kg/cm2",
+    "parameter_role": "design",
+    "document_id": "Crude desalter",
+    "page": 15,
+    "chunk_id": "dch-design",
+    "evidence": "Vessel design pressure 15.5 kg/cm2 g",
+    "source": "specification"
+  },
+  {
+    "claim_id": "d4",
+    "entity_uid": "e-11-V-02",
+    "predicate": "flow_rate",
+    "value": 6,
+    "unit": "%",
+    "parameter_role": "normal",
+    "qualifier": "wash water on crude",
+    "document_id": "Crude desalter",
+    "page": 21,
+    "chunk_id": "dch-operation",
+    "evidence": "Wash water rate is normally 6 % on crude",
+    "source": "prose"
+  }
+]

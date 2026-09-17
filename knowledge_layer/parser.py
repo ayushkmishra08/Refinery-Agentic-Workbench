@@ -409,8 +409,13 @@ class DocumentParser:
         finally:
             pdf.close()
 
-    def parse(self, pdf_path: Path) -> ParsedDocument:
-        """Parse a PDF document with memory-safe page windowing."""
+    def parse(self, pdf_path: Path, on_progress=None) -> ParsedDocument:
+        """Parse a PDF document with memory-safe page windowing.
+
+        ``on_progress(pages_done, pages_total)`` is called as each window lands, so a caller
+        waiting on a long parse can show real progress rather than a spinner. Pages recovered
+        from a checkpoint count as done, because from the waiting person's point of view they are.
+        """
         pdf_path = Path(pdf_path).resolve()
         if not pdf_path.exists():
             raise FileNotFoundError(f"PDF not found: {pdf_path}")
@@ -468,8 +473,19 @@ class DocumentParser:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }, indent=2), encoding="utf-8")
 
+        def report(done_windows: set[int]) -> None:
+            """Pages finished, out of pages to do. A failure never stops the parse."""
+            if on_progress is None:
+                return
+            try:
+                pages = sum(min(w_e, last_page) - w_s + 1 for i, w_s, w_e in windows if i in done_windows)
+                on_progress(pages, last_page)
+            except Exception:
+                logger.debug("progress callback failed", exc_info=True)
+
         # ---- run windows ------------------------------------------------
         results: dict[int, WindowResult] = {}
+        report(set(completed))
         for idx, w_start, w_end in windows:
             slice_path = windows_dir / f"window_{idx:03d}.parsed.json"
             if idx in completed and slice_path.exists():
@@ -486,6 +502,7 @@ class DocumentParser:
             results[idx] = wr
             completed.add(idx)
             save_checkpoint(completed)
+            report(completed)
 
             gc.collect()
             try:

@@ -53,6 +53,11 @@ SCOPE_TAG_PREFIXES: dict[str, tuple[str, ...]] = {
 }
 
 
+#: Below this many plant-tagged items a document is probably not a plant manual, and its
+#: inventory should be counted by whatever names it does use. Mirrors the retrieval agent.
+THIN_INVENTORY = 5
+
+
 class ContextBuilder:
     def __init__(self, knowledge, cfg: WorkbenchConfig) -> None:
         self.knowledge = knowledge
@@ -98,6 +103,16 @@ class ContextBuilder:
         if route == "inventory":
             # A survey question has no single subject: list the corpus instead of searching it.
             pkg.entity_counts = self.knowledge.entity_type_counts()
+            # The default count is plant tags only (11-P-01, 080-H-001), which is right for a unit
+            # manual and empty-to-misleading for a vendor catalogue or a standard, where equipment
+            # is named by model number. The composer writes its prose from these counts, so a thin
+            # count here is what produced "the catalogue covers one reactor" over a table listing
+            # seventy-four items. Widen on the same rule the retrieval agent uses, so the sentence
+            # and the table it sits above cannot disagree.
+            if sum(pkg.entity_counts.values()) < THIN_INVENTORY:
+                loose = self.knowledge.entity_type_counts(tagged_only=False, plant_only=False)
+                if sum(loose.values()) > sum(pkg.entity_counts.values()):
+                    pkg.entity_counts = loose
             limit = self.cfg.effort.inventory_limit
             prefixes = SCOPE_TAG_PREFIXES.get(req.scope or "")
             if prefixes:

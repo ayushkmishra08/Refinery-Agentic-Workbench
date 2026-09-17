@@ -239,17 +239,47 @@ class GovernanceSettings(BaseModel):
 class SecuritySettings(BaseModel):
     """Role-based access control over the documents.
 
-    Access is on by default: the CDU operating manual is classified ``confidential`` and only
-    a lead engineer (or an administrator) may read it, so the first request of a session asks
-    for the lead engineer password. ``RWB_AUTH=off`` disables the gate entirely — for the
-    benchmark and the test suite, never for a shared install.
+    Three roles (``user`` < ``manager`` < ``admin``) and three document tags
+    (``INTERNAL`` < ``CONFIDENTIAL`` < ``SECRET``); a role reads a document when its level
+    reaches the tag's. Access is on by default and the CLI asks who you are before it will take
+    a question. ``RWB_AUTH=off`` disables the gate entirely — for the benchmark and the test
+    suite, never for a shared install.
     """
     enabled: bool = True
-    default_role: str = Field(default="guest", description="Role assumed before anyone signs in")
+    require_sign_in_before_prompt: bool = Field(
+        default=True, description="The CLI and REPL ask for credentials before accepting a question, not after refusing one",
+    )
     token_ttl_seconds: int = 8 * 3600
     prompt_on_denial: bool = Field(default=True, description="The CLI asks for the password in place instead of only reporting the denial")
-    allow_unauthenticated_capabilities: bool = Field(
-        default=True, description="A signed-out user still gets the 'what can this answer' reply and the login instruction, not a bare 401",
+    # ---- escalation -------------------------------------------------------------------
+    escalation_enabled: bool = Field(default=True, description="Offer the request-access route when a question needs material above the caller's role")
+    auto_raise_requests: bool = Field(
+        default=True, description="Raise the access request automatically when a question is refused, so the engineer does not have to retype it",
+    )
+    request_ttl_seconds: int = Field(default=24 * 3600, description="How long an undecided access request stays live")
+    grant_ttl_seconds: int = Field(default=30 * 60, description="How long an approved access key works before it must be re-requested")
+    grant_max_uses: int = Field(default=1, description="Uses per approved key; one by default")
+    # ---- release gate -----------------------------------------------------------------
+    leak_check: bool = Field(
+        default=True, description="Re-check every finished answer's provenance before release; a failure withholds the whole answer",
+    )
+    show_classification_banner: bool = Field(
+        default=True, description="Print the classification of the material an answer was built from, and who it was released to",
+    )
+    # ---- second factor ----------------------------------------------------------------
+    mfa_required_roles: list[str] = Field(
+        default_factory=list,
+        description="Roles that must present an authenticator code as well as a password. Empty by default: "
+                    "the confidentiality this workstation is built for lives in the knowledge layer, not at "
+                    "the door, and a code prompt at sign-in only slows the person down. Enrolment stays "
+                    "available to anyone who wants it. RWB_MFA=on asks manager and admin for a code; "
+                    "RWB_MFA=manager,admin (or any role list) sets it explicitly.",
+    )
+    mfa_demo_codes: bool = Field(
+        default=False,
+        description="Return the expected authenticator code in the login challenge so the workstation can be "
+                    "demonstrated without a phone. RWB_OTP_DEMO=1 turns it on; it is a demo switch, never a "
+                    "deployment one, and every response carrying a code says so.",
     )
 
 
@@ -368,6 +398,16 @@ def load_config(effort: str | None = None) -> WorkbenchConfig:
         cfg.document_ids = [x.strip() for x in v.split(",") if x.strip()]
     if (v := env("RWB_AUTH")) and v.lower() in ("0", "off", "false", "no"):
         cfg.security.enabled = False
+    if v := env("RWB_MFA"):
+        lowered = v.strip().lower()
+        if lowered in ("0", "off", "false", "no"):
+            cfg.security.mfa_required_roles = []
+        elif lowered in ("1", "on", "true", "yes"):
+            cfg.security.mfa_required_roles = ["manager", "admin"]
+        else:
+            cfg.security.mfa_required_roles = [r.strip().lower() for r in v.split(",") if r.strip()]
+    if (v := env("RWB_OTP_DEMO")) and v.lower() in ("1", "on", "true", "yes"):
+        cfg.security.mfa_demo_codes = True
     if v := env("RWB_ANSWER_STYLE"):
         cfg.presentation.style = v.lower()
     if (v := env("RWB_LLM_ANSWER")) is not None and v.lower() in ("0", "off", "false", "no"):

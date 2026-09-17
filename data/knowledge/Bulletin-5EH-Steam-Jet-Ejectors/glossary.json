@@ -1,0 +1,42 @@
+{
+  "document_id": "Bulletin-5EH-Steam-Jet-Ejectors",
+  "source_filename": "Bulletin-5EH-Steam-Jet-Ejectors.pdf",
+  "entries": [
+    {
+      "term": "FRP",
+      "canonical_meaning": "PREVIOUSLY SUPPLIED AS HAVEG",
+      "aliases": [],
+      "abbreviation": "FRP",
+      "full_form": "PREVIOUSLY SUPPLIED AS HAVEG",
+      "evidence": "FRP  (PREVIOUSLY SUPPLIED AS HAVEG)",
+      "page": 6,
+      "section": "FIG. 555H PHENOLIC FRP (PREVIOUSLY SUPPLIED AS HAVEG) CONSTRUCTION",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "Bulletin-5EH-Steam-Jet-Ejectors"
+    },
+    {
+      "term": "BEM",
+      "canonical_meaning": "Connect Heads & Fixed Tubes",
+      "aliases": [],
+      "abbreviation": "BEM",
+      "full_form": "Connect Heads & Fixed Tubes",
+      "evidence": "BEM (Connect Heads & Fixed Tubes)",
+      "page": 14,
+      "section": "Condensers:",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "Bulletin-5EH-Steam-Jet-Ejectors"
+    }
+  ],
+  "total_entries": 2,
+  "abbreviation_map": {
+    "FRP": "PREVIOUSLY SUPPLIED AS HAVEG",
+    "BEM": "Connect Heads & Fixed Tubes"
+  },
+  "term_map": {
+    "FRP": "PREVIOUSLY SUPPLIED AS HAVEG",
+    "BEM": "Connect Heads & Fixed Tubes"
+  },
+  "build_timestamp": "2026-09-16T13:27:46.356692+00:00"
+}

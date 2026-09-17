@@ -5,9 +5,11 @@ PBKDF2-HMAC-SHA256 digest over 240 000 iterations, and verification is a constan
 compare. A wrong password costs the same time as a right one, and five wrong ones inside the
 lockout window close the account for fifteen minutes.
 
-On first run the store seeds one account — ``lead`` / ``1234`` (override with
-``RWB_LEAD_PASSWORD``) — because the workbench must be usable out of the box; the seeded
-password is marked ``must_change`` so every login says so out loud.
+On first run the store seeds one account per role — ``admin``, ``manager`` and ``user`` — so the
+workbench is usable immediately. Their passwords come from ``RWB_ADMIN_PASSWORD``,
+``RWB_MANAGER_PASSWORD`` and ``RWB_USER_PASSWORD`` when those are set, and otherwise from
+``SEED_ACCOUNTS`` below, in which case each account is marked ``must_change`` and every login
+says so out loud.
 
 A successful login mints a ``SessionToken``: 32 random bytes, stored by SHA-256 digest only,
 valid for eight hours. Handing the token back is what proves the role on later requests.
@@ -25,7 +27,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from workbench.security.roles import Clearance, Role, role_clearance
+from workbench.security import totp
+from workbench.security.roles import Role, level_of, readable_tags
+from workbench.security.totp import TotpError
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +41,16 @@ MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_SECONDS = 15 * 60
 FAILURE_WINDOW_SECONDS = 15 * 60
 
+# The accounts created on first run: one per role, so every path through the system can be
+# demonstrated without an administrator having to exist first. Each is flagged ``must_change``
+# and the environment variable beside it replaces the password at seed time.
+#   username   role            default password   environment override
+SEED_ACCOUNTS: list[tuple[str, Role, str, str]] = [
+    ("admin",   Role.ADMIN,   "Admin#2026",   "RWB_ADMIN_PASSWORD"),
+    ("manager", Role.MANAGER, "Manager#2026", "RWB_MANAGER_PASSWORD"),
+    ("user",    Role.USER,    "User#2026",    "RWB_USER_PASSWORD"),
+]
+
 
 class AuthError(RuntimeError):
     """Login refused. The message is safe to show: it never says which half was wrong."""
@@ -44,6 +58,20 @@ class AuthError(RuntimeError):
     def __init__(self, message: str, *, locked_until: float | None = None) -> None:
         super().__init__(message)
         self.locked_until = locked_until
+
+
+class MfaRequired(RuntimeError):
+    """The password was right and a second factor is still owed.
+
+    Not an error in the usual sense — it is the middle of a two-step sign-in, and it deliberately
+    carries no token. Raised only after the password has been verified, so it never doubles as an
+    oracle for which accounts exist.
+    """
+
+    def __init__(self, *, username: str, role: str) -> None:
+        super().__init__("An authenticator code is required to finish signing in.")
+        self.username = username
+        self.role = role
 
 
 def hash_password(password: str, salt: bytes | None = None, iterations: int = PBKDF2_ITERATIONS) -> tuple[str, str, int]:
@@ -59,7 +87,7 @@ def _token_digest(token: str) -> str:
 
 class Credential(BaseModel):
     username: str
-    role: Role = Role.ENGINEER
+    role: Role = Role.USER
     display_name: str = ""
     salt: str
     digest: str
@@ -69,6 +97,13 @@ class Credential(BaseModel):
     failed_attempts: int = 0
     last_failure: float = 0.0
     locked_until: float = 0.0
+    totp_secret: str | None = Field(default=None, description="Shared secret for the authenticator app; set at enrolment")
+    totp_enrolled: float = 0.0
+    totp_used_counters: list[int] = Field(default_factory=list, description="Recently accepted TOTP steps, so a code cannot be replayed")
+
+    @property
+    def mfa_enrolled(self) -> bool:
+        return bool(self.totp_secret)
 
     def verify(self, password: str) -> bool:
         _s, digest, _i = hash_password(password, bytes.fromhex(self.salt), self.iterations)
@@ -96,10 +131,17 @@ class Principal(BaseModel):
     token: str | None = None              # the raw token, returned once at login and never stored
     expires: float = 0.0
     must_change_password: bool = False
+    mfa_enrolled: bool = False
+    mfa_satisfied: bool = False
 
     @property
-    def clearance(self) -> Clearance:
-        return role_clearance(self.role)
+    def level(self) -> int:
+        return level_of(self.role)
+
+    @property
+    def tags(self) -> list[str]:
+        """The document tags this principal may read — what the UI shows as their clearance."""
+        return [t.value for t in readable_tags(self.role)]
 
     def describe(self) -> str:
         who = self.display_name or self.username
@@ -121,6 +163,9 @@ class AuthService:
         self.token_ttl = token_ttl_seconds
         self._users: dict[str, Credential] = {}
         self._tokens: dict[str, SessionToken] = {}
+        # secrets minted by begin_enrolment but not yet proved; deliberately in memory only, so an
+        # abandoned enrolment leaves nothing behind and cannot be activated by editing a file
+        self._pending_enrolment: dict[str, str] = {}
         self._load()
         if seed_default and not self._users:
             self._seed_default()
@@ -161,13 +206,24 @@ class AuthService:
             pass
 
     def _seed_default(self) -> None:
-        password = os.getenv("RWB_LEAD_PASSWORD") or "1234"
-        self.add_user("lead", password, Role.LEAD_ENGINEER, display_name="Lead Engineer",
-                      must_change=not os.getenv("RWB_LEAD_PASSWORD"))
-        logger.info("seeded the default lead engineer account")
+        """Create one account per role on first run."""
+        from workbench.security.roles import title
+
+        for username, role, default_password, env_var in SEED_ACCOUNTS:
+            supplied = os.getenv(env_var)
+            self.add_user(username, supplied or default_password, role, display_name=title(role),
+                          must_change=not supplied)
+        logger.info("seeded %d role accounts", len(SEED_ACCOUNTS))
+
+    @staticmethod
+    def seeded_accounts() -> list[dict]:
+        """What the seeded accounts are, for the setup script and the documentation to print."""
+        return [{"username": u, "role": r.value, "default_password": p, "env_override": e,
+                 "from_environment": bool(os.getenv(e))}
+                for u, r, p, e in SEED_ACCOUNTS]
 
     # ------------------------------------------------------------------ accounts
-    def add_user(self, username: str, password: str, role: Role | str = Role.ENGINEER, *,
+    def add_user(self, username: str, password: str, role: Role | str = Role.USER, *,
                  display_name: str = "", must_change: bool = False) -> Credential:
         salt, digest, iterations = hash_password(password)
         cred = Credential(username=username.lower(), role=Role(role), display_name=display_name or username,
@@ -187,7 +243,60 @@ class AuthService:
 
     def users(self) -> list[dict]:
         return [{"username": c.username, "role": c.role.value, "display_name": c.display_name,
-                 "must_change": c.must_change, "locked": c.locked_until > time.time()} for c in self._users.values()]
+                 "must_change": c.must_change, "locked": c.locked_until > time.time(),
+                 "mfa_enrolled": c.mfa_enrolled} for c in self._users.values()]
+
+    # ------------------------------------------------------------------ second factor
+    def begin_enrolment(self, username: str, *, issuer: str = "MRPL AI Workstation") -> dict:
+        """Mint a secret and hand back the QR payload. Not active until ``confirm_enrolment``.
+
+        Two steps on purpose: an account whose secret were stored before the holder proved their
+        app can produce a code would be locked out of its own second factor.
+        """
+        cred = self._users[username.lower()]
+        secret = totp.new_secret()
+        self._pending_enrolment[cred.username] = secret
+        return {"username": cred.username, "secret": secret,
+                "uri": totp.provisioning_uri(secret, username=cred.username, issuer=issuer),
+                "digits": totp.DIGITS, "period": totp.STEP_SECONDS}
+
+    def confirm_enrolment(self, username: str, code: str) -> Credential:
+        """Activate the pending secret once the holder proves the app is producing its codes."""
+        cred = self._users[username.lower()]
+        secret = self._pending_enrolment.get(cred.username)
+        if not secret:
+            raise AuthError("Start enrolment first; there is no pending authenticator secret for this account.")
+        counter = totp.verify(secret, code)                      # raises TotpError on a bad code
+        cred.totp_secret = secret
+        cred.totp_enrolled = time.time()
+        cred.totp_used_counters = [counter]
+        self._pending_enrolment.pop(cred.username, None)
+        self._save_users()
+        return cred
+
+    def disable_mfa(self, username: str) -> Credential:
+        cred = self._users[username.lower()]
+        cred.totp_secret = None
+        cred.totp_enrolled = 0.0
+        cred.totp_used_counters = []
+        self._save_users()
+        return cred
+
+    def verify_totp(self, username: str, code: str, *, at: float | None = None) -> None:
+        """Check a code for an enrolled account and burn the step it matched.
+
+        ``at`` overrides the clock; it exists so the tests can cross a step boundary without
+        sleeping for thirty seconds, and is never set by the API.
+        """
+        cred = self._users[username.lower()]
+        if not cred.totp_secret:
+            raise AuthError("This account has no authenticator enrolled.")
+        now = at if at is not None else time.time()
+        counter = totp.verify(cred.totp_secret, code, at=now, used_counters=set(cred.totp_used_counters))
+        # keep only steps that could still be replayed; the list never grows
+        floor = int(now // totp.STEP_SECONDS) - totp.VALID_WINDOW
+        cred.totp_used_counters = [c for c in [*cred.totp_used_counters, counter] if c >= floor]
+        self._save_users()
 
     # ------------------------------------------------------------------ login
     def authenticate(self, username: str, password: str, *, label: str = "") -> Principal:
@@ -220,6 +329,40 @@ class AuthService:
         cred.locked_until = 0.0
         self._save_users()
         return self._mint(cred, label=label)
+
+    def authenticate_with_mfa(self, username: str, password: str, *, code: str | None = None,
+                              label: str = "", required_roles: list[str] | None = None,
+                              at: float | None = None) -> Principal:
+        """Password first, then the authenticator code when the role requires one.
+
+        The password is always checked first, so a wrong password never reveals whether the
+        account has a second factor, and the lockout counter still governs. Only once the password
+        is right does the second factor come into it:
+
+        * role does not require MFA, or the account is not enrolled -> a token, as before;
+        * role requires it and the account is enrolled, no code given -> ``MfaRequired``;
+        * code given -> verified and burned, then a token.
+
+        ``MfaRequired`` carries no token. There is no half-signed-in state to leak: a caller who
+        stops here holds nothing.
+        """
+        principal = self.authenticate(username, password, label=label)   # raises on a bad password
+        cred = self._users[principal.username]
+        needs = (cred.role.value in (required_roles or []))
+        principal.mfa_enrolled = cred.mfa_enrolled
+        if not needs or not cred.mfa_enrolled:
+            principal.mfa_satisfied = not needs
+            return principal
+        if not code:
+            self.revoke(principal.token)          # the token minted a moment ago is not earned yet
+            raise MfaRequired(username=cred.username, role=cred.role.value)
+        try:
+            self.verify_totp(cred.username, code, at=at)
+        except (TotpError, AuthError):
+            self.revoke(principal.token)
+            raise
+        principal.mfa_satisfied = True
+        return principal
 
     def _mint(self, cred: Credential, *, label: str = "") -> Principal:
         raw = secrets.token_urlsafe(TOKEN_BYTES)

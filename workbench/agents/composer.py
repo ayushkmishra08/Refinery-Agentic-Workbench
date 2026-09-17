@@ -387,8 +387,42 @@ class AnswerComposerAgent(BaseAgent):
 
     @staticmethod
     def _one_line(text: str, width: int = 240) -> str:
-        t = re.sub(r"\s+", " ", (text or "").replace("|", " ")).strip()
+        """One clean line of prose from a retrieved passage.
+
+        Chunks keep their source markup — "### 2.1 NORMAL OPERATING CONDITIONS", bullet dashes,
+        table pipes — because the knowledge layer stores the document faithfully. Dropped into a
+        sentence unchanged, that produced answers reading "The primary purpose is to lower the
+        viscosity. ## DETERMINING DESALTER PROCESS VARIABLES ...". The markup goes; a heading that
+        is left stranded becomes a clause rather than a shout.
+        """
+        lines = [ln.strip() for ln in (text or "").replace("|", " ").splitlines()]
+        body = [ln for ln in lines if ln and not AnswerComposerAgent._is_heading(ln)]
+        # a passage that is *only* a heading still has to say something, so keep it then
+        kept = body or [ln for ln in lines if ln]
+        t = " ".join(kept)
+        t = re.sub(r"^\s*[-*•]\s+", "", t)                               # a leading bullet marker
+        t = re.sub(r"\*\*(.+?)\*\*", r"\1", t)                           # bold
+        t = re.sub(r"\s+", " ", t).strip()
         return t if len(t) <= width else t[:width].rsplit(" ", 1)[0] + " ..."
+
+    @staticmethod
+    def _is_heading(line: str) -> bool:
+        """A section heading rather than a sentence.
+
+        Headings are how the document is organised, not what it says, and splicing one into prose
+        produces "...settling rate of water droplets. DETERMINING DESALTER PROCESS VARIABLES The
+        primary variables include...". They are dropped and the body kept.
+        """
+        if line.startswith("#"):
+            return True
+        stripped = line.strip(" .:")
+        if not stripped or len(stripped.split()) > 12:
+            return False
+        if re.match(r"^\d+(\.\d+)*[.)]?\s", stripped) and stripped.rstrip()[-1] not in ".?!":
+            return True                                    # "2.1 Normal operating conditions"
+        letters = [c for c in stripped if c.isalpha()]
+        upper_ratio = sum(c.isupper() for c in letters) / len(letters) if letters else 0
+        return upper_ratio > 0.7 and line.rstrip()[-1:] not in ".?!"
 
     # ------------------------------------------------------------------ brief
     def _brief(self, request: StructuredRequest, material: dict) -> tuple[str, list[str]]:
@@ -502,8 +536,14 @@ class AnswerComposerAgent(BaseAgent):
         be grounded. It is prose deliberately — the point of this agent is that the engineer
         never receives a pile of blocks as the answer.
         """
-        subjects = [self._label(e) for e in request.entities] or ([request.scope] if request.scope else [])
+        subjects = [self._label(e) for e in request.entities]
+        is_scope = not subjects and bool(request.scope)
+        if is_scope:
+            # a scope word ("document", "refinery") is a place, not a thing: the sentence has to
+            # open "Across the loaded documents", never "On document, the documents record"
+            subjects = ["the loaded documents" if request.scope == "document" else f"the {request.scope}"]
         subject = " and ".join(subjects[:2]) if subjects else "the documents"
+        lead_in = f"Across {subject}," if is_scope else f"On {subject}, the documents record the following."
         opening = []
         for c in request.corrections:
             opening.append(c.sentence())
@@ -519,7 +559,7 @@ class AnswerComposerAgent(BaseAgent):
             keep = min(4, material["on_topic_claims"] or 4)
             body.append(" ".join(material["claim_sentences"][:keep]))
         elif material["facts"]:
-            body.append(f"On {subject}, the documents record the following. " + " ".join(self._sentence(f) for f in material["facts"][:5]))
+            body.append(f"{lead_in} " + " ".join(self._sentence(f) for f in material["facts"][:5]))
         if material["relations"]:
             body.append("In the documented line-up, " + "; ".join(material["relations"][:4]) + ".")
         if material["steps"]:
@@ -530,7 +570,7 @@ class AnswerComposerAgent(BaseAgent):
         if material["safety"]:
             body.append("The documents attach these precautions: " + "; ".join(material["safety"][:3]) + ".")
         if not body and material["facts"]:
-            body.append(f"On {subject}, the documents record the following. " + " ".join(self._sentence(f) for f in material["facts"][:5]))
+            body.append(f"{lead_in} " + " ".join(self._sentence(f) for f in material["facts"][:5]))
         if not body and material["passages"]:
             body.append(f"The documents do not state this about {subject} directly. The nearest passage reads: "
                         + material["passages"][0])

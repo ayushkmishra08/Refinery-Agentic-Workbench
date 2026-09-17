@@ -34,9 +34,23 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | GET | `/health` | liveness, backend, model, effort level, resource state |
 | GET | `/agents` | list of agents (key, class, phase, description) |
 | GET | `/schema` | JSON schemas of `FinalResponse`, `Block`, `UserRequest` |
-| POST | `/auth/login` | username + password -> `{token, role, clearance, readable_documents}` |
+| POST | `/auth/login` | username + password -> `{token, role, readable_tags, readable_documents}` |
 | POST | `/auth/logout` | revoke the bearer token |
-| GET | `/auth/whoami` | the caller's role, clearance and readable documents |
+| GET | `/auth/whoami` | the caller's role, tags, readable documents and second-factor state |
+| GET | `/auth/mfa` | whether this role needs an authenticator and whether one is enrolled |
+| POST | `/auth/mfa/enrol` | start enrolment -> `{secret, otpauth_uri}`; nothing is stored until confirmed |
+| POST | `/auth/mfa/confirm` | prove the app works with a code; that code is then spent |
+| DELETE | `/auth/mfa` | remove an authenticator (your own; an admin may remove anyone's) |
+| GET | `/stats` | counts for the caller's workspace, summed over what this role may read |
+| GET | `/knowledge/tree` | the knowledge layer branch by branch, with this role's reach on each |
+| POST | `/security/documents/{document_id}/roles` | pin who reads one branch (admin only) |
+| GET | `/security` | the role schema, the document tags, and the caller's place in both |
+| POST | `/access-requests` | ask a higher role to release what one question needs |
+| GET | `/access-requests` | your own requests and their state |
+| GET | `/approvals` | your approval queue, with the material each request would release |
+| POST | `/approvals/{id}/approve` | approve and receive the one-time key (shown once) |
+| POST | `/approvals/{id}/deny` | refuse a request |
+| GET | `/security-log` | the security audit trail (manager and above) |
 | POST | `/ask` | run a request synchronously, returns `FinalResponse` |
 | POST | `/runs` | start a request in the background, returns `{run_id, session_id}` |
 | GET | `/runs` | all recorded runs (without the final response and event log) |
@@ -45,22 +59,25 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | POST | `/runs/{run_id}/btw` | ask the status agent about one run |
 | POST | `/btw` | ask the status agent about the latest run of a session |
 | GET | `/sessions/{session_id}` | session memory (turns, uploads, pending clarification) |
-| POST | `/upload` | upload a PDF or an image into a session |
+| POST | `/upload` | attach a PDF or an image to **this conversation** (parsed, indexed, session-only) |
+| DELETE | `/upload?session_id=` | forget everything attached to this conversation |
+| POST | `/knowledge/documents/{id}/promote` | move an attachment into the shared knowledge layer (manager+) |
 | GET | `/reviews` | pending human-in-the-loop items |
 | POST | `/reviews/{response_id}` | approve / reject a flagged response |
 | GET | `/audit/{session_id}?audit_id=` | audit trail records of a session |
 
 ### 2.0 Authentication — sign in before anything else
 
-Every document is classified and the CDU operating manual is `confidential`, so a caller without a
-token is cleared for nothing and `POST /ask` answers `401`. See `docs/ACCESS_AND_ANSWERS.md` for the
-role ladder and how documents are classified.
+Every document carries a tag and a caller without a token is cleared for nothing, so `POST /ask`
+answers `401`. Three roles — `user` < `manager` < `admin` — read three tags — `INTERNAL` <
+`CONFIDENTIAL` < `SECRET`. See **[`docs/SECURITY.md`](SECURITY.md)** for the model, the escalation
+flow and how an access key is verified.
 
 ```http
 POST /auth/login
-{"username": "lead", "password": "1234", "label": "web"}
+{"username": "manager", "password": "Manager#2026", "label": "web"}
 
-200 {"token": "y7Qd...", "username": "lead", "role": "lead_engineer", "clearance": "confidential",
+200 {"token": "y7Qd...", "username": "manager", "role": "manager", "readable_tags": ["INTERNAL", "CONFIDENTIAL"],
      "expires": 1789459200.0, "must_change_password": true,
      "readable_documents": ["CDU operating manual"], "withheld_documents": []}
 ```
@@ -204,7 +221,78 @@ Responses with `requires_human_review: true` are recorded. `GET /reviews` return
 `{"decision":"approved"|"rejected","reviewer":"name","note":""}` records the decision. Nothing is blocked
 automatically: the answer was already delivered with the flag; the review is a record.
 
-### 2.6 Audit
+### 2.5b Attachments — a document that belongs to one conversation
+
+`POST /upload` (multipart: `file`, `session_id`, `note`) parses a PDF with the knowledge layer's
+own pipeline and indexes it **for the conversation that uploaded it**. It is not added to the
+shared corpus, not classified, and nothing is written into `data/knowledge`; the parse is cached
+under `data/workbench/uploads/_cache/<hash>/` so the same file is not parsed twice.
+
+Who can read it: the person who uploaded it, in that conversation, whatever their role — it is
+their own file. Nobody else, in any other conversation, by any phrasing.
+
+Parsing is slow the first time a file is seen — minutes for a large document — so the call
+returns immediately:
+
+```jsonc
+{ "status": "indexing", "kind": "pdf", "run_id": "run-ab12", "document_id": "GNH-eng" }
+```
+
+Poll `GET /runs/{run_id}` until `finished` is set: `final_status` is `indexed` or `failed`,
+`phase` walks through `ingest:parsing` → `ingest:normalizing` → `ingest:indexing`, and `progress`
+carries real counts from the parser:
+
+```jsonc
+{ "done": 12, "total": 32, "unit": "pages", "percent": 31 }
+```
+
+Those are pages the parser has actually finished, reported as each window lands — not an estimate.
+Reading the pages is weighted at 85% of `percent` because that is where the wall clock goes; the
+stages after it carry the remainder. Pages recovered from a checkpoint count as done.
+
+**Do not let a question be asked before `final_status` is `indexed`.** It will be answered from
+every document *except* the one being read, so it comes back as a confident answer about the wrong
+thing — which is indistinguishable from the feature being broken.
+
+An answer drawn from an attachment names it in `security.attached_documents`, and the attachment
+contributes no classification: nobody has classified it, so it does not stamp the answer with a
+tier it does not belong to.
+
+`DELETE /upload?session_id=` forgets them. `POST /knowledge/documents/{id}/promote`
+(`{session_id, tag?}`) is the deliberate opposite: it re-parses into the knowledge layer's own
+directories, adds the document to the shared corpus and classifies it (`CONFIDENTIAL` unless a
+`tag` is given). That needs **manager or above**, because the person doing it is deciding what
+everyone else will be able to read.
+
+### 2.6 The knowledge layer and who reads it
+
+`GET /knowledge/tree` returns one **branch** per document — the unit access is granted in — with
+the caller's reach marked on each:
+
+```jsonc
+{
+  "role": "user", "readable": 4, "locked": 2,
+  "branches": [
+    { "document_id": "API 610 pump standard", "tag": "INTERNAL",
+      "roles": ["user", "manager", "admin"], "compartmented": false, "readable": true,
+      "pages": 82, "counts": { "entities": 8, "claims": 0, "procedures": 2, "chunks": 72 },
+      "chapters": [ { "number": 1, "title": "Product description" } ] },
+
+    // a locked branch reports its name, its tag and who to ask — and nothing else. No chapters,
+    // no page total, no counts: that would measure the tier above the caller.
+    { "document_id": "CDU operating manual", "tag": "SECRET",
+      "roles": ["admin"], "compartmented": false, "readable": false, "ask": "admin" }
+  ]
+}
+```
+
+`POST /security/documents/{document_id}/roles` with `{"roles": ["manager"]}` pins an explicit
+reader allowlist — a **compartment**, read by exactly those roles however senior anyone else is.
+`{"roles": null}` hands the document back to the tag ladder. Administrators only (`403`
+otherwise, `404` for a document that is not loaded). The tag is never changed by this call: it
+still says how sensitive the material is, and the banners, refusals and audit trail all read it.
+
+### 2.7 Audit
 
 `GET /audit/{session_id}` (optionally `?audit_id=`) returns the JSONL records written during runs: `request`,
 `structured_request`, `plan`, `replan`, `step_result`, `final`, `error`. The `audit_trail_id` in every

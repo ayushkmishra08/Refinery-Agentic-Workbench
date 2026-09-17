@@ -81,11 +81,29 @@ def secure_cfg(tmp_path):
 
 @pytest.fixture
 def secure_orch(secure_cfg, mock_knowledge):
+    """An orchestrator with the gate on, the three role accounts, and the three tiers tagged.
+
+    The tagging mirrors the deployment: the CDU manual is SECRET (admin), the Crude desalter is
+    CONFIDENTIAL (manager), the API 610 standard is INTERNAL (user).
+    """
     from workbench.orchestration.orchestrator import Orchestrator
+    from workbench.security.roles import Role, Tag
 
     o = Orchestrator(secure_cfg, knowledge=mock_knowledge, llm=NullLLM(), warm_start=False)
+    o.auth.add_user("admin", "admin-pw", Role.ADMIN, display_name="Administrator")
+    o.auth.add_user("manager", "manager-pw", Role.MANAGER, display_name="Manager")
+    o.auth.add_user("user", "user-pw", Role.USER, display_name="User")
+    o.classifications.assign("CDU operating manual", Tag.SECRET, "unit operating manual", by="setup")
+    o.classifications.assign("Crude desalter", Tag.CONFIDENTIAL, "unit equipment documentation", by="setup")
+    o.classifications.assign("API 610 pump standard", Tag.INTERNAL, "published standard", by="setup")
     yield o
     o.shutdown()
+
+
+@pytest.fixture
+def tokens(secure_orch):
+    """A signed-in token per role, so a test can say ``tokens['user']``."""
+    return {name: secure_orch.login(name, f"{name}-pw").token for name in ("admin", "manager", "user")}
 
 
 @pytest.fixture(scope="session")

@@ -244,9 +244,12 @@ why-questions, safety, comparisons, conflicts/provenance, work plans, reports an
 evidence-cited render blocks for a web front end.
 
 ```powershell
-python -m workbench login                       # the CDU manual is classified; sign in first (default account: lead)
+python -m workbench setup-security              # create the three role accounts and tag every document
+python -m workbench login                       # sign in first; nothing is readable until you do
+python -m workbench security                    # the role schema, the document tags, your own access
+python -m workbench security-check --passwords  # red-team every role for leakage
 python -m workbench status                      # hardware profile, models, backend, documents
-python -m workbench whoami                      # role, clearance, which documents it opens
+python -m workbench whoami                      # role, tags, which documents it opens
 python -m workbench ask "What is the normal flow rate of the crude charge pump?"
 python -m workbench ask "What are all the equipments in the refinery?"   # survey the corpus, no entity needed
 python -m workbench ask "..." --effort low      # index only, no model; high/ultra widen retrieval and use the model
@@ -258,10 +261,16 @@ python -m workbench serve --port 8000           # FastAPI + SSE for the frontend
 python -m workbench -v bench                    # 70-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 0.8 s mean
 ```
 
-**Access control.** Every document is classified and nothing is readable until a cleared user signs in: the CDU
-operating manual is `confidential`, which means a lead engineer or an administrator. The gate sits at the knowledge
-service itself, so no agent, search or tag lookup can reach around it. `RWB_AUTH=off` removes it for the benchmark
-and the test suite. See `docs/ACCESS_AND_ANSWERS.md`.
+**Access control.** Three roles — `user` < `manager` < `admin` — and three document tags — `INTERNAL` <
+`CONFIDENTIAL` < `SECRET`. A role reads a document when its level reaches the tag's, and nothing above it.
+Here that means the CDU operating manual is readable by an administrator, the Crude desalter manual by a
+manager, and the standards and vendor manuals by anyone signed in; a guest reads nothing, and the workbench
+asks who you are *before* it takes a question. Enforcement sits at the knowledge service, so no search, tag
+lookup or wording reaches around it — which is why prompt injection has nothing to work with. A question
+above your level raises an access request: the approver reviews the exact records and, if they agree, issues
+a signed single-use key that opens those records for that one question and nothing else.
+`python -m workbench security-check` red-teams the whole thing against your own documents.
+**Start here: [`docs/SECURITY.md`](docs/SECURITY.md)** — written for a first-time reader.
 
 **The answer is written, not assembled.** An Answer Composer turns the retrieved claims, edges, procedure steps and
 passages into prose — the knowledge is context, the reply is composed from it — and checks every figure, tag and

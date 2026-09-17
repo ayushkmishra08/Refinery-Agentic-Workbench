@@ -15,106 +15,21 @@ Four changes to the workbench, all visible to whoever is sitting in front of it:
 
 ## 1. Access control
 
-### The model
+Three roles (`user` < `manager` < `admin`), three document tags (`INTERNAL` < `CONFIDENTIAL` <
+`SECRET`), and one rule: a role reads a document when its level reaches the tag's. In this
+deployment the CDU operating manual is `SECRET`, the Crude desalter manual is `CONFIDENTIAL`,
+and the standards and vendor manuals are `INTERNAL`.
 
-| Piece | Where | What it does |
-|---|---|---|
-| Roles and clearances | `workbench/security/roles.py` | `guest < operator/engineer < lead_engineer < admin`, each carrying a clearance |
-| Document classification | `workbench/security/classification.py` | Which clearance a document needs; persisted to `data/workbench/security/classifications.json` |
-| Credentials and tokens | `workbench/security/auth.py` | PBKDF2-HMAC-SHA256 over 240 000 iterations, lockout, bearer tokens |
-| The decision | `workbench/security/policy.py` | `AccessPolicy.decide(principal, documents) -> AccessDecision` |
-| Enforcement | `workbench/security/guard.py` | A `KnowledgeService` wrapper that drops every record the principal may not read |
+Enforcement is at the knowledge service, not at the prompt: agents receive a
+`GuardedKnowledgeService` and cannot reach a document their principal is not cleared for through
+any route. A question the caller's role cannot answer can be escalated — an approver reviews the
+exact records and, if they agree, issues a signed one-time key that opens those records and
+nothing else.
 
-Clearances, lowest to highest: `public`, `internal`, `confidential`, `secret`. A principal may
-read a document at or below their own clearance and nothing else.
-
-```
-guest          public
-operator       internal
-engineer       internal
-lead_engineer  confidential   <- the CDU operating manual sits here
-admin          secret
-```
-
-### Why the CDU manual is confidential
-
-`DEFAULT_RULES` in `classification.py` matches a document's id, title, unit and type. A unit
-operating manual — anything naming CDU, VDU, crude or vacuum distillation, or typed as an
-operating manual — is `confidential`. A document that matches no rule is *also* confidential:
-an unclassified document is not a public one. Session uploads are `internal`, because the
-person who uploaded them already holds the session.
-
-To reclassify by hand, edit `data/workbench/security/classifications.json` (a `pinned` entry is
-never recomputed) or call `ClassificationRegistry.set()`.
-
-### The guard is the enforcement point
-
-Agents never hold the raw backend. `Orchestrator._run` resolves the principal, asks the policy
-what they may read, and wraps the knowledge service:
-
-```python
-principal, access = self.access_for(request.auth_token)
-knowledge = GuardedKnowledgeService(self.knowledge, access.allowed, enabled=cfg.security.enabled)
-```
-
-Every list-returning method is filtered by `document_id`; every single-record lookup returns
-`None` for a document that is not allowed; an entity survives only if at least one of its
-documents is readable, and its `document_ids` are narrowed to those. There is no route around
-it — not a search, not a tag lookup, not a neighbour walk, not `get_entity` on a uid guessed
-from somewhere else.
-
-When *nothing* is readable the run stops before Phase 0 and returns `status="unauthorized"`
-with no evidence attached, naming the document, its classification and the role that would open
-it.
-
-### Signing in
-
-```bash
-python -m workbench login              # default account: lead
-python -m workbench whoami             # role, clearance, readable and withheld documents
-python -m workbench passwd             # change a password; signs out every session for it
-python -m workbench users --add asha --role engineer
-python -m workbench logout
-```
-
-`ask` and `repl` check the stored token before running and prompt in place when it does not
-open the loaded documents, so the password question appears exactly where the engineer is.
-The token lives in `data/workbench/security/cli_session.json` and lasts eight hours.
-
-The seeded account is `lead` / `1234`. It is marked `must_change`, and every login says so.
-Set `RWB_LEAD_PASSWORD` before the first run to seed a real one instead.
-
-Over HTTP:
-
-```bash
-curl -X POST localhost:8000/auth/login -d '{"username":"lead","password":"1234"}' -H 'content-type: application/json'
-# -> {"token": "...", "role": "lead_engineer", "readable_documents": ["CDU operating manual"]}
-
-curl -X POST localhost:8000/ask -H "Authorization: Bearer $TOKEN" \
-     -H 'content-type: application/json' -d '{"text":"..."}'
-```
-
-`POST /ask` without a usable token is `401`. `POST /auth/login` is `401` on a wrong password and
-`423` while an account is locked out. `user_role` in the request body is a frontend hint and is
-never consulted by the policy — only the token decides.
-
-### What is refused, and how
-
-- five wrong passwords inside fifteen minutes lock the account for fifteen minutes, and the
-  right password does not open a locked account;
-- a wrong password and an unknown username give the same message and cost roughly the same time;
-- raw passwords are never stored and raw tokens are never written to disk (the store holds a
-  SHA-256 digest);
-- changing an account's role invalidates every token minted under the old one;
-- every access decision, allowed or denied, is written to the audit trail as `kind: "access"`.
-
-### Switching it off
-
-`RWB_AUTH=off` disables the gate. The test suite and the benchmark use it — they exercise
-routing and retrieval, and signing in two hundred times tests the same door two hundred times.
-`tests/workbench/test_security.py` turns it back on and is where the door itself is tested.
-
----
+**The whole of it is documented for a first-time reader in [`docs/SECURITY.md`](SECURITY.md)** —
+the model, the escalation walk-through, how a key proves itself, the red-team check and the
+answers to the questions people ask. What follows here is the *answer composition* work, which
+is a separate concern.
 
 ## 2. The composed answer
 

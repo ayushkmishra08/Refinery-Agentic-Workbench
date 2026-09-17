@@ -221,7 +221,13 @@ class GovernanceAgent(BaseAgent):
         assumptions = composed.content.get("assumptions") or []
         if assumptions:
             parts.append("*Assumed: " + "; ".join(assumptions[:2]) + ".*")
-        if access is not None and getattr(access, "denied", None):
+        if access is not None and getattr(access, "grant_id", None):
+            # a grant is in play: say what it opened, not what is still shut. Repeating the
+            # refusal under an answer that was just released by approval reads as a mistake.
+            parts.append(f"*Released under approved access grant {access.grant_id}: "
+                         f"{len(access.granted_records)} record(s) in {', '.join(access.granted_documents)}. "
+                         f"Nothing else in those documents was opened.*")
+        elif access is not None and getattr(access, "denied", None):
             parts.append("*" + access.message() + "*")
         if review and reason:
             parts.append(f"**Human review required.** {reason}")

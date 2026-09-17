@@ -86,12 +86,17 @@ def stored_identity(cfg) -> dict | None:
 def prompt_login(orch, *, username: str | None = None, reason: str = "") -> str | None:
     """Ask for a username and password at the terminal; return the token on success."""
     from workbench.security.auth import AuthError
+    from workbench.security.roles import Role, describe
 
     if reason:
         print(f"\n  {reason}")
+    if username is None:
+        print("  Roles on this system:")
+        for role in (Role.USER, Role.MANAGER, Role.ADMIN):
+            print(f"    {role.value:<8} {describe(role)}")
     for attempt in range(MAX_ATTEMPTS):
         try:
-            user = username or input("  username [lead]: ").strip() or "lead"
+            user = username or input("  username [user]: ").strip() or "user"
             password = _read_password(f"  password for {user}: ")
         except (EOFError, KeyboardInterrupt):
             print("\n  sign-in cancelled.")
@@ -112,19 +117,45 @@ def prompt_login(orch, *, username: str | None = None, reason: str = "") -> str 
     return None
 
 
-def ensure_access(orch, *, interactive: bool = True) -> str | None:
-    """A token that opens the loaded documents, asking for one at the terminal if needed."""
+def require_sign_in(orch, *, interactive: bool = True) -> str | None:
+    """Establish who is asking, before any question is accepted.
+
+    The workbench asks for a role first and answers second. That ordering is the point: a
+    question is never evaluated on behalf of an unknown caller, so there is no window in which
+    retrieval has run but identity has not been established.
+
+    Returns a token, or None when the caller declined and the run should proceed as a guest
+    (which reads nothing, and will be told so).
+    """
     if not orch.cfg.security.enabled:
         return None
     token = load_token(orch.cfg)
-    principal, decision = orch.access_for(token)
-    if not decision.denied:
+    principal = orch.principal(token)
+    if principal.authenticated:
+        return token
+    if not interactive:
+        return None
+    print()
+    print("  This workbench holds classified unit documentation. Sign in before asking a question.")
+    for doc in orch.document_catalogue():
+        print(f"    {doc['document_id'][:46]:<46} {doc['tag']:<13} {doc['min_role']} and above")
+    print()
+    return prompt_login(orch, reason="")
+
+
+def ensure_access(orch, *, interactive: bool = True) -> str | None:
+    """A token that opens as much as possible, offering a sign-in when something is withheld.
+
+    Used after ``require_sign_in``: a signed-in user who is simply not cleared for one document
+    is not re-prompted, because re-typing their own password will not change their role. They
+    are only offered the prompt when nobody is signed in at all.
+    """
+    if not orch.cfg.security.enabled:
+        return None
+    token = load_token(orch.cfg)
+    principal = orch.principal(token)
+    if principal.authenticated:
         return token
     if not interactive or not orch.cfg.security.prompt_on_denial:
         return token
-    docs = ", ".join(d.get("title") or d["document_id"] for d in decision.denied_detail)
-    needed = ", ".join(decision.required_roles()) or "a cleared role"
-    reason = (f"{docs} is classified {decision.denied_detail[0]['clearance']} and needs: {needed}."
-              if decision.denied_detail else decision.message())
-    new_token = prompt_login(orch, reason=reason)
-    return new_token or token
+    return prompt_login(orch, reason="No one is signed in, so no document is readable.") or token

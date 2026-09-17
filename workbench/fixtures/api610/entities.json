@@ -1,0 +1,20 @@
+[
+  {
+    "entity_uid": "e-api610-pump",
+    "canonical_tag": null,
+    "name": "Centrifugal pump (API 610)",
+    "entity_type": "Pump",
+    "aliases": ["api 610 pump", "centrifugal pump", "process pump", "oh2 pump"],
+    "mention_count": 52,
+    "description": "Overhung centrifugal pump covered by API 610"
+  },
+  {
+    "entity_uid": "e-api610-seal",
+    "canonical_tag": null,
+    "name": "Mechanical seal (API 682)",
+    "entity_type": "Equipment",
+    "aliases": ["mechanical seal", "seal", "seal flush plan"],
+    "mention_count": 21,
+    "description": "Cartridge mechanical seal and its flush plan"
+  }
+]

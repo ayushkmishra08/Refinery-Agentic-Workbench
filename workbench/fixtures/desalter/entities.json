@@ -1,0 +1,29 @@
+[
+  {
+    "entity_uid": "e-11-V-02",
+    "canonical_tag": "11-V-02",
+    "name": "Desalter (11-V-02)",
+    "entity_type": "Vessel",
+    "aliases": ["11-V-02", "11 V 02", "desalter", "crude desalter", "electrostatic desalter"],
+    "mention_count": 34,
+    "description": "Two-stage electrostatic crude desalter"
+  },
+  {
+    "entity_uid": "e-11-X-01",
+    "canonical_tag": "11-X-01",
+    "name": "Vortex Mixer (11-X-01)",
+    "entity_type": "Equipment",
+    "aliases": ["11-X-01", "vortex mixer", "mixing valve"],
+    "mention_count": 9,
+    "description": "Wash-water mixing device upstream of the desalter"
+  },
+  {
+    "entity_uid": "e-11-PIC-1105",
+    "canonical_tag": "11-PIC-1105",
+    "name": "Desalter pressure controller (11-PIC-1105)",
+    "entity_type": "Instrument",
+    "aliases": ["11-PIC-1105", "PIC-1105", "desalter pressure controller"],
+    "mention_count": 6,
+    "description": "Controls desalter operating pressure"
+  }
+]

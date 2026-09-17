@@ -34,9 +34,11 @@ It handles fourteen kinds of request (`workbench/core/request.py`, `TaskType`):
 
 Three things sit around those fourteen and are described in `docs/ACCESS_AND_ANSWERS.md`:
 
-- **who is asking.** Every document carries a classification and the CDU manual is `confidential`, so the
-  first request of a session asks for the lead engineer password. The gate is at the knowledge service, not
-  at the UI, so no agent can reach around it.
+- **who is asking.** Every document carries a tag and every role a level; the CDU manual is `SECRET`, so
+  only an administrator reads it, and the workbench asks who you are before it takes a question at all.
+  The gate is at the knowledge service, not at the UI or the prompt, so no agent and no wording reaches
+  around it. A question above your level can be escalated for a signed, single-use key over named records.
+  See `docs/SECURITY.md`.
 - **what comes back.** The retrieved claims, edges, steps and passages are context; an Answer Composer writes
   the reply from them and is checked against them. The typed blocks are still on the response for a frontend.
 - **what came before.** "What if we use 11-E-01 instead?" is rewritten into a standalone comparison against

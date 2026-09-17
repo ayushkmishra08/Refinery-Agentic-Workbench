@@ -1,0 +1,667 @@
+{
+  "document_id": "API610 pump operation manual",
+  "source_filename": "API610 pump operation manual.pdf",
+  "title": "SECTION ONE - PRODUCT DESCRIPTION",
+  "document_type": "maintenance_manual",
+  "document_number": "",
+  "revision": "",
+  "status": "",
+  "effective_date": "",
+  "refinery": "",
+  "plant": "operator to receive useful tips and guidelines relative  to  the  unit.  the  tools  and/or  equipme",
+  "unit": "",
+  "block": "",
+  "area": "of the machine/plant. please  contact  a  ruhrpumpen  representative  should  problems  arise.  the ",
+  "chapters": [
+    {
+      "number": "",
+      "title": "SECTION ONE - PRODUCT DESCRIPTION",
+      "page_start": 5,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION TWO - SAFETY",
+      "page_start": 7,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION THREE - TRANSPORT & STORAGE",
+      "page_start": 11,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION FOUR - INSTALLATION",
+      "page_start": 16,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION FIVE - PIPING AND ALIGNMENT",
+      "page_start": 22,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "4.",
+      "title": "4. Soft Foot",
+      "page_start": 26,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION SIX - LUBRICATION",
+      "page_start": 34,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION SEVEN - OPERATION",
+      "page_start": 40,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION EIGHT - MAINTENANCE",
+      "page_start": 45,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "37.",
+      "title": "37. To assemble the impeller on the shaft:",
+      "page_start": 69,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION NINE - SPARE PARTS",
+      "page_start": 75,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION TEN - PARTS INFORMATION",
+      "page_start": 77,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "SECTION ELEVEN - TROUBLESHOOTING CHART",
+      "page_start": 79,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    }
+  ],
+  "sections": [
+    {
+      "number": "",
+      "title": "INSTALLATION, OPERATION, AND MAINTENANCE MANUAL",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Renewed SCE",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "FOREWORD",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "© 2012 Ruhrpumpen All Rights Reserved.",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Contents",
+      "page": 3,
+      "parent_chapter": null
+    },
+    {
+      "number": "1.1",
+      "title": "1.1 INTRODUCTION",
+      "page": 5,
+      "parent_chapter": ""
+    },
+    {
+      "number": "1.2",
+      "title": "1.2 PUMP CASE, IMPELLER, AND WEAR RINGS",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "1.2.1",
+      "title": "1.2.1 Pump Case",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "1.2.2",
+      "title": "1.2.2 Impeller and Wear Rings",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "1.3",
+      "title": "1.3 SEAL CHAMBER",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "1.4",
+      "title": "1.4 BEARING BRACKET",
+      "page": 6,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.2",
+      "title": "2.2 QUALIFICATION AND TRAINING OF OPERATING PERSONNEL",
+      "page": 7,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.3",
+      "title": "2.3 HAZARDS IN THE EVENT OF NON-COMPLIANCE WITH THE SAFETY INSTRUCTIONS",
+      "page": 8,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.4",
+      "title": "2.4 COMPLIANCE WITH REGULATIONS PERTAINING TO SAFETY AT WORK",
+      "page": 8,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.5",
+      "title": "2.5 COMPLIANCE WITH DIRECTIVES PERTAINING TO PUMPS OPERATING IN POTENTIALLY EXPLOSIVE ATMOSPHERES",
+      "page": 8,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.6",
+      "title": "2.6 SAFETY INSTRUCTIONS RELEVANT FOR OPERATION",
+      "page": 9,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.7",
+      "title": "2.7 SAFETY INSTRUCTIONS RELEVANT FOR MAINTENANCE, INSPECTION AND ASSEMBLY WORK",
+      "page": 9,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.8",
+      "title": "2.8 UNAUTHORIZED ALTERATIONS AND SPARE PARTS",
+      "page": 10,
+      "parent_chapter": ""
+    },
+    {
+      "number": "2.9",
+      "title": "2.9 UNAUTHORIZED MODES OF OPERATION",
+      "page": 10,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.1",
+      "title": "3.1 SHIPPING ARRANGEMENTS",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.2",
+      "title": "3.2 UNLOADING AND CHECKING EQUIPMENT",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.3",
+      "title": "3.3 TRANSPORT",
+      "page": 11,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.4",
+      "title": "3.4 STORING",
+      "page": 12,
+      "parent_chapter": ""
+    },
+    {
+      "number": "3.5",
+      "title": "3.5 CONSERVATION",
+      "page": 14,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.1",
+      "title": "4.1 CONCRETE FOUNDATION PREPARATION",
+      "page": 16,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.2",
+      "title": "4.2 LEVELING BASEPLATE",
+      "page": 17,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Jacking Bolts",
+      "page": 19,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.3",
+      "title": "4.3 GROUTING",
+      "page": 19,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.3.1",
+      "title": "4.3.1 Equipment/Material Required",
+      "page": 19,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.3.2",
+      "title": "4.3.2 Grouting Precautions",
+      "page": 20,
+      "parent_chapter": ""
+    },
+    {
+      "number": "4.3.3",
+      "title": "4.3.3 Grouting Procedure",
+      "page": 20,
+      "parent_chapter": ""
+    },
+    {
+      "number": "5.1",
+      "title": "5.1 PIPING THE SYSTEM",
+      "page": 23,
+      "parent_chapter": ""
+    },
+    {
+      "number": "5.2",
+      "title": "5.2 ALIGNMENT *",
+      "page": 25,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "B. REVERSE INDICATOR ALIGNMENT GRAPHICAL ANALYSIS",
+      "page": 26,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "6.1",
+      "title": "6.1 OIL RING LUBRICATION",
+      "page": 34,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "6.1.1",
+      "title": "6.1.1 Recommended Lubricant",
+      "page": 34,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "6.1.2.",
+      "title": "6.1.2. Method of Application",
+      "page": 34,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "6.1.3.",
+      "title": "6.1.3. Quantity",
+      "page": 34,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "(b) For Bearing Bracket Size 55, 0.40 U.S. gallons (1.5 L) for the following pump sizes:",
+      "page": 35,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "(c) For Bearing Bracket Size 75, 0.98 U.S. gallons (3.7 L) for the following pump sizes:",
+      "page": 35,
+      "parent_chapter": ""
+    },
+    {
+      "number": "6.1.4",
+      "title": "6.1.4 Maintenance",
+      "page": 36,
+      "parent_chapter": ""
+    },
+    {
+      "number": "6.2",
+      "title": "6.2 PURE OIL MIST-DRY SUMP",
+      "page": 36,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Maintenance:",
+      "page": 37,
+      "parent_chapter": ""
+    },
+    {
+      "number": "6.3",
+      "title": "6.3 PURGE OIL MIST-WET SUMP",
+      "page": 37,
+      "parent_chapter": ""
+    },
+    {
+      "number": "6.4",
+      "title": "6.4 OIL CHANGE",
+      "page": 38,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.1",
+      "title": "7.1 PRIMING",
+      "page": 40,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.2",
+      "title": "7.2 STARTUP",
+      "page": 40,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.3",
+      "title": "7.3 OPERATING CHECK",
+      "page": 41,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.4",
+      "title": "7.4 DOWELING",
+      "page": 43,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.5",
+      "title": "7.5 STOPPING",
+      "page": 43,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.6",
+      "title": "7.6 SHORT-TERM SHUTDOWN",
+      "page": 44,
+      "parent_chapter": ""
+    },
+    {
+      "number": "7.7",
+      "title": "7.7 LONG-TERM SHUTDOWN",
+      "page": 44,
+      "parent_chapter": ""
+    },
+    {
+      "number": "8.1",
+      "title": "8.1 DISASSEMBLY",
+      "page": 45,
+      "parent_chapter": ""
+    },
+    {
+      "number": "8.2",
+      "title": "8.2 INSPECTION and CLEANING",
+      "page": 46,
+      "parent_chapter": ""
+    },
+    {
+      "number": "8.3",
+      "title": "8.3 REASSEMBLY",
+      "page": 47,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Tightening torquing \"crosswise\"",
+      "page": 72,
+      "parent_chapter": "37."
+    },
+    {
+      "number": "",
+      "title": "ATTENTION",
+      "page": 73,
+      "parent_chapter": "37."
+    },
+    {
+      "number": "",
+      "title": "Material Storage of spare parts",
+      "page": 75,
+      "parent_chapter": ""
+    },
+    {
+      "number": "10.1",
+      "title": "10.1 PUMP SECTIONAL DRAWING AND PARTS LISTING - BEARING BRACKET SIZE 35",
+      "page": 77,
+      "parent_chapter": ""
+    },
+    {
+      "number": "10.2",
+      "title": "10.2 PUMP SECTIONAL DRAWING AND PARTS LISTING - BEARING BRACKET SIZES 55, 75, AND 90",
+      "page": 78,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "GERMANY",
+      "page": 81,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "MEXICO",
+      "page": 81,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "EGYPT",
+      "page": 81,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "ARGENTINA",
+      "page": 81,
+      "parent_chapter": ""
+    }
+  ],
+  "total_pages": 82,
+  "abbreviations": [],
+  "equipment_naming_conventions": [],
+  "process_terminology": [],
+  "safety_terminology": [],
+  "referenced_documents": [
+    {
+      "reference_text": "API 610",
+      "document_type": "Standard",
+      "document_number": "API 610",
+      "title": "",
+      "evidence": "Heavy Duty, Single Stage, Overhung, API 610 Process Pump",
+      "page": 1,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "API610",
+      "document_type": "Standard",
+      "document_number": "API610",
+      "title": "",
+      "evidence": "is either single or two-plane, to meet the requirements of API610. It is keyed to the shaft and locked with an impeller nut a",
+      "page": 6,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A36",
+      "document_type": "Standard",
+      "document_number": "ASTM A36",
+      "title": "",
+      "evidence": "oose foundation bolts of size specified in drawing (ASTM A36, M 1020 and ASTM A575 are recommended), they should b",
+      "page": 17,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A575",
+      "document_type": "Standard",
+      "document_number": "ASTM A575",
+      "title": "",
+      "evidence": "f size specified in drawing (ASTM A36, M 1020 and ASTM A575 are recommended), they should be long enough to allow a mi",
+      "page": 17,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 10-1",
+      "document_type": "Standard",
+      "document_number": "IS 10-1",
+      "title": "",
+      "evidence": "or rides on the motor hub. In the example shown below, this is 10-1/2 inches (266.7 mm).",
+      "page": 26,
+      "present_in_corpus": false
+    }
+  ],
+  "cross_references": [
+    {
+      "source_section": "SECTION TWO - SAFETY > 2.7 SAFETY INSTRUCTIONS RELEVANT FOR MAINTENANCE, INSPECTION AND ASSEMBLY WORK",
+      "source_page": 9,
+      "target_kind": "section",
+      "target_number": "7.5",
+      "evidence": "mperative to follow the procedure for shutting down the machine as described in SECTION 7.5 - STOPPING. Pumps and pump units that c"
+    },
+    {
+      "source_section": "SECTION TWO - SAFETY > 2.7 SAFETY INSTRUCTIONS RELEVANT FOR MAINTENANCE, INSPECTION AND ASSEMBLY WORK",
+      "source_page": 9,
+      "target_kind": "section",
+      "target_number": "7.2",
+      "evidence": "ve again. Prior to restarting the machine, follow the instructions listed under SECTION 7.2 - STARTUP ."
+    },
+    {
+      "source_section": "SECTION FOUR - INSTALLATION > 4.2 LEVELING BASEPLATE",
+      "source_page": 18,
+      "target_kind": "section",
+      "target_number": "3.3",
+      "evidence": "Attach lifting rig hooks to lifting lugs of baseplate as described in SECTION 3.3 - TRANSPORT."
+    },
+    {
+      "source_section": "SECTION SIX - LUBRICATION > 6.3 PURGE OIL MIST-WET SUMP",
+      "source_page": 37,
+      "target_kind": "section",
+      "target_number": "6.1",
+      "evidence": "All the steps outlined in SECTION 6.1 - OIL RING LUBRICATION apply, along wit"
+    },
+    {
+      "source_section": "SECTION SIX - LUBRICATION > 6.4 OIL CHANGE",
+      "source_page": 39,
+      "target_kind": "section",
+      "target_number": "6.1.1",
+      "evidence": "Refer to SECTION 6.1.1 - Recommended Lubricant for recommended"
+    },
+    {
+      "source_section": "SECTION SEVEN - OPERATION > 7.4 DOWELING",
+      "source_page": 43,
+      "target_kind": "section",
+      "target_number": "7.2",
+      "evidence": "Start the pump as defined in SECTION 7.2 - STARTUP ."
+    },
+    {
+      "source_section": "SECTION SEVEN - OPERATION > 7.7 LONG-TERM SHUTDOWN",
+      "source_page": 44,
+      "target_kind": "section",
+      "target_number": "7.5",
+      "evidence": "Follow the stopping procedure described in SECTION 7.5 - STOPPING."
+    },
+    {
+      "source_section": "SECTION SEVEN - OPERATION > 7.7 LONG-TERM SHUTDOWN",
+      "source_page": 44,
+      "target_kind": "section",
+      "target_number": "7.2",
+      "evidence": "rational state, warm up and start the unit at monthly intervals (see SECTION 7.2 - STARTUP for details)."
+    },
+    {
+      "source_section": "SECTION EIGHT - MAINTENANCE > 8.1 DISASSEMBLY",
+      "source_page": 45,
+      "target_kind": "section",
+      "target_number": "7.5",
+      "evidence": "Stop the pump. See SECTION 7.5 - STOPPING ."
+    },
+    {
+      "source_section": "SECTION EIGHT - MAINTENANCE > 8.2 INSPECTION and CLEANING",
+      "source_page": 47,
+      "target_kind": "section",
+      "target_number": "8.3",
+      "evidence": "ed chisel tool. Replacement wear rings are installed by a light shrink fit (see SECTION 8.3 - REASSEMBLY )."
+    }
+  ],
+  "standing_instructions": [],
+  "table_categories_found": [
+    "safety_table",
+    "unknown_table",
+    "decorative_table"
+  ],
+  "key_concepts": [],
+  "pages_analyzed": 20,
+  "profile_timestamp": "2026-09-16T13:28:35.765984+00:00",
+  "confidence": 0.6
+}

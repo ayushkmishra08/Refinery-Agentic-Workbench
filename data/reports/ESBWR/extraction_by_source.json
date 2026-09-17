@@ -1,0 +1,26 @@
+{
+  "rule": {
+    "relationships": {
+      "accepted": 232,
+      "rejected": 1,
+      "weak": 0
+    },
+    "claims": {
+      "accepted": 14,
+      "rejected": 3,
+      "weak": 10
+    }
+  },
+  "table": {
+    "relationships": {
+      "accepted": 0,
+      "rejected": 0,
+      "weak": 0
+    },
+    "claims": {
+      "accepted": 92,
+      "rejected": 17,
+      "weak": 0
+    }
+  }
+}

@@ -13,7 +13,9 @@ def test_documents_and_stats(cfg):
     docs = s.documents()
     assert docs[0].document_id == "CDU operating manual" and docs[0].revision == "0"
     st = s.stats()
-    assert st["entities"] == 8 and st["claims"] == 13 and st["procedures"] == 3 and st["chunks"] == 4 and st["vectors"] == 0
+    # three fixture documents now: the CDU manual plus the desalter and API 610 tiers that the
+    # access-control tests need. The CDU figures are the first three of each count.
+    assert st["documents"] == 3 and st["entities"] == 12 and st["claims"] == 19 and st["procedures"] == 4 and st["chunks"] == 10 and st["vectors"] == 0
 
 
 def test_resolve_entity_exact_alias_prefers_tagged(cfg):
@@ -43,7 +45,7 @@ def test_resolve_entity_fuzzy_name(cfg):
 def test_search_entities_by_type(cfg):
     s = store(cfg)
     pumps = s.search_entities("pump", entity_type="Pump")
-    assert [e.entity_uid for e in pumps] == ["e-11-PM-01"]
+    assert "e-11-PM-01" in [e.entity_uid for e in pumps]
     assert s.get_entity("e-11-F-01").canonical_tag == "11-F-01"
     assert s.get_entity("nope") is None
 
@@ -89,7 +91,7 @@ def test_procedures_by_entity_type_and_query(cfg):
     assert {p.procedure_id for p in by_entity} == {"proc-changeover-01", "proc-pump-isolation"}
     assert by_entity[0].score > 0
     typed = s.procedures(procedure_type="startup")
-    assert typed and typed[0].procedure_id == "proc-heater-lightoff"
+    assert typed and "proc-heater-lightoff" in [p.procedure_id for p in typed]
     q = s.procedures(entity_uid="e-11-PM-01", query="change over to the standby pump")
     assert q[0].procedure_id == "proc-changeover-01"
     assert s.get_procedure("proc-heater-lightoff").steps[0].tags == ["11-F-01"]

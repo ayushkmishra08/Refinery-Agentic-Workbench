@@ -83,15 +83,18 @@ This guide provides the necessary steps to set up the `refinery-knowledge-layer`
    `knowledge_layer/config.py` to a model already in the cache (e.g. `all-MiniLM-L6-v2`); the vector index is
    recreated automatically when the dimension changes.
 
-4. **Workbench accounts**: the first workbench command creates `data/workbench/security/users.json` with one
-   account, `lead` / `1234`, cleared for the classified unit manuals. Set a real password before that first run:
+4. **Workbench accounts and document tags**: run `python scripts/setup_security.py` once after the
+   pipeline. It creates one account per role — `admin`, `manager`, `user` — and tags every loaded
+   document: unit operating manuals `SECRET`, unit equipment documentation `CONFIDENTIAL`, published
+   standards and vendor manuals `INTERNAL`. It prints the resulting matrix so you can check it.
    ```powershell
-   $env:RWB_LEAD_PASSWORD = "<a real password>"     # read only when the credential store is seeded
+   $env:RWB_ADMIN_PASSWORD = "<a real password>"     # set these before the first run,
+   $env:RWB_MANAGER_PASSWORD = "<a real password>"   # or use --random-passwords, which prints
+   $env:RWB_USER_PASSWORD = "<a real password>"      # strong ones once
    ```
-   Already seeded? Change it with `python -m workbench passwd`, which also signs out every session for that
-   account. Add colleagues with `python -m workbench users --add <name> --role engineer|lead_engineer|admin`;
-   only `lead_engineer` and `admin` may read the CDU manual. `RWB_AUTH=off` removes the gate (the benchmark and
-   the test suite use it). Details in `docs/ACCESS_AND_ANSWERS.md`.
+   The seeded demo passwords are `Admin#2026`, `Manager#2026` and `User#2026`; each is flagged
+   must-change and every login says so. `RWB_AUTH=off` removes the gate (the benchmark and the test
+   suite use it). The whole model is documented in `docs/SECURITY.md`.
 
 ## Running
 

@@ -3,6 +3,12 @@
 Used by the Context Resolver to resolve "it", "this pump", "the same equipment", and by the
 Task Classifier for follow-ups ("and the shutdown?"). Persisted as JSON per session under
 data/workbench/sessions/ so a server restart keeps the conversation.
+
+**Sessions belong to a principal.** A conversation holds the previous answers, so two people
+sharing a session id would share whatever the more-cleared of them was told. The orchestrator
+therefore namespaces every session by the signed-in username (``alice__web``), and a state whose
+``owner`` does not match the caller is not returned. Picking someone else's session id gets you
+your own empty conversation, not theirs.
 """
 from __future__ import annotations
 
@@ -30,6 +36,8 @@ class Turn(BaseModel):
 
 class SessionState(BaseModel):
     session_id: str
+    owner: str = Field(default="", description="The principal this conversation belongs to; sessions are never shared across roles")
+    owner_role: str = ""
     created: float = Field(default_factory=time.time)
     turns: list[Turn] = Field(default_factory=list)
     uploaded_documents: list[dict] = Field(default_factory=list)   # {document_id, name, chunks, added}
@@ -65,17 +73,32 @@ class SessionStore:
         safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in session_id)[:80] or "default"
         return self.dir / f"{safe}.json"
 
-    def load(self, session_id: str) -> SessionState:
+    @staticmethod
+    def key_for(owner: str, session_id: str) -> str:
+        """The stored name of one person's conversation. Two roles never collide."""
+        return f"{owner or 'anonymous'}__{session_id}"
+
+    def load(self, session_id: str, *, owner: str = "", owner_role: str = "") -> SessionState:
+        """The conversation for this session id, belonging to this principal.
+
+        ``owner`` is checked, not trusted from the file: a state stored under someone else's name
+        is discarded and a fresh one returned, so a guessed session id yields nothing.
+        """
         if session_id in self._cache:
-            return self._cache[session_id]
+            cached = self._cache[session_id]
+            if not owner or cached.owner == owner:
+                return cached
         p = self._path(session_id)
+        st = None
         if p.exists():
             try:
                 st = SessionState.model_validate_json(p.read_text(encoding="utf-8"))
             except Exception:
-                st = SessionState(session_id=session_id)
-        else:
-            st = SessionState(session_id=session_id)
+                st = None
+        if st is None or (owner and st.owner and st.owner != owner):
+            st = SessionState(session_id=session_id, owner=owner, owner_role=owner_role)
+        st.owner = st.owner or owner
+        st.owner_role = owner_role or st.owner_role
         self._cache[session_id] = st
         return st
 

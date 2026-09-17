@@ -1,0 +1,42 @@
+{
+  "document_id": "API610 pump operation manual",
+  "source_filename": "API610 pump operation manual.pdf",
+  "entries": [
+    {
+      "term": "DTI",
+      "canonical_meaning": "Dial  Type  Indicator",
+      "aliases": [],
+      "abbreviation": "DTI",
+      "full_form": "Dial  Type  Indicator",
+      "evidence": "Dial  Type  Indicator  (DTI)",
+      "page": 23,
+      "section": "SECTION FIVE - PIPING AND ALIGNMENT > 5.1 PIPING THE SYSTEM",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "API610 pump operation manual"
+    },
+    {
+      "term": "TIR",
+      "canonical_meaning": "Total Indicator Readout",
+      "aliases": [],
+      "abbreviation": "TIR",
+      "full_form": "Total Indicator Readout",
+      "evidence": "TIR (Total Indicator Readout)",
+      "page": 27,
+      "section": "4. Soft Foot > B. REVERSE INDICATOR ALIGNMENT GRAPHICAL ANALYSIS",
+      "confidence": 0.85,
+      "source": "inline_definition",
+      "document_id": "API610 pump operation manual"
+    }
+  ],
+  "total_entries": 2,
+  "abbreviation_map": {
+    "DTI": "Dial  Type  Indicator",
+    "TIR": "Total Indicator Readout"
+  },
+  "term_map": {
+    "DTI": "Dial  Type  Indicator",
+    "TIR": "Total Indicator Readout"
+  },
+  "build_timestamp": "2026-09-16T13:28:35.791970+00:00"
+}

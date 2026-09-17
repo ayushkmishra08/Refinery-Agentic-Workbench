@@ -1,0 +1,29 @@
+[
+  {
+    "chunk_id": "dch-operation",
+    "chunk_type": "equipment",
+    "page": 14,
+    "chapter_number": 2,
+    "section_path": "Chapter 2: Desalter operation > 2.1 NORMAL OPERATING CONDITIONS",
+    "entity_uids": ["e-11-V-02", "e-11-X-01"],
+    "text": "### 2.1 NORMAL OPERATING CONDITIONS\n\nThe desalter 11-V-02 is operated at 8.5 kg/cm2 g and a desalting temperature of 130 degC. Wash water is injected upstream of the vortex mixer 11-X-01 at normally 6 % on crude. Pressure is held by 11-PIC-1105 to keep the crude in the liquid phase across the vessel; vaporisation inside the desalter disrupts the electrostatic field and carries salt forward into the heater."
+  },
+  {
+    "chunk_id": "dch-design",
+    "chunk_type": "specification",
+    "page": 15,
+    "chapter_number": 2,
+    "section_path": "Chapter 2: Desalter operation > 2.2 VESSEL DATA",
+    "entity_uids": ["e-11-V-02"],
+    "text": "### 2.2 VESSEL DATA\n\nDesign pressure 15.5 kg/cm2 g. Design temperature 165 degC. The vessel carries two electrode grids energised through a transformer rated at 22 kVA."
+  },
+  {
+    "chunk_id": "dch-upset",
+    "chunk_type": "upset",
+    "page": 38,
+    "chapter_number": 4,
+    "section_path": "Chapter 4: Troubleshooting > 4.2 POOR DESALTING",
+    "entity_uids": ["e-11-V-02"],
+    "text": "### 4.2 POOR DESALTING\n\nIf salt carry-over rises, check the wash water rate, the mixing valve pressure drop across 11-X-01, the interface level, and the demulsifier dosing rate. A low desalting temperature is the most common documented cause."
+  }
+]

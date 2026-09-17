@@ -1,0 +1,522 @@
+{
+  "document_id": "Crude desalter",
+  "source_filename": "Crude desalter.pdf",
+  "title": "Engineering Encyclopedia",
+  "document_type": "unknown",
+  "document_number": "",
+  "revision": "",
+  "status": "",
+  "effective_date": "",
+  "refinery": "",
+  "plant": "",
+  "unit": "",
+  "block": "",
+  "area": "",
+  "chapters": [
+    {
+      "number": "",
+      "title": "PART 1:",
+      "page_start": 91,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    }
+  ],
+  "sections": [
+    {
+      "number": "",
+      "title": "Engineering Encyclopedia",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Saudi Aramco DeskTop Standards",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "CRUDE OIL DESALTING",
+      "page": 1,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "INFORMATION INTRODUCTION",
+      "page": 5,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "PRINCIPLES OF CRUDE OIL DESALTING",
+      "page": 6,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Background",
+      "page": 6,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Source of Salts and Contaminants in Crude",
+      "page": 7,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Contaminant Tests",
+      "page": 9,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Contaminant",
+      "page": 9,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Laboratory Test",
+      "page": 9,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Desalting Process",
+      "page": 11,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Theory",
+      "page": 15,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "MICROSCOPIC",
+      "page": 16,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Typical Desalter Performance",
+      "page": 20,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "DETERMINING DESALTER PROCESS VARIABLES AND OPTIMUM OPERATING CONDITIONS",
+      "page": 22,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Oil Feed Quality",
+      "page": 22,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Temperature",
+      "page": 22,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Pressure",
+      "page": 23,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Wash Water Rates, Quality, Injection Points, and Sources",
+      "page": 24,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Wash Water/Oil Mixing",
+      "page": 25,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Electric Field",
+      "page": 29,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Oil/Water Residence Times",
+      "page": 33,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Chemical Additives",
+      "page": 35,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "DESALTER DESIGN FEATURES",
+      "page": 37,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Conventional Low Velocity Units",
+      "page": 37,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Natco Dual Polarity",
+      "page": 42,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "DUAL POLARITYTM COALESCER",
+      "page": 43,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Petreco Bielectric Design",
+      "page": 43,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Howe-Baker Edge Design",
+      "page": 46,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Mud Wash System",
+      "page": 47,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Entrance Bushings",
+      "page": 48,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Electrical Components",
+      "page": 48,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Howe-Baker's Double Protection extreme bushing design is shown in Figure 25.",
+      "page": 50,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Transformers and Reactors",
+      "page": 50,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Electrical Instrumentation",
+      "page": 51,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Interface Level Control",
+      "page": 52,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Bottom Injected Desalter or Dehydrator",
+      "page": 54,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Top Injected Desalter",
+      "page": 54,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "ESTIMATE THE SIZE OF A DESALTER",
+      "page": 56,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "DESALTER PERFORMANCE EVALUATION",
+      "page": 58,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Performance Indices",
+      "page": 58,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Analytical Procedures",
+      "page": 59,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Shutdown/Startup Procedures",
+      "page": 59,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "TROUBLESHOOTING CRUDE OIL DESALTING EQUIPMENT",
+      "page": 60,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "SUMMARY",
+      "page": 61,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 1: Graph for Determining Optimum Operating Condition",
+      "page": 64,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 2: Resources for Estimating the Size of a Desalter",
+      "page": 65,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 2A:",
+      "page": 65,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Notes:",
+      "page": 65,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Notes:",
+      "page": 66,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Where:",
+      "page": 70,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 4: Resources for Troubleshooting Desalter Operation",
+      "page": 72,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 4B:",
+      "page": 73,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Work Aid 4D: Troubleshooting Desalter  Problem of  a Wide Emulsion Band",
+      "page": 75,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "GLOSSARY",
+      "page": 80,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "REFERENCES",
+      "page": 82,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "ADDENDUMS",
+      "page": 83,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Addendum A:  Desalter Shutdown and Start Up Instructions",
+      "page": 84,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Typical Desalter Start-Up Instructions",
+      "page": 84,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Typical Desalter Shutdown Instructions",
+      "page": 86,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Typical Desalter Inspection/Maintenance Preparation",
+      "page": 87,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Addendum B:  Desalting Equipment Vendors",
+      "page": 88,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Natco",
+      "page": 88,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "National Tank France",
+      "page": 88,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Howe-Baker",
+      "page": 88,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Petreco Petrolite Corporation",
+      "page": 89,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Addendum C:   Typical Chemical Analysis of Sea & Aquifer Water",
+      "page": 90,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Addendum D:   Relative Desaltability of Various Crudes",
+      "page": 91,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Addendum D: Relative Desaltability of Various Crudes",
+      "page": 92,
+      "parent_chapter": ""
+    },
+    {
+      "number": "",
+      "title": "Addendum E:   Water Solubility in Crude Oil",
+      "page": 93,
+      "parent_chapter": ""
+    }
+  ],
+  "total_pages": 93,
+  "abbreviations": [
+    {
+      "abbreviation": "-",
+      "full_form": "S i - S o S i x 100",
+      "evidence": "- = S i - S o S i x 100",
+      "page": 70,
+      "source": "abbreviation_table"
+    },
+    {
+      "abbreviation": "-",
+      "full_form": "W w + W i - W o W w + W i x 100",
+      "evidence": "- = W w + W i - W o W w + W i x 100",
+      "page": 70,
+      "source": "abbreviation_table"
+    },
+    {
+      "abbreviation": "A",
+      "full_form": "W W o S i + 0.01 W w S w ( ) W w + W i",
+      "evidence": "A = W W o S i + 0.01 W w S w ( ) W w + W i",
+      "page": 70,
+      "source": "abbreviation_table"
+    },
+    {
+      "abbreviation": "MI",
+      "full_form": "A S o",
+      "evidence": "MI = A S o",
+      "page": 70,
+      "source": "abbreviation_table"
+    },
+    {
+      "abbreviation": "E",
+      "full_form": "S i - S o S i - A x 100",
+      "evidence": "E = S i - S o S i - A x 100",
+      "page": 70,
+      "source": "abbreviation_table"
+    }
+  ],
+  "equipment_naming_conventions": [
+    {
+      "pattern": "\\bE-\\d{2,4}[A-Z]?\\b",
+      "description": "Heat Exchangers (E-xxx)",
+      "examples": [
+        "E-94"
+      ]
+    }
+  ],
+  "process_terminology": [],
+  "safety_terminology": [],
+  "referenced_documents": [
+    {
+      "reference_text": "IS 28",
+      "document_type": "Standard",
+      "document_number": "IS 28",
+      "title": "",
+      "evidence": "neutral voltage of 16,500 V, the voltage between electrodes is 28,600 V. This difference in voltage drops possibly enhances",
+      "page": 41,
+      "present_in_corpus": false
+    }
+  ],
+  "cross_references": [],
+  "standing_instructions": [],
+  "table_categories_found": [
+    "toc_table",
+    "unknown_table",
+    "equipment_table",
+    "abbreviation_table",
+    "chemical_table"
+  ],
+  "key_concepts": [],
+  "pages_analyzed": 20,
+  "profile_timestamp": "2026-09-16T13:41:15.511975+00:00",
+  "confidence": 0.6
+}

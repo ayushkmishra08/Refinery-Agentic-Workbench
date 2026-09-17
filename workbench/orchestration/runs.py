@@ -26,6 +26,9 @@ class RunState(BaseModel):
     followup: str = "new"                                      # new | substitution | elaboration | continuation
     entities: list[str] = Field(default_factory=list)
     goal: str | None = None
+    #: How far a long ingest has got: {"done": 12, "total": 32, "unit": "pages", "percent": 37}.
+    #: Only set while a document is being read; a question run leaves it empty.
+    progress: dict | None = None
     step_status: list[dict] = Field(default_factory=list)      # {step_id, agent, goal, depends_on, status, summary}
     current_step: dict | None = None
     recent_events: list[dict] = Field(default_factory=list)

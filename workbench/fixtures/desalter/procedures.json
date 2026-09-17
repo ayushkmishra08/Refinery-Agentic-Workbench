@@ -1,0 +1,17 @@
+[
+  {
+    "procedure_id": "proc-desalter-startup",
+    "title": "Desalter commissioning after a shutdown",
+    "procedure_type": "startup",
+    "page_start": 44,
+    "page_end": 45,
+    "applies_to": ["e-11-V-02"],
+    "section_path": "Chapter 5: Start-up > 5.1 DESALTER COMMISSIONING",
+    "steps": [
+      {"sequence": 1, "text": "Confirm the vessel is full of crude and vented before energising the grids."},
+      {"sequence": 2, "text": "Establish wash water at 4 % on crude and raise to 6 % once the interface is stable."},
+      {"sequence": 3, "text": "Energise the transformer only after the interface level is confirmed on the local gauge."},
+      {"sequence": 4, "text": "Raise the desalting temperature to 130 degC at no more than 20 degC per hour."}
+    ]
+  }
+]

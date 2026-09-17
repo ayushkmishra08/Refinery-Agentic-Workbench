@@ -1,0 +1,29 @@
+[
+  {
+    "chunk_id": "ach-bearings",
+    "chunk_type": "specification",
+    "page": 47,
+    "chapter_number": 6,
+    "section_path": "6 Accessories > 6.10 Bearings and bearing housings",
+    "entity_uids": ["e-api610-pump"],
+    "text": "### 6.10 Bearings and bearing housings\n\nBearings shall be selected for a minimum rated life of 25 000 hours with continuous operation at rated conditions. Bearing housing oil temperature shall not exceed 82 degC, and the temperature rise above ambient shall not exceed 40 degC."
+  },
+  {
+    "chunk_id": "ach-vibration",
+    "chunk_type": "specification",
+    "page": 52,
+    "chapter_number": 8,
+    "section_path": "8 Inspection and testing > 8.3 Performance test",
+    "entity_uids": ["e-api610-pump"],
+    "text": "### 8.3 Performance test\n\nUnfiltered vibration shall not exceed 3.0 mm/s rms at rated flow when measured at the bearing housings. Readings are taken in the horizontal, vertical and axial directions."
+  },
+  {
+    "chunk_id": "ach-seal",
+    "chunk_type": "equipment",
+    "page": 61,
+    "chapter_number": 6,
+    "section_path": "6 Accessories > 6.8 Mechanical seals",
+    "entity_uids": ["e-api610-seal", "e-api610-pump"],
+    "text": "### 6.8 Mechanical seals\n\nCartridge seals conforming to API 682 shall be supplied. The flush plan is selected from the piping plans; Plan 11 recirculates from the discharge through an orifice to the seal chamber and is the default for clean services."
+  }
+]

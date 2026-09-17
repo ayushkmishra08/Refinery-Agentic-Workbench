@@ -3,6 +3,25 @@
     "document_id": "CDU operating manual",
     "unit": "CDU-II",
     "pages": 562,
-    "revision": "0"
+    "revision": "0",
+    "document_type": "operating_manual"
+  },
+  {
+    "document_id": "Crude desalter",
+    "title": "Crude desalter equipment manual",
+    "unit": "CDU-II",
+    "pages": 93,
+    "revision": "1",
+    "document_type": "equipment_manual",
+    "fixtures": "desalter"
+  },
+  {
+    "document_id": "API 610 pump standard",
+    "title": "API 610 centrifugal pump standard",
+    "unit": "plant",
+    "pages": 82,
+    "revision": "11",
+    "document_type": "standard",
+    "fixtures": "api610"
   }
 ]

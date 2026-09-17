@@ -1,0 +1,5448 @@
+{
+  "document_id": "ESBWR",
+  "source_filename": "ESBWR.pdf",
+  "title": "Enclosure 1",
+  "document_type": "unknown",
+  "document_number": "",
+  "revision": "",
+  "status": "",
+  "effective_date": "",
+  "refinery": "",
+  "plant": "application; others based on bounding approach. nedc-33084 class i drf 0000-0007-3896 august",
+  "unit": "",
+  "block": "",
+  "area": "",
+  "chapters": [
+    {
+      "number": "1.",
+      "title": "1.  Introduction",
+      "page_start": 17,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "2.",
+      "title": "2.  Core and Vessel Design",
+      "page_start": 28,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "3.",
+      "title": "3.  Key Nuclear Island Mechanical Systems Description",
+      "page_start": 129,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "1.",
+      "title": "1.  Diverse Means of Rod Insertion",
+      "page_start": 169,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "2.",
+      "title": "2.  Absence of FMCRD Piston Seals",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "3.",
+      "title": "3.  FMCRD Discharge",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "4.",
+      "title": "4.  Plant Maneuverability",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "5.",
+      "title": "5.  Plant Automation",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "6.",
+      "title": "6.  Reactor Startup Time",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "7.",
+      "title": "7.  Rod Drop Accident Prevention",
+      "page_start": 170,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "4.",
+      "title": "4.  Safety System Design",
+      "page_start": 270,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "5.",
+      "title": "5.  Containment Design and Support Systems",
+      "page_start": 293,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "6.",
+      "title": "6.  Reactor Building and Auxiliary Fuel Building Design",
+      "page_start": 351,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "7.",
+      "title": "7. Electrical Power and Control/Instrumentation Design",
+      "page_start": 357,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "8.",
+      "title": "8.  Support and Auxiliary Systems",
+      "page_start": 421,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "9.",
+      "title": "9. Turbine Island Design Description",
+      "page_start": 447,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "10.",
+      "title": "10. Reactor Refueling and Servicing",
+      "page_start": 453,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "1.",
+      "title": "1.  Under Vessel Rotating Platform (F17-E010)",
+      "page_start": 469,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "2.",
+      "title": "2.  CRD Handling Device (F17-E011)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "3.",
+      "title": "3.  CRD Bolt Wrench Device (F17-E012)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "4.",
+      "title": "4.  CRD Bolt Wrench Device Carrier (F17-E013)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "5.",
+      "title": "5.  CRD Motor/Spool Piece Bolt End Effectors (F17-E014)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "6.",
+      "title": "6.  Bolt Wrench Control Panel (F17-E015)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "7.",
+      "title": "7.  CRD Attachment Carrier (F17-E016)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "8.",
+      "title": "8.  Motor/Spool Piece Cart (F17-E017)",
+      "page_start": 470,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "9.",
+      "title": "9.  FMCRD Cart (F17-E018)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "10.",
+      "title": "10.  TV Camera and Monitor (F17-E019)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "11.",
+      "title": "11.  Fixed Sealing Flange (F17-E020)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "12.",
+      "title": "12.  CRD Control Device (F17-E021)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "1.",
+      "title": "1.  In-core Monitor Seat Flushing Device (F17-E030)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "2.",
+      "title": "2.  In-core Monitor Nut Wrench (F17-E031)",
+      "page_start": 471,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Appendix A System Schematic Diagrams",
+      "page_start": 475,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    },
+    {
+      "number": "",
+      "title": "Appendix B Arrangement Drawings",
+      "page_start": 494,
+      "page_end": null,
+      "revision": "",
+      "revision_date": "",
+      "source": "heading",
+      "is_administrative": false
+    }
+  ],
+  "sections": [
+    {
+      "number": "",
+      "title": "Enclosure 1",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "List of Reports in Support of ESBWR Pre-application Review",
+      "page": 2,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "ESBWR R Design Description",
+      "page": 4,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "IMPORTANT NOTICE REGARDING CONTENTS OF THIS REPORT",
+      "page": 5,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "PLEASE READ CAREFULLY",
+      "page": 5,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "ACKNOWLEDGMENTS",
+      "page": 6,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "ESBWR Design Description",
+      "page": 7,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Table of Contents",
+      "page": 7,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 8,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 10,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "Glossary of Acronyms",
+      "page": 10,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 12,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 13,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 15,
+      "parent_chapter": null
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 16,
+      "parent_chapter": null
+    },
+    {
+      "number": "1.1",
+      "title": "1.1 Purpose",
+      "page": 17,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.2",
+      "title": "1.2 ESBWR Design",
+      "page": 17,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.3",
+      "title": "1.3 What is the Design?",
+      "page": 18,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.4",
+      "title": "1.4 Plant Safety System",
+      "page": 20,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.4.1",
+      "title": "1.4.1 High and Low Pressure Inventory Control",
+      "page": 20,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.4.2",
+      "title": "1.4.2 Containment Heat Removal",
+      "page": 21,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.5",
+      "title": "1.5 Buildings and Structures",
+      "page": 23,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.6",
+      "title": "1.6 Plant Performance",
+      "page": 23,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.7",
+      "title": "1.7 What is the Technology Basis for the Design?",
+      "page": 24,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "",
+      "title": "Table 1-5.  Features and Technology Common to ABWR and ESBWR",
+      "page": 25,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "1.8",
+      "title": "1.8 Summary and Conclusions",
+      "page": 27,
+      "parent_chapter": "1."
+    },
+    {
+      "number": "2.1",
+      "title": "2.1  Fuel Bundle Design",
+      "page": 29,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.1",
+      "title": "2.1.1  General Description",
+      "page": 29,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.2",
+      "title": "2.1.2  Fuel Bundle",
+      "page": 31,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.3",
+      "title": "2.1.3  Fuel Rods",
+      "page": 31,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.4",
+      "title": "2.1.4  Water Rods",
+      "page": 32,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.5",
+      "title": "2.1.5  Fuel Spacer",
+      "page": 32,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.6",
+      "title": "2.1.6  Finger Springs",
+      "page": 32,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.1.7",
+      "title": "2.1.7  Channels",
+      "page": 32,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2",
+      "title": "2.2  Core Design",
+      "page": 34,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.1",
+      "title": "2.2.1  General Description of F Lattice Configuration",
+      "page": 34,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.2",
+      "title": "2.2.2  Instrumentation",
+      "page": 34,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.3",
+      "title": "2.2.3  Core Detail Description",
+      "page": 34,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.4",
+      "title": "2.2.4  Control Rods",
+      "page": 35,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.2-2 F Lattice Configuration",
+      "page": 37,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.2-5 ESBWR Control Rod",
+      "page": 40,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.5",
+      "title": "2.2.5  Core Nuclear Design",
+      "page": 41,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.5.1",
+      "title": "2.2.5.1  GE12 Fuel Assembly Design Description",
+      "page": 41,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.2-5  GE 12 Fuel Assembly Configuration",
+      "page": 42,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.2.5.3",
+      "title": "2.2.5.3  Conclusion",
+      "page": 43,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.3",
+      "title": "2.3  Natural Circulation Design Recirculation Flow",
+      "page": 44,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.3.1",
+      "title": "2.3.1  Sizing of Chimney Height for Design Recirculation Flow",
+      "page": 46,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4",
+      "title": "2.4  Reactor System  -  Internal Components",
+      "page": 48,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.1",
+      "title": "2.4.1  Summary Description",
+      "page": 48,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.2",
+      "title": "2.4.2  Reactor System",
+      "page": 48,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.3",
+      "title": "2.4.3  Reactor Pressure Vessel Internal Components",
+      "page": 52,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.3.1",
+      "title": "2.4.3.1  Core Support Structures",
+      "page": 53,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.3.2",
+      "title": "2.4.3.2  Reactor Internals",
+      "page": 63,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.4",
+      "title": "2.4.4  Design Bases",
+      "page": 72,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.4.1",
+      "title": "2.4.4.1  Safety Design Bases",
+      "page": 72,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.4.2",
+      "title": "2.4.4.2  Power Generation Design Bases",
+      "page": 72,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Design Loading Categories",
+      "page": 73,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Response of Internals Due to Steam Line Break Accident",
+      "page": 73,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Stress and Fatigue Limits for Core Support Structures",
+      "page": 73,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.5",
+      "title": "2.4.5  System Operation",
+      "page": 74,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.6",
+      "title": "2.4.6  System Operation Modes",
+      "page": 75,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.7",
+      "title": "2.4.7  Testing and Inspection Requirements",
+      "page": 75,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.4.8",
+      "title": "2.4.8  Instrumentation Requirements",
+      "page": 77,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5",
+      "title": "2.5  Reactor System  -  Reactor Pressure Vessel",
+      "page": 78,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1",
+      "title": "2.5.1  Summary Description",
+      "page": 78,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.1",
+      "title": "2.5.1.1  RPV Top Head",
+      "page": 80,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.2",
+      "title": "2.5.1.2  Shroud Support",
+      "page": 80,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.3",
+      "title": "2.5.1.3  Vessel Support",
+      "page": 81,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.4",
+      "title": "2.5.1.4  Control Rod Drive Housings",
+      "page": 81,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.5",
+      "title": "2.5.1.5  Neutron Flux Monitor In-Core Housings",
+      "page": 81,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.6",
+      "title": "2.5.1.6  Reactor Vessel Insulation",
+      "page": 81,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.7",
+      "title": "2.5.1.7  Reactor Vessel Nozzles",
+      "page": 82,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.8",
+      "title": "2.5.1.8  Reactor Vessel Fasteners",
+      "page": 84,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.1.9",
+      "title": "2.5.1.9  Materials of Construction",
+      "page": 84,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.2",
+      "title": "2.5.2  Pressure/Temperature Limits",
+      "page": 84,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.2.1",
+      "title": "2.5.2.1  Material Surveillance",
+      "page": 85,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.2.2",
+      "title": "2.5.2.2  Predicted Shift in RTNDT and Drop in Upper-Shelf Energy (USE)",
+      "page": 86,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.2.3",
+      "title": "2.5.2.3  RPV Integrity",
+      "page": 86,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.3",
+      "title": "2.5.3  Design Bases",
+      "page": 87,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.3.1",
+      "title": "2.5.3.1  Safety Design Basis",
+      "page": 87,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.3.2",
+      "title": "2.5.3.2  Power Generation Design Bases",
+      "page": 87,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.4",
+      "title": "2.5.4  Configuration and Special Features",
+      "page": 88,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.5",
+      "title": "2.5.5  System Operation",
+      "page": 89,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.6",
+      "title": "2.5.6  Testing and Inspection Requirements",
+      "page": 89,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.7",
+      "title": "2.5.7  Instrumentation Requirements",
+      "page": 89,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.5.8",
+      "title": "2.5.8  References",
+      "page": 90,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.6",
+      "title": "2.6  Reactor Heat Balances",
+      "page": 92,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.7",
+      "title": "2.7 Steam Separation and Drying System",
+      "page": 95,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.7.1",
+      "title": "2.7.1    Description and Functioning of Steam Separation System",
+      "page": 95,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.7.1.1",
+      "title": "2.7.1.1  Introduction",
+      "page": 95,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.7-1  ESBWR Steam Separator Configuration",
+      "page": 97,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Table 2.7-1 Steam Separator Component Functions and Performance Impact",
+      "page": 99,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Table 2.7-1 (Continued)",
+      "page": 100,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.7-3  Steam Dryer Unit Cutaway",
+      "page": 102,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.7-4  Steam Dryer Assembly and Cutaway View",
+      "page": 103,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "Figure 2.7-6  Performance of AS-2B Separator",
+      "page": 107,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8",
+      "title": "2.8  Principal NSSS Trip Setpoints and Trip-Response Actions",
+      "page": 111,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.1",
+      "title": "2.8.1  Summary Description",
+      "page": 111,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.2",
+      "title": "2.8.2  Neutron Flux Trip Setpoints",
+      "page": 111,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.2.1",
+      "title": "2.8.2.1  Neutron Flux-High",
+      "page": 111,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.2.2",
+      "title": "2.8.2.2  Simulated Thermal Power-High",
+      "page": 112,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.2.3",
+      "title": "2.8.2.3  Source Range Neutron Monitoring (SRNM)-High",
+      "page": 113,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3",
+      "title": "2.8.3  RPV Water Level Trip Setpoints",
+      "page": 113,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.1",
+      "title": "2.8.3.1  RPV Water Level-Level 9",
+      "page": 113,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.2",
+      "title": "2.8.3.2  RPV Water Level-Level 8",
+      "page": 113,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.3",
+      "title": "2.8.3.3  RPV Water Level-Level 3",
+      "page": 114,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.4",
+      "title": "2.8.3.4  RPV Water Level-Level 2",
+      "page": 114,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.5",
+      "title": "2.8.3.5  RPV Water Level-Level 1",
+      "page": 115,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.3.6",
+      "title": "2.8.3.6  RPV Water Level-Level 0.5",
+      "page": 115,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4",
+      "title": "2.8.4  RPV/Containment Pressure/Temperature Trip Setpoints",
+      "page": 116,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4.1",
+      "title": "2.8.4.1  Reactor Pressure-High",
+      "page": 116,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4.2",
+      "title": "2.8.4.2  Drywell Pressure-High",
+      "page": 116,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4.3",
+      "title": "2.8.4.3  Lower Drywell Temperature-High",
+      "page": 117,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4.4",
+      "title": "2.8.4.4  Suppression Pool Temperature-High",
+      "page": 117,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.4.5",
+      "title": "2.8.4.5  MSIV-Closure",
+      "page": 117,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.5",
+      "title": "2.8.5  Turbine/Generator Trip Setpoints",
+      "page": 118,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.5.1",
+      "title": "2.8.5.1  Turbine Stop Valve Closure",
+      "page": 118,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.5.2",
+      "title": "2.8.5.2  Turbine Control Fast Valve Closure",
+      "page": 118,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.6",
+      "title": "2.8.6  Miscellaneous Trip Setpoints",
+      "page": 119,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.6.1",
+      "title": "2.8.6.1  HCU Charging Water Line Pressure-Low",
+      "page": 119,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.6.2",
+      "title": "2.8.6.2  Mode Switch in Shutdown",
+      "page": 119,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.6.3",
+      "title": "2.8.6.3  Manual Scram",
+      "page": 119,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7",
+      "title": "2.8.7  Isolation Trip Setpoints",
+      "page": 120,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.1",
+      "title": "2.8.7.1  Leak Detection",
+      "page": 120,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.2",
+      "title": "2.8.7.2  Main Steam Line Ambient Temperature-High",
+      "page": 120,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.3",
+      "title": "2.8.7.3  Main Steam Line Flow-High",
+      "page": 120,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.4",
+      "title": "2.8.7.4  Turbine Inlet Pressure-Low",
+      "page": 121,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.5",
+      "title": "2.8.7.5  Turbine Area Steam Line Ambient Temperature-High",
+      "page": 121,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "2.8.7.6",
+      "title": "2.8.7.6  Main Condenser Vacuum-Low",
+      "page": 121,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 124,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "3.1",
+      "title": "3.1  Nuclear Boiler System",
+      "page": 129,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.1",
+      "title": "3.1.1  Description and Functioning of System",
+      "page": 129,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.2",
+      "title": "3.1.2  Design Bases",
+      "page": 129,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.2.1",
+      "title": "3.1.2.1  Safety Design Bases",
+      "page": 129,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.2.2",
+      "title": "3.1.2.2  Plant Investment Protection Design Bases",
+      "page": 130,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.3",
+      "title": "3.1.3  Main Steam Lines Subsystem",
+      "page": 131,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.4",
+      "title": "3.1.4  Automatic Depressurization Subsystem",
+      "page": 134,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.5",
+      "title": "3.1.5  Safety Relief Valves (SRVs)",
+      "page": 135,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.6",
+      "title": "3.1.6  Depressurization Valves (DPVs)",
+      "page": 140,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.7",
+      "title": "3.1.7  Main Steam Line Isolation Valves (MSIVs)",
+      "page": 143,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.8",
+      "title": "3.1.8  RPV Head Vent",
+      "page": 148,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.9",
+      "title": "3.1.9  Main Steam Auxiliary Supplies",
+      "page": 149,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.10",
+      "title": "3.1.10  Feedwater Lines Subsystem",
+      "page": 149,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 150,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.11",
+      "title": "3.1.11  System Operation",
+      "page": 156,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Startup Mode",
+      "page": 156,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Power Operation Mode",
+      "page": 158,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Normal Operation",
+      "page": 158,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Final Feedwater Temperature Reduction",
+      "page": 158,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Planned Transients",
+      "page": 159,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Unplanned (Analyzed) Transients (Upset and Emergency)",
+      "page": 160,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Safe Shutdown Mode",
+      "page": 160,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Cold Shutdown Mode",
+      "page": 161,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Refueling Mode",
+      "page": 161,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Testing Mode",
+      "page": 161,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.12",
+      "title": "3.1.12  Trip Setpoints",
+      "page": 161,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.13",
+      "title": "3.1.13  Testing and Inspection Requirements",
+      "page": 162,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Testing",
+      "page": 162,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "",
+      "title": "Inspection",
+      "page": 162,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.1.14",
+      "title": "3.1.14  Instrumentation Requirements",
+      "page": 163,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2",
+      "title": "3.2  Control Rod Drive System",
+      "page": 166,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.1",
+      "title": "3.2.1  Description and Functioning of System",
+      "page": 166,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.2",
+      "title": "3.2.2  Design Bases",
+      "page": 167,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.2.1",
+      "title": "3.2.2.1  Safety Design Bases",
+      "page": 167,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.2.2",
+      "title": "3.2.2.2  Plant Investment Protection Design Bases",
+      "page": 168,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.3",
+      "title": "3.2.3  Fine Motion Control Rod Drives",
+      "page": 168,
+      "parent_chapter": "3."
+    },
+    {
+      "number": "3.2.4",
+      "title": "3.2.4  FMCRD Components",
+      "page": 171,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.1",
+      "title": "3.2.4.1  Components for Fine Motion Control",
+      "page": 171,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.2",
+      "title": "3.2.4.2  Components for Scram",
+      "page": 174,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.3",
+      "title": "3.2.4.3  FMCRD Pressure Boundary",
+      "page": 174,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.4",
+      "title": "3.2.4.4  Rod Position Indication",
+      "page": 176,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.5",
+      "title": "3.2.4.5  Scram Position Indication",
+      "page": 176,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.6",
+      "title": "3.2.4.6  Control Rod Separation Detection",
+      "page": 176,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.7",
+      "title": "3.2.4.7  Bayonet Couplings",
+      "page": 176,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.8",
+      "title": "3.2.4.8  FMCRD Brake and Ball Check Valve",
+      "page": 177,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.9",
+      "title": "3.2.4.9  Integral Internal Blowout Support",
+      "page": 180,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.4.10",
+      "title": "3.2.4.10  FMCRD Seal Leak Detection",
+      "page": 181,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.5",
+      "title": "3.2.5  Materials of Construction",
+      "page": 185,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(1) Spool Piece Assembly",
+      "page": 185,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Special Materials",
+      "page": 186,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.6",
+      "title": "3.2.6  FMCRD Motor and Controls",
+      "page": 187,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Figure 3.2-8",
+      "page": 190,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.8",
+      "title": "3.2.8  Hydraulic Control Units",
+      "page": 191,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(1) Scram Pilot Valve Assembly",
+      "page": 191,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(2) Scram Inlet Valve",
+      "page": 191,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(3) Scram Accumulator",
+      "page": 191,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(4) Purge Water Orifice and Makeup Valve",
+      "page": 192,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(5) Test Connection for FMCRD Ball Check Valve Testing and Friction Testing",
+      "page": 192,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9",
+      "title": "3.2.9  Control Rod Drive Hydraulic System",
+      "page": 193,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.1",
+      "title": "3.2.9.1  Hydraulic Requirements",
+      "page": 193,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.2",
+      "title": "3.2.9.2  CRD Supply Pump",
+      "page": 194,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.3",
+      "title": "3.2.9.3  Accumulator Charging Water Header",
+      "page": 195,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.4",
+      "title": "3.2.9.4  Purge Water Header",
+      "page": 195,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.5",
+      "title": "3.2.9.5  High Pressure Makeup Line",
+      "page": 196,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.9.6",
+      "title": "3.2.9.6  System Test Line",
+      "page": 196,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10",
+      "title": "3.2.10  System Operation",
+      "page": 196,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10.1",
+      "title": "3.2.10.1  Normal Operation",
+      "page": 196,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10.2",
+      "title": "3.2.10.2   Control Rod Insertion and Withdrawal",
+      "page": 197,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10.3",
+      "title": "3.2.10.3  Scram",
+      "page": 197,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10.4",
+      "title": "3.2.10.4  Alternate Rod Insertion",
+      "page": 198,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.10.5",
+      "title": "3.2.10.5  High Pressure Makeup",
+      "page": 198,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11",
+      "title": "3.2.11  Safety Evaluation",
+      "page": 199,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11.1",
+      "title": "3.2.11.1  Evaluation of Scram Time",
+      "page": 199,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11.2",
+      "title": "3.2.11.2  Scram Reliability",
+      "page": 199,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11.3",
+      "title": "3.2.11.3  Precluding Excessive Rate of Reactivity Addition",
+      "page": 200,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11.3.1",
+      "title": "3.2.11.3.1  Control Rod Ejection Prevention",
+      "page": 200,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(1)  Failures at Drive Housing Weld",
+      "page": 200,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(2)  Rupture of Hydraulic Line to Drive Housing Flange",
+      "page": 200,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "(3)  Total Failure of All Drive Flange Bolts",
+      "page": 201,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.11.3.2",
+      "title": "3.2.11.3.2  Control Rod Drop Prevention",
+      "page": 201,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.12",
+      "title": "3.2.12  Testing, Inspection and Maintenance Requirements",
+      "page": 202,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.12.1",
+      "title": "3.2.12.1  CRD Maintenance",
+      "page": 202,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.12.2",
+      "title": "3.2.12.2  Operational Tests",
+      "page": 202,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.12.3",
+      "title": "3.2.12.3  Surveillance Tests",
+      "page": 202,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.13",
+      "title": "3.2.13  Instrumentation Requirements",
+      "page": 203,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.2.14",
+      "title": "3.2.14  Controls and Interlocks",
+      "page": 204,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3",
+      "title": "3.3  Isolation Condenser",
+      "page": 206,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.1",
+      "title": "3.3.1  Description and Functioning of System",
+      "page": 206,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.2",
+      "title": "3.3.2  Design Bases",
+      "page": 207,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.2.1",
+      "title": "3.3.2.1  Safety Design Bases",
+      "page": 207,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.2.2",
+      "title": "3.3.2.2  Plant Investment Protection Design Bases",
+      "page": 209,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.3",
+      "title": "3.3.3  Configuration and Special Features:",
+      "page": 209,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 211,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.4",
+      "title": "3.3.4  System Operation",
+      "page": 213,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 213,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown Operation",
+      "page": 213,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Isolation Condenser Operation",
+      "page": 213,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.5",
+      "title": "3.3.5  Safety Evaluation",
+      "page": 214,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.6",
+      "title": "3.3.6  Testing and Inspection Requirements",
+      "page": 215,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Inspection",
+      "page": 215,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Testing",
+      "page": 215,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.3.7",
+      "title": "3.3.7  Instrumentation Requirements",
+      "page": 216,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4",
+      "title": "3.4  Standby Liquid Control System",
+      "page": 218,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.1",
+      "title": "3.4.1  Description and Functioning of System",
+      "page": 218,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 219,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.2",
+      "title": "3.4.2  Design Bases",
+      "page": 220,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.2.1",
+      "title": "3.4.2.1  Safety Design Bases",
+      "page": 220,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.2.2",
+      "title": "3.4.2.2  Plant Investment Protection Design Bases",
+      "page": 221,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.3",
+      "title": "3.4.3  Configuration and Special Features",
+      "page": 221,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 223,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.4",
+      "title": "3.4.4  System Operation",
+      "page": 224,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 224,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown Operation",
+      "page": 225,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "SLC System Operation:  Safety-Related Mission",
+      "page": 225,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Emergency Operation:  ATWS Mitigation Mission",
+      "page": 225,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.5",
+      "title": "3.4.5  Safety Evaluation",
+      "page": 227,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.6",
+      "title": "3.4.6  Testing and Inspection Requirements",
+      "page": 229,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Testing",
+      "page": 229,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Inspection",
+      "page": 229,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.4.7",
+      "title": "3.4.7  Instrumentation Requirements",
+      "page": 230,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5",
+      "title": "3.5  Reactor Water Cleanup/Shutdown Cooling System",
+      "page": 231,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.1",
+      "title": "3.5.1  Description and Functioning of System",
+      "page": 231,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.2",
+      "title": "3.5.2  Design Bases",
+      "page": 232,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.2.1",
+      "title": "3.5.2.1  Safety Design Bases",
+      "page": 232,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.2.2",
+      "title": "3.5.2.2  Plant Investment Protection Design Bases",
+      "page": 232,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.3",
+      "title": "3.5.3  Configuration and Special Features",
+      "page": 233,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Demineralizers",
+      "page": 234,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Pumps",
+      "page": 235,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Non-Regenerative Heat Exchanger",
+      "page": 235,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Regenerative Heat Exchanger",
+      "page": 235,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Piping",
+      "page": 235,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Startup heaters",
+      "page": 236,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.4",
+      "title": "3.5.4  System Operation",
+      "page": 236,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Power Operation",
+      "page": 236,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Startup",
+      "page": 236,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Overboarding",
+      "page": 237,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Shutdown",
+      "page": 237,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Hot Standby",
+      "page": 238,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Refueling",
+      "page": 238,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Operation Following Transients",
+      "page": 238,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.5",
+      "title": "3.5.5  Safety Evaluation",
+      "page": 239,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.6",
+      "title": "3.5.6  Testing and Inspection Requirements",
+      "page": 239,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.5.7",
+      "title": "3.5.7  Instrumentation Requirements",
+      "page": 239,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Flow Measurement",
+      "page": 239,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Pump Controls",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Isolation Valves",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "NRHX High Temperature",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "System Flow Valves",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Overboard Flow Control Valves",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Temperature Monitoring",
+      "page": 240,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Conductivity Instrumentation and Sampling Points",
+      "page": 241,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "RWCU/SDCS Pumps Design Data",
+      "page": 243,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6",
+      "title": "3.6  Fuel and Auxiliary Pools Cooling System",
+      "page": 245,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.1",
+      "title": "3.6.1  Description and Functioning of System",
+      "page": 245,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.2",
+      "title": "3.6.2  Design Bases",
+      "page": 248,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.2.1",
+      "title": "3.6.2.1  Safety Design Bases",
+      "page": 248,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.2.2",
+      "title": "3.6.2.2  Plant Investment Protection Design Bases",
+      "page": 249,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.3",
+      "title": "3.6.3  Configuration and Special Features",
+      "page": 249,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.4",
+      "title": "3.6.4  System Operation",
+      "page": 252,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.5",
+      "title": "3.6.5  Safety Evaluation",
+      "page": 254,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.6",
+      "title": "3.6.6  Testing and Inspection Requirements",
+      "page": 256,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.6.7",
+      "title": "3.6.7  Instrumentation Requirements",
+      "page": 257,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7",
+      "title": "3.7  Reactor Component Cooling Water System",
+      "page": 258,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.1",
+      "title": "3.7.1  Description and Functioning of System",
+      "page": 258,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.2",
+      "title": "3.7.2  Design Bases",
+      "page": 259,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.2.1",
+      "title": "3.7.2.1  Safety Design Bases",
+      "page": 259,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.2.2",
+      "title": "3.7.2.2  Plant Investment Protection Design Bases",
+      "page": 260,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.3",
+      "title": "3.7.3  Configuration and Special Features",
+      "page": 260,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.3.1",
+      "title": "3.7.3.1  Pumps",
+      "page": 261,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.3.2",
+      "title": "3.7.3.2  Heat Exchangers",
+      "page": 261,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.3.3",
+      "title": "3.7.3.3  Head Tank",
+      "page": 261,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.3.4",
+      "title": "3.7.3.4  Piping",
+      "page": 261,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.4",
+      "title": "3.7.4  System Operation",
+      "page": 261,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.4.1",
+      "title": "3.7.4.1  Power Operation",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.4.2",
+      "title": "3.7.4.2  Startup",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.4.3",
+      "title": "3.7.4.3  Normal Plant Shutdown",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.4.4",
+      "title": "3.7.4.4  Hot Standby",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.5",
+      "title": "3.7.5  Safety Evaluation",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.6",
+      "title": "3.7.6  Testing and Inspection Requirements",
+      "page": 262,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.7.7",
+      "title": "3.7.7  Instrumentation Requirements",
+      "page": 263,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8",
+      "title": "3.8  Plant Service Water System",
+      "page": 265,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.1",
+      "title": "3.8.1  Description and Functioning of System",
+      "page": 265,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.2",
+      "title": "3.8.2  Design Bases",
+      "page": 265,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.2.1",
+      "title": "3.8.2.1  Safety Design Bases",
+      "page": 265,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.2.2",
+      "title": "3.8.2.2  Plant Investment Protection Design Bases",
+      "page": 266,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.3",
+      "title": "3.8.3  Configuration and Special Features",
+      "page": 266,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.3.1",
+      "title": "3.8.3.1  Pumps",
+      "page": 267,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.3.2",
+      "title": "3.8.3.2  Piping",
+      "page": 267,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.4",
+      "title": "3.8.4  System Operation",
+      "page": 267,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.5",
+      "title": "3.8.5  Safety Evaluation",
+      "page": 267,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.6",
+      "title": "3.8.6  Testing and Inspection Requirements",
+      "page": 268,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "3.8.7",
+      "title": "3.8.7  Instrumentation Requirements",
+      "page": 268,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "4.1",
+      "title": "4.1  Gravity-Driven Cooling System",
+      "page": 270,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.1",
+      "title": "4.1.1  Description and Functioning of System",
+      "page": 270,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 271,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.2",
+      "title": "4.1.2  Safety Design Bases",
+      "page": 272,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.2.1",
+      "title": "4.1.2.1  GDCS Short-Term Subsystem Requirements:",
+      "page": 273,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.2.2",
+      "title": "4.1.2.2  GDCS Long-Term Subsystem Requirements:",
+      "page": 273,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.2.3",
+      "title": "4.1.2.3  GDCS Deluge Subsystem Requirements:",
+      "page": 273,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.1.3",
+      "title": "4.1.3  Configuration and Special Features:",
+      "page": 274,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2",
+      "title": "4.2  Passive Containment Cooling System",
+      "page": 281,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.1",
+      "title": "4.2.1  Description and Functioning of System",
+      "page": 281,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 284,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.2",
+      "title": "4.2.2  Safety Design Bases",
+      "page": 285,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.2.1",
+      "title": "4.2.2.1  Safety Design Bases",
+      "page": 285,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.2.2",
+      "title": "4.2.2.2  Plant Investment Protection Design Bases",
+      "page": 286,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.3",
+      "title": "4.2.3  Configuration and Special Features",
+      "page": 287,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.4",
+      "title": "4.2.4  System Operation",
+      "page": 290,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 290,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown Operation",
+      "page": 290,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "Passive Containment Cooling Operation",
+      "page": 290,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "",
+      "title": "Condensate Return-to-RPV Operation",
+      "page": 290,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.5",
+      "title": "4.2.5  Safety Evaluation",
+      "page": 291,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.6",
+      "title": "4.2.6  Testing and Inspection Requirements",
+      "page": 292,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "4.2.7",
+      "title": "4.2.7  Instrumentation Requirements",
+      "page": 292,
+      "parent_chapter": "4."
+    },
+    {
+      "number": "5.1",
+      "title": "5.1 Containment Structure, System and Arrangement Design",
+      "page": 293,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.1",
+      "title": "5.1.1 Containment Structure",
+      "page": 293,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.2",
+      "title": "5.1.2 Containment Internal Structures",
+      "page": 293,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.3",
+      "title": "5.1.3 Applicable Codes (Unless Local Country Codes Apply)",
+      "page": 294,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.4",
+      "title": "5.1.4 Code Classifications and Safety Category",
+      "page": 294,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.4.1",
+      "title": "5.1.4.1 Containment",
+      "page": 294,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.4.2",
+      "title": "5.1.4.2  Containment Internal Structures",
+      "page": 295,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.5",
+      "title": "5.1.5 Functional Requirements of Components and Parts",
+      "page": 295,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.6",
+      "title": "5.1.6 Design  Loads",
+      "page": 296,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Temperature Effects:",
+      "page": 296,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.7",
+      "title": "5.1.7 Design and Analysis Procedures",
+      "page": 299,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.7.1",
+      "title": "5.1.7.1 Containment",
+      "page": 299,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.7.2",
+      "title": "5.1.7.2  Containment Internal Structures",
+      "page": 299,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.8",
+      "title": "5.1.8 Materials",
+      "page": 300,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.8.1",
+      "title": "5.1.8.1 Containment",
+      "page": 300,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.8.2",
+      "title": "5.1.8.2 Containment Internal Structures",
+      "page": 300,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.9",
+      "title": "5.1.9 Description and Functioning of Containment System",
+      "page": 300,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 301,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.10",
+      "title": "5.1.10  Containment System Design Bases",
+      "page": 302,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.10.1",
+      "title": "5.1.10.1 Safety Design Bases",
+      "page": 302,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.10.2",
+      "title": "5.1.10.2 Plant Investment Protection Design Bases",
+      "page": 303,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.11",
+      "title": "5.1.11  Containment System Configuration and Special Features",
+      "page": 303,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Drywell",
+      "page": 304,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Suppression Chamber",
+      "page": 304,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "DW/SC Connecting Vents",
+      "page": 304,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Spillover Pipes",
+      "page": 305,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Standby Gas Treatment System",
+      "page": 305,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Containment Isolation System",
+      "page": 305,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Containment Atmospheric Control System",
+      "page": 305,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Drywell Cooling System",
+      "page": 306,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Flammability Control System",
+      "page": 306,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Vacuum Relief",
+      "page": 306,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.12",
+      "title": "5.1.12  System Operation",
+      "page": 307,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown Operation",
+      "page": 307,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Post-LOCA Operation",
+      "page": 308,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.13",
+      "title": "5.1.13  Safety Evaluation",
+      "page": 308,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.14",
+      "title": "5.1.14  Testing and Inspection Requirements",
+      "page": 309,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Pre-operational Testing and Inspection",
+      "page": 309,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Post-Operational Leakage Rate Testing and Maintenance",
+      "page": 309,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Liner and Seals",
+      "page": 309,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.15",
+      "title": "5.1.15  Instrumentation Requirements",
+      "page": 309,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.16",
+      "title": "5.1.16  Containment Arrangement and Layout",
+      "page": 310,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.16.1",
+      "title": "5.1.16.1 Drywell",
+      "page": 311,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.16.2",
+      "title": "5.1.16.2 Suppression Chamber",
+      "page": 313,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.16.3",
+      "title": "5.1.16.3 Internal Structures",
+      "page": 313,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.17",
+      "title": "5.1.17  Containment Drawings",
+      "page": 315,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.18",
+      "title": "5.1.18  Containment Overpressure Protection System (COPS)",
+      "page": 315,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.1.19",
+      "title": "5.1.19  Maintainability Considerations Taken in Containment Layout",
+      "page": 315,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2",
+      "title": "5.2 Flammability Control System",
+      "page": 317,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.1",
+      "title": "5.2.1 Description and Functioning of System",
+      "page": 317,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.1.1",
+      "title": "5.2.1.1 Background for Discussion on Flammability Control",
+      "page": 317,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 318,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.1.2",
+      "title": "5.2.1.2 Detailed FCS System Description",
+      "page": 320,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 323,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.2",
+      "title": "5.2.2 Design Bases",
+      "page": 325,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.2.1",
+      "title": "5.2.2.1 Safety Design Bases",
+      "page": 325,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.2.2",
+      "title": "5.2.2.2 Plant Investment Protection Design Bases",
+      "page": 325,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.3",
+      "title": "5.2.3 Configuration and Special Features",
+      "page": 326,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.4",
+      "title": "5.2.4 System Operation",
+      "page": 327,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 327,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown Operation",
+      "page": 327,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "FCS Operation:  Safety-Related Mission",
+      "page": 327,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.5",
+      "title": "5.2.5 Safety Evaluation",
+      "page": 328,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.6",
+      "title": "5.2.6 Testing and Inspection Requirements",
+      "page": 328,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.2.7",
+      "title": "5.2.7 Instrumentation Requirements",
+      "page": 328,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3",
+      "title": "5.3 Drywell Cooling System",
+      "page": 330,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.1",
+      "title": "5.3.1 Description and Functioning of System",
+      "page": 330,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.2",
+      "title": "5.3.2 Design Bases",
+      "page": 332,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.2.1",
+      "title": "5.3.2.1 Safety Design Bases",
+      "page": 332,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.2.2",
+      "title": "5.3.2.2 Plant Investment Protection Design Bases",
+      "page": 332,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.3",
+      "title": "5.3.3 Configuration and Special Features",
+      "page": 332,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.4",
+      "title": "5.3.4 System Operation",
+      "page": 335,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 335,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Plant Shutdown/Refueling Operations",
+      "page": 335,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Loss of Preferred Power Operation (LOPP)",
+      "page": 335,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Integrated Leak Rate Test (ILRT) Operation",
+      "page": 335,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.5",
+      "title": "5.3.5 Safety Evaluation",
+      "page": 336,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.6",
+      "title": "5.3.6 Testing and Inspection Requirements",
+      "page": 336,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.3.7",
+      "title": "5.3.7 Instrumentation Requirements",
+      "page": 336,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4",
+      "title": "5.4 Containment Atmospheric Control System (CACS)",
+      "page": 338,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.1",
+      "title": "5.4.1 Description and Functioning of System",
+      "page": 338,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.1.1",
+      "title": "5.4.1.1 Background",
+      "page": 338,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.1.2",
+      "title": "5.4.1.2 Detailed CACS System Description",
+      "page": 338,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.2",
+      "title": "5.4.2 Design Bases",
+      "page": 340,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.2.1",
+      "title": "5.4.2.1 Safety Design Bases",
+      "page": 340,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.2.2",
+      "title": "5.4.2.2 Plant Investment Protection Design Bases",
+      "page": 340,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.3",
+      "title": "5.4.3 Configuration and Special Features",
+      "page": 341,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.4",
+      "title": "5.4.4 System Operation",
+      "page": 342,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Startup Operation (Inerting)",
+      "page": 342,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "Normal Plant Operation",
+      "page": 343,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "De-inerting (Plant Shutdown Operation)",
+      "page": 343,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.5",
+      "title": "5.4.5 Safety Evaluation",
+      "page": 343,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.6",
+      "title": "5.4.6 Testing and Inspection Requirements",
+      "page": 343,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.4.7",
+      "title": "5.4.7 Instrumentation Requirements",
+      "page": 344,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.5",
+      "title": "5.5 Features Provided for Prevention and Mitigation of Severe Accident",
+      "page": 345,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.5.1",
+      "title": "5.5.1 Introduction",
+      "page": 345,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.5.2",
+      "title": "5.5.2 Layered Defense-in-Depth Approach",
+      "page": 345,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.5.3",
+      "title": "5.5.3 Proposed ESBWR Design Features for Severe Accident Control",
+      "page": 345,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "1)  Isolation Condenser (IC)  System",
+      "page": 345,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "2)  Automatic Depression System",
+      "page": 346,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "3) Compact Containment Design",
+      "page": 346,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "4)  PCC Heat Exchangers",
+      "page": 346,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "5)  Core Catcher",
+      "page": 346,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "6)  Lower Drywell Configuration",
+      "page": 347,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "7)  Containment Overpressure Protection System",
+      "page": 347,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "8)  Flooder System",
+      "page": 347,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "9)  Passive Containment Cooling System (PCCS)",
+      "page": 347,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "10)  Suppression Pool and Airspace",
+      "page": 348,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "11)  GDCS in Wetwell Configuration",
+      "page": 348,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "12)  Inerted Containment",
+      "page": 348,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "",
+      "title": "13)  Recombiners",
+      "page": 348,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "5.5.4",
+      "title": "5.5.4 Summary and Conclusion",
+      "page": 349,
+      "parent_chapter": "5."
+    },
+    {
+      "number": "6.1",
+      "title": "6.1 Reactor Building Structure Design",
+      "page": 351,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.1",
+      "title": "6.1.1 Description",
+      "page": 351,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.2",
+      "title": "6.1.2 Applicable Codes (Unless Local Country Codes Apply)",
+      "page": 351,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.3",
+      "title": "6.1.3 Code Classification and Safety Category",
+      "page": 352,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.4",
+      "title": "6.1.4 Design Loads",
+      "page": 352,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.5",
+      "title": "6.1.5 Design and Analysis Procedures",
+      "page": 354,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.1.6",
+      "title": "6.1.6 Materials",
+      "page": 354,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.2",
+      "title": "6.2 Auxiliary Fuel Building Structure Design",
+      "page": 355,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.2.1",
+      "title": "6.2.1 Description",
+      "page": 355,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.2.2",
+      "title": "6.2.2 Applicable Codes (Unless Local Country Codes Apply)",
+      "page": 355,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "6.2.3",
+      "title": "6.2.3 Design Loads",
+      "page": 355,
+      "parent_chapter": "6."
+    },
+    {
+      "number": "7.1",
+      "title": "7.1 Station Electrical Power Distribution System",
+      "page": 357,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.1",
+      "title": "7.1.1 Description and Functioning of System",
+      "page": 358,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.1.1",
+      "title": "7.1.1.1 Power System",
+      "page": 358,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.1.2",
+      "title": "7.1.1.2 Medium Voltage Distribution System",
+      "page": 359,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.1.3",
+      "title": "7.1.1.3 Low Voltage Distribution System",
+      "page": 361,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.2",
+      "title": "7.1.2 Design Bases",
+      "page": 361,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.2.1",
+      "title": "7.1.2.1 Accidents Design Bases",
+      "page": 361,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.2.2",
+      "title": "7.1.2.2 Design Extention Conditions Design Bases",
+      "page": 362,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.2.3",
+      "title": "7.1.2.3 Plant Investment Protection Design Bases",
+      "page": 362,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3",
+      "title": "7.1.3 Configuration and Special Features",
+      "page": 363,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1",
+      "title": "7.1.3.1 Offsite Power System",
+      "page": 364,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.1",
+      "title": "7.1.3.1.1 Main Generator",
+      "page": 365,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.2",
+      "title": "7.1.3.1.2 Main Transformer",
+      "page": 365,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.3",
+      "title": "7.1.3.1.3 Main Generator Breaker",
+      "page": 366,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.4",
+      "title": "7.1.3.1.4 Unit Auxiliary Transformers",
+      "page": 366,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.5",
+      "title": "7.1.3.1.5 Reserve Auxiliary Transformer",
+      "page": 367,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.1.6",
+      "title": "7.1.3.1.6 Isolated Phase Bus Duct",
+      "page": 368,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2",
+      "title": "7.1.3.2 Onsite Power System",
+      "page": 368,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.1",
+      "title": "7.1.3.2.1 Power Generation Busses",
+      "page": 368,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.2",
+      "title": "7.1.3.2.2 Plant Investment Protection Busses",
+      "page": 369,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3",
+      "title": "7.1.3.2.3 Non-1E Low Voltage System",
+      "page": 371,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3.1",
+      "title": "7.1.3.2.3.1 Load Centers",
+      "page": 372,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3.2",
+      "title": "7.1.3.2.3.2 MCCs",
+      "page": 372,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3.3",
+      "title": "7.1.3.2.3.3 Power Cables",
+      "page": 372,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3.4",
+      "title": "7.1.3.2.3.4 Non-1E DC Power System",
+      "page": 373,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.3.5",
+      "title": "7.1.3.2.3.5 Non-1E Vital (Uninterruptible) Power System",
+      "page": 373,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.4",
+      "title": "7.1.3.2.4 1E Low Voltage System",
+      "page": 374,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.4.1",
+      "title": "7.1.3.2.4.1 1E 400/230 VAC Power System",
+      "page": 374,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.4.2",
+      "title": "7.1.3.2.4.2 1E DC Power System",
+      "page": 375,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.3.2.4.3",
+      "title": "7.1.3.2.4.3 1E Vital (Uninterruptible) Power System",
+      "page": 375,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.4",
+      "title": "7.1.4 System Operation",
+      "page": 376,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.4.1",
+      "title": "7.1.4.1 Offsite Power System Operation",
+      "page": 376,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.4.2",
+      "title": "7.1.4.2 Onsite Power System Operation",
+      "page": 377,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.4.3",
+      "title": "7.1.4.3 Bus Transfer Description",
+      "page": 378,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Fast Buss Transfer",
+      "page": 378,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Dead-Bus Transfer",
+      "page": 378,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.5",
+      "title": "7.1.5 Trip Setpoints",
+      "page": 379,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.6",
+      "title": "7.1.6 Testing and Inspection Requirements",
+      "page": 379,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.7",
+      "title": "7.1.7 Instrumentation Requirements",
+      "page": 380,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.7.1",
+      "title": "7.1.7.1 Special Features",
+      "page": 380,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.7.2",
+      "title": "7.1.7.2 Instrumentation",
+      "page": 380,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.1.7.3",
+      "title": "7.1.7.3 Control",
+      "page": 381,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2",
+      "title": "7.2 Reactor Trip System",
+      "page": 382,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Reactor Protection System (RPS)",
+      "page": 382,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Neutron Monitoring System (NMS)",
+      "page": 382,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Suppression Pool Temperature Monitoring System (SPTMS)",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1",
+      "title": "7.2.1 Reactor Protection System (RPS)",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1",
+      "title": "7.2.1.1 RPS Description",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.1",
+      "title": "7.2.1.1.1 RPS Identification",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.2",
+      "title": "7.2.1.1.2 RPS Classification",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.3",
+      "title": "7.2.1.1.3 Power Sources",
+      "page": 383,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4",
+      "title": "7.2.1.1.4 RPS Equipment Design",
+      "page": 384,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.1",
+      "title": "7.2.1.1.4.1 Arrangement",
+      "page": 384,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.2",
+      "title": "7.2.1.1.4.2 Initiating Circuits",
+      "page": 386,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.3",
+      "title": "7.2.1.1.4.3 Neutron Monitoring System (NMS)",
+      "page": 387,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.4",
+      "title": "7.2.1.1.4.4 Nuclear Boiler System",
+      "page": 388,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.5",
+      "title": "7.2.1.1.4.5 Control Rod Drive (CRD) System",
+      "page": 388,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.6",
+      "title": "7.2.1.1.4.6 Suppression Pool Temperature Monitoring System (SPTMS)",
+      "page": 388,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.7",
+      "title": "7.2.1.1.4.7 Reactor Protection System",
+      "page": 388,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.1.4.8",
+      "title": "7.2.1.1.4.8 RPS Outputs to Interfacing Systems",
+      "page": 389,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.2",
+      "title": "7.2.1.2 RPS Design Basis",
+      "page": 391,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.3",
+      "title": "7.2.1.3   RPS Testing and Inspection Requirements",
+      "page": 393,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.3.1",
+      "title": "7.2.1.3.1 System Testing: Operational Verifiability",
+      "page": 393,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.3.2",
+      "title": "7.2.1.3.2 Surveillance Testing and In-Service Inspection",
+      "page": 393,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4",
+      "title": "7.2.1.4 RPS Instrumentation and Control",
+      "page": 394,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.1",
+      "title": "7.2.1.4.1 Automatic Scram Variables",
+      "page": 394,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.2",
+      "title": "7.2.1.4.2 Automatic and Manual Bypass of Selected Scram Functions",
+      "page": 395,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.2.1",
+      "title": "7.2.1.4.2.1 Operational Bypasses",
+      "page": 395,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.2.2",
+      "title": "7.2.1.4.2.2 Maintenance Bypasses",
+      "page": 396,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.3",
+      "title": "7.2.1.4.3 Requirements for Manual Controls",
+      "page": 397,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.3.1",
+      "title": "7.2.1.4.3.1 Mode Switch",
+      "page": 397,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.3.2",
+      "title": "7.2.1.4.3.2 Manual Scram Switches",
+      "page": 397,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.3.3",
+      "title": "7.2.1.4.3.3 Manual Divisional Trip Switches",
+      "page": 398,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.3.4",
+      "title": "7.2.1.4.3.4 Trip Reset Switches",
+      "page": 398,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.4",
+      "title": "7.2.1.4.4 Operational Bypass Switches",
+      "page": 398,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.4.1",
+      "title": "7.2.1.4.4.1 Maintenance Bypass Switches",
+      "page": 398,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.4.2",
+      "title": "7.2.1.4.4.2 Test Switches",
+      "page": 398,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.4.3",
+      "title": "7.2.1.4.4.3 Coincident/Non-Coincident NMS Trip Selection Switches",
+      "page": 399,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.5",
+      "title": "7.2.1.4.5 Scram Logic",
+      "page": 399,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.5.1",
+      "title": "7.2.1.4.5.1 Automatic Scram Trip Logic",
+      "page": 399,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.5.2",
+      "title": "7.2.1.4.5.2 Manual Scram Trip Logic",
+      "page": 400,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.1.4.6",
+      "title": "7.2.1.4.6 Requirements for Supplemental Back-Up Scram",
+      "page": 400,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2",
+      "title": "7.2.2 Neutron Monitoring System (NMS)",
+      "page": 400,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1",
+      "title": "7.2.2.1 NMS System Description",
+      "page": 400,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "System Identification",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Neutron Flux Monitoring Ranges System Safety Classification",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Power Sources",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1",
+      "title": "7.2.2.1.1 Startup Range Neutron Monitor (SRNM) Subsystem",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.1",
+      "title": "7.2.2.1.1.1 General Description",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.2",
+      "title": "7.2.2.1.1.2 Power Sources",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "",
+      "title": "Channels:",
+      "page": 401,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.3",
+      "title": "7.2.2.1.1.3 Physical Arrangement",
+      "page": 402,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.4",
+      "title": "7.2.2.1.1.4 Signal Processing",
+      "page": 402,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.5",
+      "title": "7.2.2.1.1.5 Trip Functions",
+      "page": 402,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.6",
+      "title": "7.2.2.1.1.6 Bypasses and Interlocks",
+      "page": 403,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.7",
+      "title": "7.2.2.1.1.7 Redundancy and Diversity",
+      "page": 403,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.1.8",
+      "title": "7.2.2.1.1.8 Environmental Considerations",
+      "page": 403,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2",
+      "title": "7.2.2.1.2 Local Power Range Monitor (LPRM)",
+      "page": 403,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.1",
+      "title": "7.2.2.1.2.1 General Description",
+      "page": 403,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.2",
+      "title": "7.2.2.1.2.2 Uninterruptible Power Supply (UPS)",
+      "page": 404,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.3",
+      "title": "7.2.2.1.2.3 Physical Arrangement",
+      "page": 404,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.4",
+      "title": "7.2.2.1.2.4 Signal Processing",
+      "page": 404,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.5",
+      "title": "7.2.2.1.2.5 Trip Functions",
+      "page": 404,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.6",
+      "title": "7.2.2.1.2.6 Bypasses and Interlocks",
+      "page": 405,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.7",
+      "title": "7.2.2.1.2.7 Redundancy",
+      "page": 405,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.2.8",
+      "title": "7.2.2.1.2.8 Environmental Considerations",
+      "page": 405,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3",
+      "title": "7.2.2.1.3 Average Power Range Monitor (APRM)",
+      "page": 406,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.1",
+      "title": "7.2.2.1.3.1 General Description",
+      "page": 406,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.2",
+      "title": "7.2.2.1.3.2 Power Sources",
+      "page": 406,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.3",
+      "title": "7.2.2.1.3.3 Signal Conditioning",
+      "page": 406,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.4",
+      "title": "7.2.2.1.3.4 Trip Function",
+      "page": 406,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.5",
+      "title": "7.2.2.1.3.5 Bypasses and Interlocks",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.6",
+      "title": "7.2.2.1.3.6 Redundancy",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.1.3.7",
+      "title": "7.2.2.1.3.7 Environmental Considerations",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2",
+      "title": "7.2.2.2 NMS System Design Basis",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.1",
+      "title": "7.2.2.2.1 Startup Range Neutron Monitor (SRNM) Subsystem",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.1.1",
+      "title": "7.2.2.2.1.1 Safety-Related Design Bases",
+      "page": 407,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.1.2",
+      "title": "7.2.2.2.1.2 Non-Safety-Related Design Bases",
+      "page": 408,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.2",
+      "title": "7.2.2.2.2 Local Power Range Monitor (LPRM)",
+      "page": 408,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.2.1",
+      "title": "7.2.2.2.2.1 Safety-Related Design Bases",
+      "page": 408,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.2.2",
+      "title": "7.2.2.2.2.2 Non-Safety-Related Design Bases",
+      "page": 409,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.3",
+      "title": "7.2.2.2.3 Average Power Range Monitor (APRM)",
+      "page": 409,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.3.1",
+      "title": "7.2.2.2.3.1 Safety-Related Design Bases",
+      "page": 409,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.2.3.2",
+      "title": "7.2.2.2.3.2 Non-Safety-Related Design Bases",
+      "page": 409,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3",
+      "title": "7.2.2.3 Testing and Inspection Requirements",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3.1",
+      "title": "7.2.2.3.1 General Requirements",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3.2",
+      "title": "7.2.2.3.2 Specific Requirements",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3.2.1",
+      "title": "7.2.2.3.2.1 SRNM Testability and Calibration",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3.2.2",
+      "title": "7.2.2.3.2.2 LPRM Testability and Calibration",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.3.2.3",
+      "title": "7.2.2.3.2.3 APRM Testability and Calibration",
+      "page": 410,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.4",
+      "title": "7.2.2.4 Instrumentation",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.4.1",
+      "title": "7.2.2.4.1 Instrumentation Requirements",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.4.2",
+      "title": "7.2.2.4.2 Basic Control Logic Requirements",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.2.4.3",
+      "title": "7.2.2.4.3 Basic Instrument Arrangement Requirements",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3",
+      "title": "7.2.3 Suppression Pool Temperature Monitoring System (SPTMS)",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1",
+      "title": "7.2.3.1 System Description",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.1",
+      "title": "7.2.3.1.1 General",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.2",
+      "title": "7.2.3.1.2 Power Sources",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.3",
+      "title": "7.2.3.1.3 Equipment Design",
+      "page": 411,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.4",
+      "title": "7.2.3.1.4 Signal Processing, Control and MMI",
+      "page": 412,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.5",
+      "title": "7.2.3.1.5 Testing and Inspection Requirements",
+      "page": 412,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.1.6",
+      "title": "7.2.3.1.6 Instrumentation Requirements",
+      "page": 413,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.2",
+      "title": "7.2.3.2 Design Basis",
+      "page": 413,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.2.1",
+      "title": "7.2.3.2.1 Safety-Related Design Bases",
+      "page": 413,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "7.2.3.2.2",
+      "title": "7.2.3.2.2 Non-Safety-Related Design Bases",
+      "page": 413,
+      "parent_chapter": "7."
+    },
+    {
+      "number": "8.1",
+      "title": "8.1  Offgas System",
+      "page": 421,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.1.1",
+      "title": "8.1.1  Description and Functioning of System",
+      "page": 421,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.1.4",
+      "title": "8.1.4  Operation",
+      "page": 432,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2",
+      "title": "8.2  Fire Protection System",
+      "page": 434,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1",
+      "title": "8.2.1  System Description",
+      "page": 434,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.1",
+      "title": "8.2.1.1  Facility Features for Fire Protection",
+      "page": 434,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.2",
+      "title": "8.2.1.2  Fire Protection Water Supply System",
+      "page": 435,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.2.1",
+      "title": "8.2.1.2.1  Water Source",
+      "page": 435,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.2.2",
+      "title": "8.2.1.2.2  Fire Pumps",
+      "page": 435,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.3",
+      "title": "8.2.1.3  Yard Piping",
+      "page": 436,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.4",
+      "title": "8.2.1.4  Water Sprinkler, Standpipe, and Hose Systems",
+      "page": 436,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.4.1",
+      "title": "8.2.1.4.1  Water Spray or Deluge for Charcoal Filters",
+      "page": 437,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.4.2",
+      "title": "8.2.1.4.2  Standpipe and Hose Systems (Wet)",
+      "page": 437,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.5",
+      "title": "8.2.1.5  Fixed Automatic Water Extinguishing Systems",
+      "page": 437,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.5.1",
+      "title": "8.2.1.5.1  Wet Pipe Sprinkler System",
+      "page": 438,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.5.2",
+      "title": "8.2.1.5.2  Pre-Action Sprinkler System (Manual or Automatic)",
+      "page": 438,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.5.3",
+      "title": "8.2.1.5.3  Deluge System (Manual and/or Automatic)",
+      "page": 438,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.6",
+      "title": "8.2.1.6  Foam System",
+      "page": 438,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.7",
+      "title": "8.2.1.7  Smoke Detection and Alarms Systems",
+      "page": 438,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.8",
+      "title": "8.2.1.8  Fire Barriers",
+      "page": 439,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9",
+      "title": "8.2.1.9  Building Ventilation",
+      "page": 439,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.1",
+      "title": "8.2.1.9.1  Main Control Room (MCR)",
+      "page": 439,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.2",
+      "title": "8.2.1.9.2  Reactor Building Clean Area Ventilation System (CLAVS)",
+      "page": 440,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.3",
+      "title": "8.2.1.9.3  Reactor Building Contaminated Area Ventilation System (CONAVS)",
+      "page": 440,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.4",
+      "title": "8.2.1.9.4  Refueling and Pool Area Ventilation System (REPAVS)",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.5",
+      "title": "8.2.1.9.5  Battery Room Exhaust System (BRES)",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.6",
+      "title": "8.2.1.9.6  Auxiliary Fuel Building",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.7",
+      "title": "8.2.1.9.7  Turbine Building",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.1.9.8",
+      "title": "8.2.1.9.8  Radwaste Building",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.2",
+      "title": "8.2.2  Design Bases",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.2.1",
+      "title": "8.2.2.1  General",
+      "page": 441,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.2.2",
+      "title": "8.2.2.2  Design Bases",
+      "page": 442,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.2.3",
+      "title": "8.2.2.3  Codes, Standards, and Regulatory Guidance",
+      "page": 443,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.3",
+      "title": "8.2.3  Inspection and Testing",
+      "page": 445,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.4",
+      "title": "8.2.4  Instrumentation Requirements",
+      "page": 445,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "8.2.5",
+      "title": "8.2.5  Post-Accident Water Makeup and Coolant",
+      "page": 446,
+      "parent_chapter": "8."
+    },
+    {
+      "number": "9.1",
+      "title": "9.1  Steam and Power Conversion System",
+      "page": 447,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.1",
+      "title": "9.1.1 Turbine Main Steam System and the Turbine Generator Set",
+      "page": 448,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.2",
+      "title": "9.1.2 Main Condenser",
+      "page": 448,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.3",
+      "title": "9.1.3 Condenser Evacuation System",
+      "page": 449,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.4",
+      "title": "9.1.4 Moisture Separator Reheater System",
+      "page": 450,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.5",
+      "title": "9.1.5 Turbine Gland Steam System",
+      "page": 450,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.6",
+      "title": "9.1.6 Turbine Bypass System",
+      "page": 451,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.1.7",
+      "title": "9.1.7 Steam Extraction System",
+      "page": 451,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "9.2",
+      "title": "9.2  Condensate and Feedwater System",
+      "page": 452,
+      "parent_chapter": "9."
+    },
+    {
+      "number": "10.1",
+      "title": "10.1 Reactor Refueling",
+      "page": 453,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1",
+      "title": "10.1.1 Refueling Machine",
+      "page": 453,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1.1",
+      "title": "10.1.1.1 Design Philosophy",
+      "page": 454,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "",
+      "title": "NEDC-33084",
+      "page": 455,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1.2",
+      "title": "10.1.1.2 Robotic Arm",
+      "page": 457,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1.3",
+      "title": "10.1.1.3 Mast",
+      "page": 457,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1.4",
+      "title": "10.1.1.4 Pendant",
+      "page": 458,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.1.1.5",
+      "title": "10.1.1.5 End Effectors",
+      "page": 460,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.2",
+      "title": "10.2 Inclined Fuel Transfer System (IFTS)",
+      "page": 461,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3",
+      "title": "10.3 Servicing Equipment and Systems",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1",
+      "title": "10.3.1 RPV Servicing Equipment (F13-E000)",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.1",
+      "title": "10.3.1.1 Wet Transfer of Dryer and Separator",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.2",
+      "title": "10.3.1.2 RPV Servicing Tools (F13-E001)",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.3",
+      "title": "10.3.1.3 Chimney Head Bolt Wrench (F13-E003)",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.4",
+      "title": "10.3.1.4 Head Holding Pedestals (F13-E005)",
+      "page": 466,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.5",
+      "title": "10.3.1.5 Dryer and Separator Strongback (F13-E008)",
+      "page": 467,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.6",
+      "title": "10.3.1.6 Head Strongback (F13-E009)",
+      "page": 467,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.7",
+      "title": "10.3.1.7 Stud Tensioning Equipment (F13-E013)",
+      "page": 467,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.8",
+      "title": "10.3.1.8 Stud Cleaning Facility (F13-E020)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.9",
+      "title": "10.3.1.9 Stud Flange Hole Seal (F13-E021)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.10",
+      "title": "10.3.1.10 Stud Flange Hole Cleaner (F13-E022)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.11",
+      "title": "10.3.1.11 Stud Nut Cleaner (F13-E023)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.1.12",
+      "title": "10.3.1.12 Flange Sealing Surface Protector (F13-E024)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.2",
+      "title": "10.3.2 RPV Internal Servicing Equipment (F14-E000)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.2.1",
+      "title": "10.3.2.1 Control Rod Grapple (F14-E002)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.2.2",
+      "title": "10.3.2.2 Dummy Fuel Bundle (F14-E016)",
+      "page": 468,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.2.3",
+      "title": "10.3.2.3 Guide Rod Handling Tool (F14-E021)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.2.4",
+      "title": "10.3.2.4 Surveillance Capsule Handling Device (F14-E022)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.3",
+      "title": "10.3.3 Refueling Equipment (F15-E000)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.3.1",
+      "title": "10.3.3.1 Refueling Machine Equipment (F15-E003)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.4",
+      "title": "10.3.4 Fuel Storage Equipment (F16-E000)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.5",
+      "title": "10.3.5 Under Vessel Servicing Equipment (F17-E000)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.5.1",
+      "title": "10.3.5.1 FMCRD Handling Machine (F17-E01X)",
+      "page": 469,
+      "parent_chapter": "10."
+    },
+    {
+      "number": "10.3.5.2",
+      "title": "10.3.5.2 In-core Monitor Assembly Handling Equipment (F17-E03X)",
+      "page": 471,
+      "parent_chapter": "12."
+    },
+    {
+      "number": "10.3.6",
+      "title": "10.3.6 FMCRD Maintenance Facility Equipment",
+      "page": 471,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7",
+      "title": "10.3.7 Refueling and Servicing Outage",
+      "page": 471,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.1",
+      "title": "10.3.7.1 Equipment Preparation",
+      "page": 471,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.2",
+      "title": "10.3.7.2 Reactor Shutdown",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.3",
+      "title": "10.3.7.3 Drywell Head Removal",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.4",
+      "title": "10.3.7.4 Reactor Vessel Opening",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.4.1",
+      "title": "10.3.7.4.1  Vessel Head Removal",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.4.2",
+      "title": "10.3.7.4.2  Dryer Removal",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.4.3",
+      "title": "10.3.7.4.3  Separator Removal",
+      "page": 472,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.5",
+      "title": "10.3.7.5 Fuel Bundle Sampling",
+      "page": 473,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.6",
+      "title": "10.3.7.6 Refueling and Reactor Servicing",
+      "page": 473,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.6.1",
+      "title": "10.3.7.6.1  Refueling",
+      "page": 473,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "10.3.7.7",
+      "title": "10.3.7.7 Vessel Closure",
+      "page": 474,
+      "parent_chapter": "2."
+    },
+    {
+      "number": "",
+      "title": "X43X68X61X70X74X65X72X20X33X2EX38",
+      "page": 483,
+      "parent_chapter": ""
+    }
+  ],
+  "total_pages": 504,
+  "abbreviations": [],
+  "equipment_naming_conventions": [],
+  "process_terminology": [],
+  "safety_terminology": [],
+  "referenced_documents": [
+    {
+      "reference_text": "IS 3048",
+      "document_type": "Standard",
+      "document_number": "IS 3048",
+      "title": "",
+      "evidence": "The length of active fuel for the ESBWR is 3048 mm (120'). Previous BWR designs used active fuel lengths o",
+      "page": 33,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 14",
+      "document_type": "Standard",
+      "document_number": "IS 14",
+      "title": "",
+      "evidence": "s about 14 weight % (14% quality). 14% quality means there is 14 weight % steam and 86 weight % water, mixed at the correspo",
+      "page": 44,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 302",
+      "document_type": "Standard",
+      "document_number": "IS 302",
+      "title": "",
+      "evidence": "re is 8.62 MPa-gauge (1250 psig) and the design temperature is 302°C (576°F).",
+      "page": 78,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 163",
+      "document_type": "Standard",
+      "document_number": "IS 163",
+      "title": "",
+      "evidence": "e maximum heat transfer rate for insulation on the top head is 163 kcal/m 2 h (60.1 Btu/ft 2 h). The approximate minimum air t",
+      "page": 82,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E-185",
+      "document_type": "Standard",
+      "document_number": "ASTM E-185",
+      "title": "",
+      "evidence": "equirements, specifically: USNRC Regulatory Guide 1.99 and ASTM E-185, necessitate the following calculations and/or actions:",
+      "page": 85,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 60",
+      "document_type": "Standard",
+      "document_number": "IS 60",
+      "title": "",
+      "evidence": "Four capsules are provided since the design life of the RPV is 60 years and predicted transition temperature shift is less th",
+      "page": 85,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 125",
+      "document_type": "Standard",
+      "document_number": "IS 125",
+      "title": "",
+      "evidence": "s adequate to activate the plunger. Nominal firing voltage is 125 Vdc, however the initiator-boosters are designed to functio",
+      "page": 141,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 10",
+      "document_type": "Standard",
+      "document_number": "IS 10",
+      "title": "",
+      "evidence": "The DPV inlet side design pressure is 10.34 MPa gauge (1500 psig) at a design temperature of 313 ° C",
+      "page": 141,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASME 182",
+      "document_type": "Standard",
+      "document_number": "ASME 182",
+      "title": "",
+      "evidence": "Spool Piece Housing | ASME 182 Grade F304L Seal Housing | ASME 182 Grade F304L Drive Shaft",
+      "page": 185,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASME 479",
+      "document_type": "Standard",
+      "document_number": "ASME 479",
+      "title": "",
+      "evidence": "ade F304L Seal Housing | ASME 182 Grade F304L Drive Shaft | ASME 479 Grade XM-19 (Hardsurfaced with | Colmonoy No. 6) Ball Bear",
+      "page": 185,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A276",
+      "document_type": "Standard",
+      "document_number": "ASTM A276",
+      "title": "",
+      "evidence": "XM-19 (Hardsurfaced with | Colmonoy No. 6) Ball Bearings | ASTM A276 Type 440C Gland Packing Spring | Inconel X-750 (2) Ball Spi",
+      "page": 185,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A-564",
+      "document_type": "Standard",
+      "document_number": "ASTM A-564",
+      "title": "",
+      "evidence": "conel X-750 (2) Ball Spindle Assembly | Ball Screw Shaft | ASTM A-564 TP630 (17-4PH) Condition H-1100 Ball Nut | ASTM A-564 TP630",
+      "page": 185,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 314",
+      "document_type": "Standard",
+      "document_number": "IS 314",
+      "title": "",
+      "evidence": "e ICS is 10.34 MPa (1500 psig), and the design temperature is 314.5 ° C (598 ° F). These conditions correspond to ATWS event",
+      "page": 208,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 85",
+      "document_type": "Standard",
+      "document_number": "IS 85",
+      "title": "",
+      "evidence": "The MSIV position minimum plant safety analytical limit is 85% open.",
+      "page": 213,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 700",
+      "document_type": "Standard",
+      "document_number": "IS 700",
+      "title": "",
+      "evidence": "adequate cold shutdown margin, after operation of the SLC, is 700 ppm (parts per million). Calculation of the minimum quanti",
+      "page": 227,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 55",
+      "document_type": "Standard",
+      "document_number": "IS 55",
+      "title": "",
+      "evidence": "ment. The controlled limit for the reactor vessel cooldown is 55.6° C/h (100° F/h), and normal operating temperature is appr",
+      "page": 227,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 21",
+      "document_type": "Standard",
+      "document_number": "IS 21",
+      "title": "",
+      "evidence": "shutdown. In the cleanup mode, the capacity of each train is 21.6 kg/sec (47.6 lb/sec), corresponding to 1% of the rated fe",
+      "page": 231,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 48",
+      "document_type": "Standard",
+      "document_number": "IS 48",
+      "title": "",
+      "evidence": "4.9 MW and the corresponding maximum pool water temperature is 48.9 ° C (120 ° F). The FAPCS has the capability to utilize b",
+      "page": 253,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 16",
+      "document_type": "Standard",
+      "document_number": "IS 16",
+      "title": "",
+      "evidence": "or single-train operation. This maximum heat load condition is 16.9 MW with a corresponding maximum pool temperature of 48.9",
+      "page": 253,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 50",
+      "document_type": "Standard",
+      "document_number": "IS 50",
+      "title": "",
+      "evidence": "ng refueling, with normal maximum spent fuel pool heat load is 50 ° C (120 ° F). During refueling, with the transfer gates b",
+      "page": 256,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 70",
+      "document_type": "Standard",
+      "document_number": "IS 70",
+      "title": "",
+      "evidence": "l pool heat load, and a single active failure in the FAPCS, is 70 ° C (160 ° F). This condition is associated with a full-co",
+      "page": 256,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ANSI B31",
+      "document_type": "Standard",
+      "document_number": "ANSI B31",
+      "title": "",
+      "evidence": "ith associated components, are designed to Quality Group D, ANSI B31.1, and Seismic Category N.",
+      "page": 261,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 759",
+      "document_type": "Standard",
+      "document_number": "IS 759",
+      "title": "",
+      "evidence": "PCCS System is 759 kPa (gauge) (110 psig), and the design temperature is 171 o",
+      "page": 286,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 171",
+      "document_type": "Standard",
+      "document_number": "IS 171",
+      "title": "",
+      "evidence": "m is 759 kPa (gauge) (110 psig), and the design temperature is 171 o C (340 o F).",
+      "page": 286,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS: 27",
+      "document_type": "Standard",
+      "document_number": "IS: 27",
+      "title": "",
+      "evidence": "The compressive strength of concrete at 28 days is: 27.56 Mpa (4000 psi) for structural concrete.",
+      "page": 300,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A615",
+      "document_type": "Standard",
+      "document_number": "ASTM A615",
+      "title": "",
+      "evidence": "med and Plain Billet Steel Bars for Concrete Reinforcement (ASTM A615, Grade 60)'. Reinforcing steel also has a tendency to decr",
+      "page": 300,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM A36",
+      "document_type": "Standard",
+      "document_number": "ASTM A36",
+      "title": "",
+      "evidence": "Structural steel shall conform to ASTM A36 or A572 Gr. 50. The steel allowable stress values are decr",
+      "page": 300,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 160",
+      "document_type": "Standard",
+      "document_number": "IS 160",
+      "title": "",
+      "evidence": "teel and is shaped as a right cylinder. The plate thickness is 160 mm (6'- 1/4\").",
+      "page": 314,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 200",
+      "document_type": "Standard",
+      "document_number": "IS 200",
+      "title": "",
+      "evidence": "ng to the penetration at the RB wall, the nominal pipe size is 200 A (8-inch). This increases once again to a nominal pipe si",
+      "page": 339,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 100",
+      "document_type": "Standard",
+      "document_number": "IS 100",
+      "title": "",
+      "evidence": "in less than 12 hours, assuming the containment atmosphere is 100% nitrogen. This condition could develop after several mont",
+      "page": 341,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 24",
+      "document_type": "Standard",
+      "document_number": "IS 24",
+      "title": "",
+      "evidence": "equires a 1735 MVA generator; the nominal generator voltage is 24 KV. In all respects the generator is standard technology wi",
+      "page": 365,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ANSI C37",
+      "document_type": "Standard",
+      "document_number": "ANSI C37",
+      "title": "",
+      "evidence": "ing rating is determined in accordance with requirements of ANSI C37.010. Switchgear control power is supplied from the two non-",
+      "page": 369,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 400",
+      "document_type": "Standard",
+      "document_number": "IS 400",
+      "title": "",
+      "evidence": "plied from the various PIP busses and the secondary voltage is 400/230 Vac. The transformer secondary supplies its associated",
+      "page": 372,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 30",
+      "document_type": "Standard",
+      "document_number": "IS 30",
+      "title": "",
+      "evidence": "firm lack of buss voltage for dead bus transfer permissives is 30%.",
+      "page": 379,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 150",
+      "document_type": "Standard",
+      "document_number": "IS 150",
+      "title": "",
+      "evidence": "een the top elevation sensor row and low water level status is 150 mm (6 in.); a nominal distance between the bottom elevation",
+      "page": 412,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 640",
+      "document_type": "Standard",
+      "document_number": "IS 640",
+      "title": "",
+      "evidence": "bottom elevation sensor row and the lowest horizontal vent is 640 mm (25 in.).",
+      "page": 412,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 25",
+      "document_type": "Standard",
+      "document_number": "IS 25",
+      "title": "",
+      "evidence": "lame spread and smoke development rating of these materials is 25 or less. (Materials having a flame spread and smoke develo",
+      "page": 434,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 80",
+      "document_type": "Standard",
+      "document_number": "NFPA 80",
+      "title": "",
+      "evidence": "comply with National Fire Protection Association Standard, NFPA 80 (or comparable European standard). The fuel oil day tank i",
+      "page": 436,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 10",
+      "document_type": "Standard",
+      "document_number": "NFPA 10",
+      "title": "",
+      "evidence": "ings. The fire extinguishers are located in accordance with NFPA 10.",
+      "page": 437,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 14",
+      "document_type": "Standard",
+      "document_number": "NFPA 14",
+      "title": "",
+      "evidence": "pipes are designed for Class III service in accordance with NFPA 14. A 6.35cm (2-1/2 in.) to 3.8-cm (1-1/2-in.) reducer is uti",
+      "page": 437,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 13",
+      "document_type": "Standard",
+      "document_number": "NFPA 13",
+      "title": "",
+      "evidence": "afety-related areas is designed to meet the requirements of NFPA 13, and Seismic Category II criteria (assurance that any failu",
+      "page": 437,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 15",
+      "document_type": "Standard",
+      "document_number": "NFPA 15",
+      "title": "",
+      "evidence": "The deluge system is designed to meet the requirements of NFPA 15.",
+      "page": 438,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 11",
+      "document_type": "Standard",
+      "document_number": "NFPA 11",
+      "title": "",
+      "evidence": "The foam system is designed to meet the requirements of NFPA 11.",
+      "page": 438,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E-119",
+      "document_type": "Standard",
+      "document_number": "ASTM E-119",
+      "title": "",
+      "evidence": "rrier. Only noncombustible materials qualified by test per ASTM E-119 are used for construction of fire barriers. Ventilation du",
+      "page": 439,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "ASTM E84",
+      "document_type": "Standard",
+      "document_number": "ASTM E84",
+      "title": "",
+      "evidence": "ASTM E84, Method of Test of Surface Burning Characteristics of Build",
+      "page": 443,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 12",
+      "document_type": "Standard",
+      "document_number": "NFPA 12",
+      "title": "",
+      "evidence": "nance and Use (3) NFPA 11, Foam Extinguishing Systems (4) NFPA 12, Carbon Dioxide Systems (5) NFPA 13, Sprinkler Systems (6)",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 20",
+      "document_type": "Standard",
+      "document_number": "NFPA 20",
+      "title": "",
+      "evidence": "d Hose Systems (7) NFPA 15, Water Spray Fixed Systems (8) NFPA 20, Standards for the Installation of Centrifugal Fire Pumps (",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 22",
+      "document_type": "Standard",
+      "document_number": "NFPA 22",
+      "title": "",
+      "evidence": "andards for the Installation of Centrifugal Fire Pumps (9) NFPA 22, Water Tanks (10) NFPA 24, Private Fire Service Mains and",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 24",
+      "document_type": "Standard",
+      "document_number": "NFPA 24",
+      "title": "",
+      "evidence": "n of Centrifugal Fire Pumps (9) NFPA 22, Water Tanks (10) NFPA 24, Private Fire Service Mains and their Appurtenances (11) N",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 26",
+      "document_type": "Standard",
+      "document_number": "NFPA 26",
+      "title": "",
+      "evidence": "4, Private Fire Service Mains and their Appurtenances (11) NFPA 26, Recommended Practices for the Supervision of Valves Contro",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 30",
+      "document_type": "Standard",
+      "document_number": "NFPA 30",
+      "title": "",
+      "evidence": "Valves Controlling Water Supplies for Fire Protection (12) NFPA 30, Flammable and Combustible Liquids Code (13) NFPA 37, Comb",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 37",
+      "document_type": "Standard",
+      "document_number": "NFPA 37",
+      "title": "",
+      "evidence": "(12) NFPA 30, Flammable and Combustible Liquids Code (13) NFPA 37, Combustion Engines and Gas Turbines (14) NFPA 70, Nationa",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 70",
+      "document_type": "Standard",
+      "document_number": "NFPA 70",
+      "title": "",
+      "evidence": "de (13) NFPA 37, Combustion Engines and Gas Turbines (14) NFPA 70, National Electric Code (15) NFPA 72D, Proprietary Protect",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 72",
+      "document_type": "Standard",
+      "document_number": "NFPA 72",
+      "title": "",
+      "evidence": "nd Gas Turbines (14) NFPA 70, National Electric Code (15) NFPA 72D, Proprietary Protection Signaling Systems (16) NFPA 72E,",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 90",
+      "document_type": "Standard",
+      "document_number": "NFPA 90",
+      "title": "",
+      "evidence": "Windows (18) NFPA 80A, Protection from Exposure Fire (19) NFPA 90A, Air Conditioning and Ventilating Systems (20) NFPA 196,",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 196",
+      "document_type": "Standard",
+      "document_number": "NFPA 196",
+      "title": "",
+      "evidence": ") NFPA 90A, Air Conditioning and Ventilating Systems (20) NFPA 196, Fire Hose (21) NFPA 204, Smoke and Heat Venting Guide (22",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 204",
+      "document_type": "Standard",
+      "document_number": "NFPA 204",
+      "title": "",
+      "evidence": "ing and Ventilating Systems (20) NFPA 196, Fire Hose (21) NFPA 204, Smoke and Heat Venting Guide (22) NFPA 251, Fire Test, Bu",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 251",
+      "document_type": "Standard",
+      "document_number": "NFPA 251",
+      "title": "",
+      "evidence": "ire Hose (21) NFPA 204, Smoke and Heat Venting Guide (22) NFPA 251, Fire Test, Building Construction and Materials (23) NFPA",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 252",
+      "document_type": "Standard",
+      "document_number": "NFPA 252",
+      "title": "",
+      "evidence": "A 251, Fire Test, Building Construction and Materials (23) NFPA 252, Fire Tests, Door Assemblies",
+      "page": 444,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 255",
+      "document_type": "Standard",
+      "document_number": "NFPA 255",
+      "title": "",
+      "evidence": "NFPA 255, Building Materials, Test of Surface Burning Characteristic",
+      "page": 445,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "NFPA 803",
+      "document_type": "Standard",
+      "document_number": "NFPA 803",
+      "title": "",
+      "evidence": "NFPA 803, Standard for Fire Protection for Light Water Nuclear Power",
+      "page": 445,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 1380",
+      "document_type": "Standard",
+      "document_number": "IS 1380",
+      "title": "",
+      "evidence": "performance. The gross electrical output of the generator is 1380 MWe.",
+      "page": 448,
+      "present_in_corpus": false
+    },
+    {
+      "reference_text": "IS 230",
+      "document_type": "Standard",
+      "document_number": "IS 230",
+      "title": "",
+      "evidence": "own in Figure 10.1-3. The diameter of the cylindrical body is 230 mm and the two TV cameras are located inside the cylindrica",
+      "page": 458,
+      "present_in_corpus": false
+    }
+  ],
+  "cross_references": [
+    {
+      "source_section": "2. Core and Vessel Design",
+      "source_page": 28,
+      "target_kind": "section",
+      "target_number": "2.3",
+      "evidence": "ifferent in design from the SBWR and traditional BWR's and will be discussed in Section 2.3."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.2 Core Design > 2.2.3 Core Detail Description",
+      "source_page": 34,
+      "target_kind": "chapter",
+      "target_number": "2.4",
+      "evidence": "flow to the fuel assemblies through the fuel support inlet orificing. Refer to Chapter 2.4 for more detail of the fuel support and"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > Figure 2.2-5 ESBWR Control Rod > 2.2.5 Core Nuclear Design",
+      "source_page": 41,
+      "target_kind": "section",
+      "target_number": "2.1.1",
+      "evidence": "The current reference core uses the GE12 fuel design as described in Section 2.1.1. As new fuel designs evolve they will"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.3 Natural Circulation Design Recirculation Flow > 2.3.1 Sizing of Chimney Height for Design Recirculation Flow",
+      "source_page": 46,
+      "target_kind": "section",
+      "target_number": "2.4.3.2",
+      "evidence": "downcomer region and the core region. The chimney and partitions assembly (see Section 2.4.3.2 for detail description) is installed ab"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.1 Summary Description",
+      "source_page": 48,
+      "target_kind": "section",
+      "target_number": "2.2",
+      "evidence": "t will be built. ESBWR's reference fuel and control rod design is described in Section 2.2 of this report."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.1 Core Support Structures",
+      "source_page": 54,
+      "target_kind": "section",
+      "target_number": "2.5.3",
+      "evidence": "port brackets via the shroud. More details on the shroud supports are given in Section 2.5.3 of this report."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.2 Reactor Internals",
+      "source_page": 63,
+      "target_kind": "section",
+      "target_number": "2.3",
+      "evidence": "ificantly increasing the flow rate through the core's fuel assemblies (refer to Section 2.3)."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.2 Reactor Internals",
+      "source_page": 65,
+      "target_kind": "section",
+      "target_number": "2.7",
+      "evidence": "x, causing these bubbles rapidly to move into the steam phase region. Refer to Section 2.7 for further details."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.2 Reactor Internals",
+      "source_page": 67,
+      "target_kind": "section",
+      "target_number": "3.4",
+      "evidence": "vated. Additional description of how the SLCS System functions can be found in Section 3.4."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.2 Reactor Internals",
+      "source_page": 68,
+      "target_kind": "section",
+      "target_number": "3.2",
+      "evidence": "e housing in the unlikely event of a weld break at the RPV stub tube. Refer to Section 3.2 for further detail of this ejection mit"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.4 Reactor System - Internal Components > 2.4.3 Reactor Pressure Vessel Internal Components > 2.4.3.2 Reactor Internals",
+      "source_page": 70,
+      "target_kind": "section",
+      "target_number": "2.8",
+      "evidence": "alibration system uses what is known as a gamma-thermometer (see description in Section 2.8). This design advancement allows elimi"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > Stress and Fatigue Limits for Core Support Structures > 2.4.6 System Operation Modes",
+      "source_page": 75,
+      "target_kind": "section",
+      "target_number": "3.1",
+      "evidence": "on of the Reactor System are identical to those described for the NBS System in Section 3.1."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > Stress and Fatigue Limits for Core Support Structures > 2.4.8 Instrumentation Requirements",
+      "source_page": 77,
+      "target_kind": "section",
+      "target_number": "3.1",
+      "evidence": "stem (NSSS) is the instrumentation associated with the NBS System, described in Section 3.1."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.5 Reactor System - Reactor Pressure Vessel > 2.5.1 Summary Description > 2.5.1.4 Control Rod Drive Housings",
+      "source_page": 81,
+      "target_kind": "section",
+      "target_number": "2.4.3.2",
+      "evidence": "tailed description of the control rod drive housings, the reader is referred to Section 2.4.3.2 of this report."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.5 Reactor System - Reactor Pressure Vessel > 2.5.1 Summary Description > 2.5.1.5 Neutron Flux Monitor In-Core Housings",
+      "source_page": 81,
+      "target_kind": "section",
+      "target_number": "2.4.3.2",
+      "evidence": "e in-core housings that penetrate the RPV lower head, the reader is referred to Section 2.4.3.2 of this report."
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.5 Reactor System - Reactor Pressure Vessel > 2.5.4 Configuration and Special Features",
+      "source_page": 88,
+      "target_kind": "section",
+      "target_number": "2.4",
+      "evidence": "designed with (generally) removable internals, including the core shroud. (See Section 2.4 for a more comprehensive description of"
+    },
+    {
+      "source_section": "2. Core and Vessel Design > 2.8 Principal NSSS Trip Setpoints and Trip-Response Actions > 2.8.2 Neutron Flux Trip Setpoints > 2.8.2.1 Neutron Flux-High",
+      "source_page": 111,
+      "target_kind": "section",
+      "target_number": "7.2",
+      "evidence": "RPS System to undergo a reactor scram. The RPS System (described in detail in Section 7.2) consists of four channels. Each RPS c"
+    },
+    {
+      "source_section": "3. Key Nuclear Island Mechanical Systems Description > 3.1 Nuclear Boiler System > 3.1.4 Automatic Depressurization Subsystem",
+      "source_page": 134,
+      "target_kind": "section",
+      "target_number": "3.1.5",
+      "evidence": "harge through lines routed to quenchers in the suppression pool as described in Section 3.1.5. Four DPVs are horizontally mounted on"
+    },
+    {
+      "source_section": "3. Key Nuclear Island Mechanical Systems Description > Testing Mode",
+      "source_page": 161,
+      "target_kind": "section",
+      "target_number": "4.1.6",
+      "evidence": "reactor is classified as being in the Testing Mode. These tests are covered in section 4.1.6 below."
+    },
+    {
+      "source_section": "3. Key Nuclear Island Mechanical Systems Description > Testing Mode > 3.1.12 Trip Setpoints",
+      "source_page": 162,
+      "target_kind": "section",
+      "target_number": "2.8",
+      "evidence": "Refer to Section 2.8 for a discussion of water level actions"
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > 3.2.4 FMCRD Components > 3.2.4.9 Integral Internal Blowout Support",
+      "source_page": 181,
+      "target_kind": "section",
+      "target_number": "3.2.5.3.1",
+      "evidence": "ge seat provided for the spindle adapter as part of the anti-rotation gear (see Section 3.2.5.3.1)."
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > (5) Test Connection for FMCRD Ball Check Valve Testing and Friction Testing > 3.2.11 Safety Evaluation > 3.2.11.1 Evaluation of Scram Time",
+      "source_page": 199,
+      "target_kind": "section",
+      "target_number": "3.2.2.1",
+      "evidence": "the negative reactivity insertion required by safety design basis described in Section 3.2.2.1. The scram times shown in this descrip"
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > (1) Failures at Drive Housing Weld",
+      "source_page": 200,
+      "target_kind": "section",
+      "target_number": "3.2.3.1.1.9",
+      "evidence": "pport. The details of this internal blowout support structure are contained in Section 3.2.3.1.1.9."
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > (2) Rupture of Hydraulic Line to Drive Housing Flange",
+      "source_page": 201,
+      "target_kind": "section",
+      "target_number": "3.2.3.1.1.8",
+      "evidence": "The second means of protection is the FMCRD brake described in Section 3.2.3.1.1.8. In the event of the failure of the ch"
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > (3) Total Failure of All Drive Flange Bolts > 3.2.11.3.2 Control Rod Drop Prevention",
+      "source_page": 201,
+      "target_kind": "section",
+      "target_number": "3.2.3.1.1.6",
+      "evidence": "either the control rod or the control rod and hollow piston as an assembly (See Section 3.2.3.1.1.6 for further details)."
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > (3) Total Failure of All Drive Flange Bolts > 3.2.12 Testing, Inspection and Maintenance Requirements > 3.2.12.3 Surveillance Tests",
+      "source_page": 203,
+      "target_kind": "section",
+      "target_number": "3.2.6.2",
+      "evidence": "when the rod is fully withdrawn the first time. The procedure, as described in Section 3.2.6.2, is to withdraw the drive into the over"
+    },
+    {
+      "source_section": "7. Rod Drop Accident Prevention > Emergency Operation: ATWS Mitigation Mission > 3.4.5 Safety Evaluation",
+      "source_page": 228,
+      "target_kind": "chapter",
+      "target_number": "15",
+      "evidence": "tem is used in ATWS events presented in certain analyses typically published in Chapter 15 of a Standard Safety Analysis Report (S"
+    },
+    {
+      "source_section": "4. Safety System Design > 4.2 Passive Containment Cooling System > 4.2.1 Description and Functioning of System",
+      "source_page": 283,
+      "target_kind": "section",
+      "target_number": "4.1",
+      "evidence": "t injections to proceed. As mentioned in the accident scenario descriptions of Section 4.1, at this point during the DBA cold GDCS"
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > 5.1 Containment Structure, System and Arrangement Design > 5.1.4 Code Classifications and Safety Category > 5.1.4.2 Containment Internal Structures",
+      "source_page": 295,
+      "target_kind": "section",
+      "target_number": "5.1.3",
+      "evidence": "gned in accordance with the applicable codes for steel structures identified in Section 5.1.3 above."
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > Temperature Effects: > 5.1.7 Design and Analysis Procedures > 5.1.7.2 Containment Internal Structures",
+      "source_page": 299,
+      "target_kind": "section",
+      "target_number": "5.1.6.1",
+      "evidence": "the integrated reinforced concrete containment/RB structural model discussed in Section 5.1.6.1. A static finite element analysis is p"
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > Liner and Seals > 5.1.16 Containment Arrangement and Layout > 5.1.16.1 Drywell",
+      "source_page": 311,
+      "target_kind": "section",
+      "target_number": "2.5",
+      "evidence": "ure, a communication path exists between the upper and lower drywell. Refer to Section 2.5 for a discussion of the RPV support."
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > Liner and Seals > 5.1.16 Containment Arrangement and Layout > 5.1.16.3 Internal Structures",
+      "source_page": 314,
+      "target_kind": "section",
+      "target_number": "5.1.2",
+      "evidence": "Refer to Section 5.1.2 for a detailed discussion of the follow"
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > 5.4 Containment Atmospheric Control System (CACS) > 5.4.1 Description and Functioning of System > 5.4.1.1 Background",
+      "source_page": 338,
+      "target_kind": "section",
+      "target_number": "5.2",
+      "evidence": "As described in detail in Section 5.2 earlier in this report, ensuring that t"
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > 1) Isolation Condenser (IC) System",
+      "source_page": 345,
+      "target_kind": "section",
+      "target_number": "3.3",
+      "evidence": "event of RPV isolation. A detailed description of the IC system is provided in Section 3.3. Basically, the ICs take steam from the"
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > 2) Automatic Depression System",
+      "source_page": 346,
+      "target_kind": "section",
+      "target_number": "3.1.4",
+      "evidence": "e occurrences of high pressure melt ejection. The ADS is described in detail in Section 3.1.4."
+    },
+    {
+      "source_section": "5. Containment Design and Support Systems > 9) Passive Containment Cooling System (PCCS)",
+      "source_page": 347,
+      "target_kind": "section",
+      "target_number": "4.2",
+      "evidence": "The PCCS system is described in great detail in Section 4.2"
+    },
+    {
+      "source_section": "6. Reactor Building and Auxiliary Fuel Building Design > 6.1 Reactor Building Structure Design > 6.1.4 Design Loads",
+      "source_page": 352,
+      "target_kind": "section",
+      "target_number": "5.1",
+      "evidence": "ns, test conditions and design basis accident (DBA) conditions are described in Section 5.1. The pressure loads include the SRV di"
+    },
+    {
+      "source_section": "6. Reactor Building and Auxiliary Fuel Building Design > 6.1 Reactor Building Structure Design > 6.1.5 Design and Analysis Procedures",
+      "source_page": 354,
+      "target_kind": "section",
+      "target_number": "5.1",
+      "evidence": "the integrated reinforced concrete containment vessel/RB structure discussed in Section 5.1. The RB membrane forces, shear forces,"
+    },
+    {
+      "source_section": "2. In-core Monitor Nut Wrench (F17-E031) > 10.3.7 Refueling and Servicing Outage > 10.3.7.6 Refueling and Reactor Servicing > 10.3.7.6.1 Refueling",
+      "source_page": 474,
+      "target_kind": "section",
+      "target_number": "4.13.1",
+      "evidence": "el is moved from the pool to the reactor vessel in the reverse manner. Refer to Section 4.13.1 for more details regarding the refuelin"
+    }
+  ],
+  "standing_instructions": [],
+  "table_categories_found": [
+    "unknown_table",
+    "safety_table",
+    "process_data_table",
+    "equipment_table",
+    "operating_limit_table",
+    "abbreviation_table",
+    "material_balance_table"
+  ],
+  "key_concepts": [],
+  "pages_analyzed": 20,
+  "profile_timestamp": "2026-09-16T14:15:14.116877+00:00",
+  "confidence": 0.6
+}
