@@ -32,6 +32,12 @@ class Turn(BaseModel):
     followup_kind: str = "new"
     corrections: list[dict] = Field(default_factory=list)  # EntityCorrection dumps: tags that were not documented
     answer_preview: str = Field(default="", description="The composed answer, long enough that the next turn can refer back to it")
+    # Everything a screen needs to redraw this exchange later. The preview above is for the *next
+    # turn's* benefit; these are for the person coming back tomorrow to continue where they left
+    # off. The envelope is kept so the classification banner is redrawn as it was released, not
+    # recomputed against whatever the caller may read now.
+    answer_markdown: str = Field(default="", description="The full released answer, for redrawing the conversation")
+    security: dict = Field(default_factory=dict, description="The security envelope the answer was released with")
 
 
 class SessionState(BaseModel):
@@ -108,12 +114,45 @@ class SessionStore:
         self._cache[state.session_id] = state
         self._path(state.session_id).write_text(state.model_dump_json(indent=1), encoding="utf-8")
 
-    def list_sessions(self) -> list[dict]:
+    def list_sessions(self, owner: str | None = None) -> list[dict]:
+        """The conversations on disk — one person's when ``owner`` is given, newest first.
+
+        Files are named by the namespaced key (``alice__web-1a2b``), and the state inside carries
+        the owner, so the filter is on the recorded owner and not on a filename prefix somebody
+        could imitate. The public ``session_id`` handed back is the un-namespaced one the client
+        sent, because that is the only id the client knows.
+        """
         out = []
-        for p in sorted(self.dir.glob("*.json")):
+        for p in self.dir.glob("*.json"):
             try:
                 raw = json.loads(p.read_text(encoding="utf-8"))
-                out.append({"session_id": raw.get("session_id"), "turns": len(raw.get("turns", [])), "created": raw.get("created")})
             except Exception:
                 continue
+            if owner is not None and raw.get("owner") != owner:
+                continue
+            turns = raw.get("turns", [])
+            key = str(raw.get("session_id") or "")
+            prefix = f"{raw.get('owner') or 'anonymous'}__"
+            public = key[len(prefix):] if key.startswith(prefix) else key
+            first = next((t.get("request") for t in turns if t.get("request")), "") or ""
+            out.append({
+                "session_id": public,
+                "title": " ".join(first.split())[:90] or "New conversation",
+                "turns": len(turns),
+                "created": raw.get("created"),
+                "updated": (turns[-1].get("ts") if turns else raw.get("created")),
+                "attachments": [d.get("name") or d.get("document_id")
+                                for d in raw.get("uploaded_documents", []) if d.get("kind") == "pdf"],
+                "last_status": (turns[-1].get("status") if turns else ""),
+            })
+        out.sort(key=lambda r: -(r["updated"] or 0))
         return out
+
+    def delete(self, session_id: str) -> bool:
+        """Remove one conversation from disk and from the cache. Returns whether anything existed."""
+        self._cache.pop(session_id, None)
+        p = self._path(session_id)
+        if p.exists():
+            p.unlink()
+            return True
+        return False

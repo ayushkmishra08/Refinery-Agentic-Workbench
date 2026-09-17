@@ -672,6 +672,51 @@ class Orchestrator:
         return [r.model_dump(mode="json") for r in self.escalations.requests_of(principal.username)]
 
     # ------------------------------------------------------------------ sessions
+    def list_sessions(self, token: str | None) -> list[dict]:
+        """The caller's own conversations, newest first. A guest has none."""
+        principal = self.principal(token)
+        if not principal.authenticated:
+            return []
+        return self.sessions.list_sessions(owner=principal.username)
+
+    def delete_session(self, token: str | None, session_id: str) -> bool:
+        """Forget one of the caller's conversations — its turns, and any attachments it held."""
+        principal = self.require_principal(token)
+        key = self.sessions.key_for(principal.username, session_id)
+        self.drop_session_uploads(key)
+        return self.sessions.delete(key)
+
+    def _ensure_uploads(self, session_key: str, session) -> None:
+        """Bring a conversation's attachments back after the process that indexed them has gone.
+
+        The indexed form of an upload lives in memory — deliberately, since it is one person's
+        working file and not part of the corpus. But this machine restarts the API often, and
+        after a restart the chat still showed the attachment chip while every answer quietly came
+        from the corpus alone. The session file remembers what was attached and where the PDF is,
+        and the parse is cached by content hash, so rebuilding the index costs seconds. Do it the
+        first time the conversation is touched again, not at startup for every session on disk.
+        """
+        if session_key in self.session_uploads:
+            return
+        rows = [d for d in (session.uploaded_documents or []) if d.get("kind") == "pdf" and d.get("path")]
+        if not rows:
+            return
+        from workbench.services.ingest import SessionDocumentsBackend, build_index_from_pdf
+
+        indexes = []
+        for row in rows:
+            path = Path(row["path"])
+            if not path.exists():
+                logger.warning("attachment %s for %s is no longer on disk; skipping", row.get("document_id"), session_key)
+                continue
+            try:
+                indexes.append(build_index_from_pdf(self.cfg, path))
+            except Exception as exc:
+                logger.warning("could not rebuild attachment %s: %s", row.get("document_id"), exc)
+        if indexes:
+            self.session_uploads[session_key] = SessionDocumentsBackend(indexes, self.cfg)
+            logger.info("rebuilt %d attachment(s) for %s", len(indexes), session_key)
+
     def session_for(self, session_id: str, token: str | None = None):
         """One principal's conversation. Sessions are namespaced, so the caller must be named.
 
@@ -702,6 +747,7 @@ class Orchestrator:
         principal, access = self.access_for(request.auth_token, grant=grant)
         session_key = self.sessions.key_for(principal.username, request.session_id)
         session = self.sessions.load(session_key, owner=principal.username, owner_role=principal.role.value)
+        self._ensure_uploads(session_key, session)
         uploaded = self.upload_document_ids(session_key)
         self.audit.write(request.session_id, audit_id, "request", {"text": request.text, "run_id": rs.run_id, "principal": principal.username, "role": principal.role.value, "attachments": [a.model_dump() for a in request.attachments]})
         self.audit.write(request.session_id, audit_id, "access", access.audit_payload())
@@ -938,7 +984,9 @@ class Orchestrator:
                                       entities=[e.model_dump(mode="json") for e in req.entities], parameter=req.parameter, scenario=req.scenario, response_id=resp.response_id,
                                       status=resp.status, followup_kind=req.followup_kind,
                                       corrections=[c.model_dump(mode="json") for c in req.corrections],
-                                      answer_preview=(composed_answer.content.get("answer") if composed_answer else resp.answer_markdown)[:600]))
+                                      answer_preview=(composed_answer.content.get("answer") if composed_answer else resp.answer_markdown)[:600],
+                                      answer_markdown=resp.answer_markdown or "",
+                                      security=resp.security.model_dump(mode="json")))
             if resp.status == "clarification":
                 session.pending_clarification = {"request": request.text, "missing": req.ambiguities, "intended": req.secondary_task_types[0].value if req.secondary_task_types else None}
             else:

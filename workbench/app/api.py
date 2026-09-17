@@ -355,11 +355,32 @@ def btw(body: BtwBody) -> dict:
     return {"run_id": rs.run_id if rs else None, "blocks": [b.model_dump(mode="json") for b in blocks]}
 
 
+@app.get("/sessions")
+def sessions(token: str | None = Depends(bearer)) -> list[dict]:
+    """The caller's own conversations, newest first — title, turn count, when, attachments."""
+    return orch().list_sessions(token)
+
+
 @app.get("/sessions/{session_id}")
 def session(session_id: str, token: str | None = Depends(bearer)) -> dict:
     """One caller's conversation. Sessions are namespaced by principal, so a guessed id
     returns the caller's own (empty) conversation, never someone else's."""
-    return orch().session_for(session_id, token).model_dump(mode="json")
+    o = orch()
+    state = o.session_for(session_id, token)
+    # touching a conversation brings its attachments back if the process that indexed them is gone
+    o._ensure_uploads(state.session_id, state)
+    out = state.model_dump(mode="json")
+    out["attached_documents"] = o.upload_document_ids(state.session_id)
+    return out
+
+
+@app.delete("/sessions/{session_id}")
+def delete_session(session_id: str, token: str | None = Depends(bearer)) -> dict:
+    """Forget one of the caller's conversations."""
+    try:
+        return {"deleted": orch().delete_session(token, session_id)}
+    except PermissionError as exc:
+        raise HTTPException(401, str(exc)) from exc
 
 
 @app.post("/upload")
