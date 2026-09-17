@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" role="img" aria-label="MRPL Engineering AI Workstation">
+  <rect width="34" height="34" x="2" y="3" rx="8" fill="#0f766e"/>
+  <path d="M9 27V13h3.8l3.6 8.4L20 13h3.7v14h-3.2v-8L17.2 27h-2.2L12.2 19v8z" fill="#f8fafc"/>
+  <circle cx="28" cy="11" r="2.4" fill="#f59e0b"/>
+  <text x="44" y="18" font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="700" fill="#1e293b">MRPL</text>
+  <text x="44" y="31" font-family="Inter,system-ui,sans-serif" font-size="9" font-weight="500" fill="#64748b">Engineering AI Workstation</text>
+</svg>

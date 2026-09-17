@@ -1,0 +1,10 @@
+{
+  "name": "MRPL Engineering AI Workstation",
+  "short_name": "MRPL AI",
+  "description": "Role-gated engineering answers built only from the plant documents you are cleared to read.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#0f766e",
+  "icons": [{ "src": "/mrpl-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
