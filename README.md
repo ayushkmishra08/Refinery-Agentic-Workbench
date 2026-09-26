@@ -1,5 +1,26 @@
 # Refinery Knowledge Layer
 
+## What the workbench does now (September 2026)
+
+The operator manual is **[`docs/manual/index.html`](docs/manual/index.html)** (open it in a browser). Everything
+below the table is the original knowledge-layer README.
+
+| Capability | Where | Try it |
+|---|---|---|
+| Multi-model backend, auto-routed per call; pluggable via one YAML entry | `workbench/models/` | `python -m workbench models` · `python -m workbench route "read the scan and calculate the margin"` |
+| Agentic execution over named local tools (`read_file`, `write_file`, `list_files`, `run_python`, `spreadsheet_read`, `spreadsheet_write`, `search_documents`, `calculate`, `ocr_image`, `describe_image`, `make_docx`, `make_xlsx`, `make_pptx`) | `workbench/tools/` | `python -m workbench tools` · `python -m workbench agent "calculate (520-482)/482*100"` |
+| Hardened, ephemeral, no-egress, resource-bounded sandbox with static analysis + tests = verified, chained run log | `workbench/sandbox/` | `python -m workbench sandbox-run script.py --tests tests.py` |
+| Multimodal intake: on-device OCR (RapidOCR) + local vision model; low-confidence lines flagged | `workbench/intake/` | `python -m workbench intake "data/sample docs/test.pdf" --max-pages 3` |
+| Real deliverables (Word / Excel with live formulas / PowerPoint) under mandatory human sign-off | `workbench/deliverables/`, `workbench/review/` | `python -m workbench export <response_id> --format xlsx` · `drafts` · `draft-resolve` · `draft-signoff` |
+| Envelope encryption per knowledge branch, local KMS, session-scoped decryption, rotation and revocation | `workbench/security/vault.py`, `vault_backend.py` | `python -m workbench vault seal --shred` · `vault rotate manager` · `RWB_VAULT=on` |
+| Air-gap proof: in-process egress guard, live network monitor with a hash-chained connection log, physical-disconnect detection | `workbench/sovereignty/` | `python -m workbench sovereignty --watch 5` · `python -m workbench audit-verify` |
+| Signed, checksum-verified model packages (never a live download) | `workbench/sovereignty/model_updates.py` | `python -m workbench packages verify ./pkg` |
+| Local TLS / mutual TLS between components | `workbench/security/tls.py` | `python -m workbench serve --mtls` |
+| Hash-chained audit logs everywhere (security, run audits, connections, routing, sandbox, keys, drafts, tools) | `workbench/sovereignty/hashchain.py` | `python -m workbench audit-verify` |
+
+HTTP surface for all of it: `workbench/app/api_ext.py` (documented in `docs/API.md`, live at `/docs`).
+
+
 
 
 Source-grounded engineering knowledge extraction from refinery documents into Neo4j.
@@ -257,7 +278,17 @@ python -m workbench ask "..." --no-thinking     # answer only; --json gives the 
 python -m workbench ask "..." --detail          # every render block instead of the composed answer
 python -m workbench trace --show                # replay the newest saved thinking trace
 python -m workbench repl                        # follow-ups read in context; "btw what's going on?" while a request runs
-python -m workbench serve --port 8000           # FastAPI + SSE for the frontend (docs/API.md)
+python -m workbench serve --port 8077           # FastAPI + SSE for the frontend (docs/API.md; the WebPage proxy expects 8077); --tls / --mtls for local TLS
+python -m workbench models                      # model registry: capabilities, what is installed, who wins each task kind
+python -m workbench route "..."                 # how a request is decomposed and routed (no model call)
+python -m workbench tools | tool <name> --args '{...}' | agent "<goal>"   # named local tools and the agent loop
+python -m workbench sandbox-run file.py --tests tests.py                  # hardened sandbox
+python -m workbench intake <file> [--purpose pid|handwriting|gauge]       # on-device OCR + vision
+python -m workbench responses | export <response_id> --format docx|pptx|xlsx   # deliverables
+python -m workbench drafts | draft-resolve <draft> <figure> accepted|corrected|removed | draft-signoff <draft>
+python -m workbench vault status|seal|rotate <role>|revoke <branch> <role>   # envelope encryption
+python -m workbench sovereignty [--watch 5] | audit-verify                   # air-gap proof, chain integrity
+python -m workbench packages keygen|trust|sign|verify|import|log             # signed model packages
 python -m workbench -v bench                    # 70-prompt benchmark; 2026-09-16 LLM-free run: 100% task/entity/block/safety, 0.8 s mean
 ```
 

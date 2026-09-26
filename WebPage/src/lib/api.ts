@@ -15,8 +15,14 @@
 import type {
   AccessRequest, AgentDescription, ApprovalResult, Block, ConversationSummary, DocumentRolesResult, FinalResponse,
   Health, IngestRun, KnowledgeTree, LoginResult, MfaChallenge, MfaEnrolment, MfaStatus, Role,
-  SecurityOverview, SessionSnapshot, UploadResult, WhoAmI, WorkspaceStats,
+  SecurityOverview, SessionSnapshot, SupervisedConversation, UploadResult, WhoAmI, WorkspaceStats,
 } from "@/lib/types";
+import type {
+  ChainRow, Draft, DraftsResponse, EgressGuardStatus, ExportResult, IntakeResult, ModelsOverview, PackageLog,
+  PackageVerification, RecordedResponse, RegisterModelBody, RoutingLog, RoutingPlan, SandboxInfo, SandboxManifest,
+  SandboxResult, SealResult, SovereigntyReport, ToolCallEntry, ToolDescription, ToolResult, ToolRunReport,
+  VaultStatus, WorkspaceFile, ChainState, ConnectionEntry, NetworkMonitorStatus,
+} from "@/lib/types_ext";
 
 const BASE = import.meta.env.VITE_WORKBENCH_URL ? String(import.meta.env.VITE_WORKBENCH_URL) : "/api";
 
@@ -174,6 +180,11 @@ export const api = {
   deleteConversation: (sessionId: string) =>
     request<{ deleted: boolean }>(`/sessions/${encodeURIComponent(sessionId)}`, { method: "DELETE" }),
 
+  /** Conversations of the ranks below the caller (manager, admin). Each read is audited. */
+  supervisedConversations: () => request<SupervisedConversation[]>("/logs/conversations"),
+  supervisedConversation: (owner: string, sessionId: string) =>
+    request<SessionSnapshot>(`/logs/conversations/${encodeURIComponent(owner)}/${encodeURIComponent(sessionId)}`),
+
   /** Follow an ingest run: phase, final_status, error. */
   ingestStatus: (runId: string) => request<IngestRun>(`/runs/${runId}`),
 
@@ -218,7 +229,124 @@ export const api = {
     request<Record<string, unknown>[]>(
       `/audit/${encodeURIComponent(sessionId)}${auditId ? `?audit_id=${encodeURIComponent(auditId)}` : ""}`,
     ),
+
+  // ---------------------------------------------------------------- models & routing
+  models: () => request<ModelsOverview>("/models"),
+  routingLog: (limit = 50, runId?: string) =>
+    request<RoutingLog>(`/models/routing?limit=${limit}${runId ? `&run_id=${encodeURIComponent(runId)}` : ""}`),
+  routeText: (text: string) => request<RoutingPlan>("/models/route", { method: "POST", body: JSON.stringify({ text }) }),
+  registerModel: (body: RegisterModelBody) =>
+    request<{ registered: string; local_registry: string; installed: boolean }>("/models/register", {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  packages: () => request<PackageLog>("/models/packages"),
+  verifyPackage: (path: string) =>
+    request<PackageVerification>("/models/packages/verify", { method: "POST", body: JSON.stringify({ path }) }),
+  importPackage: (path: string, dryRun = true) =>
+    request<{ verification: PackageVerification; imported?: boolean; dry_run?: boolean; model?: string }>(
+      "/models/packages/import", { method: "POST", body: JSON.stringify({ path, dry_run: dryRun }) },
+    ),
+
+  // ---------------------------------------------------------------- sovereignty
+  sovereignty: (deep = false) => request<SovereigntyReport>(`/sovereignty?deep=${deep}`),
+  connections: (limit = 100, externalOnly = false, event?: string) =>
+    request<{ entries: ConnectionEntry[]; status: NetworkMonitorStatus }>(
+      `/sovereignty/connections?limit=${limit}&external_only=${externalOnly}${event ? `&event=${encodeURIComponent(event)}` : ""}`,
+    ),
+  verifyChains: () => request<{ chains: ChainRow[]; intact: boolean; checked: number }>("/sovereignty/verify", { method: "POST" }),
+  egress: (limit = 50) => request<{ guard: EgressGuardStatus; entries: Record<string, unknown>[]; chain: ChainState }>(`/sovereignty/egress?limit=${limit}`),
+
+  // ---------------------------------------------------------------- vault
+  vault: () => request<VaultStatus>("/vault"),
+  vaultSeal: (shred: boolean) => request<SealResult>("/vault/seal", { method: "POST", body: JSON.stringify({ shred }) }),
+  vaultRotate: (role: Role) => request<{ role: string; version: number }>(`/vault/rotate/${role}`, { method: "POST" }),
+  vaultRevoke: (branch: string, role: Role) =>
+    request<{ branch: string; role: string; roles_with_key: string[] }>("/vault/revoke", {
+      method: "POST", body: JSON.stringify({ branch, role }),
+    }),
+
+  // ---------------------------------------------------------------- tools & sandbox
+  tools: () => request<{ tools: ToolDescription[]; sandbox: SandboxInfo }>("/tools"),
+  runTool: (tool: string, args: Record<string, unknown>, sessionId: string) =>
+    request<ToolResult>("/tools/run", { method: "POST", body: JSON.stringify({ tool, args, session_id: sessionId }) }),
+  runAgent: (goal: string, sessionId: string, maxIterations = 8) =>
+    request<ToolRunReport>("/tools/agent", {
+      method: "POST", body: JSON.stringify({ goal, session_id: sessionId, max_iterations: maxIterations }),
+    }),
+  workspace: (sessionId: string) =>
+    request<{ workspace: string; files: WorkspaceFile[] }>(`/tools/workspace?session_id=${encodeURIComponent(sessionId)}`),
+  workspaceFilePath: (sessionId: string, path: string) =>
+    `/tools/workspace/file?session_id=${encodeURIComponent(sessionId)}&path=${encodeURIComponent(path)}`,
+  toolCalls: (limit = 100) => request<{ entries: ToolCallEntry[]; chain: ChainState }>(`/tools/calls?limit=${limit}`),
+  sandboxRun: (body: { code: string; tests?: string | null; inputs?: Record<string, string>; task_id?: string }) =>
+    request<SandboxResult>("/sandbox/run", { method: "POST", body: JSON.stringify(body) }),
+  sandboxRuns: (limit = 50) =>
+    request<{ entries: Record<string, unknown>[]; chain: ChainState; sandbox: SandboxInfo }>(`/sandbox/runs?limit=${limit}`),
+  sandboxManifest: () => request<SandboxManifest>("/sandbox/manifest"),
+
+  // ---------------------------------------------------------------- intake
+  intake: (file: File, sessionId: string, opts: { purpose?: string; runVision?: boolean; maxPages?: number; createDraft?: boolean } = {}) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("session_id", sessionId);
+    form.append("purpose", opts.purpose ?? "general");
+    form.append("run_vision", String(opts.runVision ?? true));
+    form.append("max_pages", String(opts.maxPages ?? 6));
+    form.append("create_draft", String(opts.createDraft ?? true));
+    return request<IntakeResult>("/intake", { method: "POST", body: form });
+  },
+
+  // ---------------------------------------------------------------- deliverables & review
+  exportDeliverable: (responseId: string, format: "docx" | "pptx" | "xlsx" | "md", title?: string) =>
+    request<ExportResult>("/deliverables", {
+      method: "POST", body: JSON.stringify({ response_id: responseId, format, title: title ?? null }),
+    }),
+  recordedResponses: (limit = 30) => request<RecordedResponse[]>(`/deliverables/responses?limit=${limit}`),
+  drafts: (status?: string) => request<DraftsResponse>(`/drafts${status ? `?status=${encodeURIComponent(status)}` : ""}`),
+  draft: (draftId: string) => request<Draft>(`/drafts/${encodeURIComponent(draftId)}`),
+  resolveFigure: (draftId: string, figureId: string, body: { action: "accepted" | "corrected" | "removed"; corrected_value?: string | null; note?: string }) =>
+    request<Draft>(`/drafts/${encodeURIComponent(draftId)}/figures/${encodeURIComponent(figureId)}/resolve`, {
+      method: "POST", body: JSON.stringify(body),
+    }),
+  signoffDraft: (draftId: string, note = "") =>
+    request<Draft>(`/drafts/${encodeURIComponent(draftId)}/signoff`, { method: "POST", body: JSON.stringify({ note }) }),
+  rejectDraft: (draftId: string, note = "") =>
+    request<Draft>(`/drafts/${encodeURIComponent(draftId)}/reject`, { method: "POST", body: JSON.stringify({ note }) }),
 };
+
+/**
+ * Fetch a file the API serves (a deliverable, a workspace file) with the bearer token and hand
+ * back a Blob. A plain link cannot carry the Authorization header, which is why this exists.
+ */
+export async function download(path: string): Promise<Blob> {
+  const headers = new Headers();
+  if (authToken) headers.set("Authorization", `Bearer ${authToken}`);
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, { headers });
+  } catch (cause) {
+    throw new ApiError(0, "The workbench is not reachable. Check that the API is running.", cause);
+  }
+  if (!res.ok) {
+    let detail: unknown = null;
+    try { detail = (await res.json())?.detail; } catch { /* not JSON */ }
+    if (res.status === 401 && authToken) onUnauthorized?.();
+    throw new ApiError(res.status, messageFrom(detail, `Download failed (${res.status}).`), detail);
+  }
+  return res.blob();
+}
+
+/** Save a Blob through the browser's download prompt. */
+export function saveBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 
 // ---------------------------------------------------------------- progress stream
 

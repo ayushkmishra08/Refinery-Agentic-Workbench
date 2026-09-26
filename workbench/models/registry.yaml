@@ -1,0 +1,166 @@
+# Model capability registry.
+#
+# Every open-weight model the workbench may use declares a *capability profile*: a score from
+# 0 to 1 per task kind. The router matches a task to the best installed model that fits the
+# hardware; nothing anywhere else names a model. To add a model: pull it into Ollama (or import
+# a signed package with `workbench models import`), add one entry here or in
+# data/workbench/models/registry.local.yaml, and it is routable at the next start.
+#
+# Task kinds (see workbench/models/router.py):
+#   classification   short structured verdicts (task type, follow-up kind)
+#   resolution       naming equipment the rules missed
+#   extraction       structuring causes / checks / actions from passages
+#   summarization    grounded prose summaries of retrieved passages
+#   composition      writing the released answer from an evidence brief
+#   reasoning        multi-step engineering reasoning, comparisons, plans
+#   calculation      structuring a calculation (the arithmetic itself is always deterministic)
+#   code             writing / fixing Python that runs in the sandbox
+#   vision           reading images: P&IDs, scans, photos, handwriting
+#   planning         refining a plan DAG
+#   tool_agent       choosing the next local tool in an agentic loop
+#
+# size_gb is the resident size; min_vram_mb is where it fits entirely on the GPU. A model
+# that does not fit still routes when nothing better is installed, at a penalty (CPU split).
+
+models:
+  - name: qwen3:4b
+    family: qwen3
+    size_gb: 2.5
+    context: 4096
+    modalities: [text]
+    min_vram_mb: 3500
+    capabilities:
+      classification: 0.80
+      resolution: 0.72
+      extraction: 0.70
+      summarization: 0.75
+      composition: 0.82
+      reasoning: 0.68
+      calculation: 0.55
+      code: 0.66
+      vision: 0.00
+      planning: 0.70
+      tool_agent: 0.70
+    notes: Default text model on a 4 GB card; fits fully with a 4k KV cache.
+
+  - name: qwen3.5:2b
+    family: qwen3.5
+    size_gb: 2.7
+    context: 4096
+    modalities: [text, image]
+    min_vram_mb: 3500
+    capabilities:
+      classification: 0.62
+      resolution: 0.55
+      extraction: 0.52
+      summarization: 0.60
+      composition: 0.58
+      reasoning: 0.45
+      calculation: 0.40
+      code: 0.45
+      vision: 0.78
+      planning: 0.45
+      tool_agent: 0.50
+    notes: The only vision-capable model that fits a 4 GB card; loaded on demand for images.
+
+  - name: deepseek-r1:7b
+    family: deepseek-r1
+    size_gb: 4.7
+    context: 8192
+    modalities: [text]
+    min_vram_mb: 6000
+    thinking: true
+    capabilities:
+      classification: 0.70
+      resolution: 0.70
+      extraction: 0.78
+      summarization: 0.72
+      composition: 0.70
+      reasoning: 0.88
+      calculation: 0.80
+      code: 0.80
+      vision: 0.00
+      planning: 0.82
+      tool_agent: 0.74
+    notes: Strong reasoning; on a 4 GB card it splits CPU/GPU (~3 tok/s), so it only wins when reasoning matters and the budget allows.
+
+  - name: qwen2.5-coder:7b
+    family: qwen2.5-coder
+    size_gb: 4.7
+    context: 16384
+    modalities: [text]
+    min_vram_mb: 6000
+    capabilities:
+      classification: 0.55
+      resolution: 0.50
+      extraction: 0.60
+      summarization: 0.55
+      composition: 0.55
+      reasoning: 0.62
+      calculation: 0.65
+      code: 0.92
+      vision: 0.00
+      planning: 0.55
+      tool_agent: 0.72
+    notes: Coding specialist. Not installed here; listed so the router shows what it would prefer for code once pulled.
+
+  - name: qwen3.5:9b
+    family: qwen3.5
+    size_gb: 6.6
+    context: 16384
+    modalities: [text, image]
+    min_vram_mb: 11500
+    capabilities:
+      classification: 0.86
+      resolution: 0.84
+      extraction: 0.85
+      summarization: 0.88
+      composition: 0.90
+      reasoning: 0.84
+      calculation: 0.75
+      code: 0.82
+      vision: 0.88
+      planning: 0.85
+      tool_agent: 0.85
+    notes: Text + vision on a 12-16 GB card.
+
+  - name: gpt-oss:20b
+    family: gpt-oss
+    size_gb: 13.0
+    context: 32768
+    modalities: [text]
+    min_vram_mb: 15500
+    thinking: true
+    capabilities:
+      classification: 0.88
+      resolution: 0.86
+      extraction: 0.88
+      summarization: 0.90
+      composition: 0.92
+      reasoning: 0.93
+      calculation: 0.85
+      code: 0.90
+      vision: 0.00
+      planning: 0.92
+      tool_agent: 0.90
+    notes: Text-only alternative on a 16 GB card.
+
+  - name: qwen3.6:27b
+    family: qwen3.6
+    size_gb: 18.0
+    context: 32768
+    modalities: [text, image]
+    min_vram_mb: 23000
+    capabilities:
+      classification: 0.92
+      resolution: 0.90
+      extraction: 0.92
+      summarization: 0.94
+      composition: 0.95
+      reasoning: 0.93
+      calculation: 0.86
+      code: 0.90
+      vision: 0.93
+      planning: 0.93
+      tool_agent: 0.92
+    notes: The 24 GB profile's single multimodal model.

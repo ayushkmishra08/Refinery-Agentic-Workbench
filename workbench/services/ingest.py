@@ -110,6 +110,19 @@ def build_index_from_pdf(cfg, pdf_path: Path, on_progress=None, *, persist: bool
     return idx
 
 
+def _purpose_from_note(note: str) -> str:
+    low = (note or "").lower()
+    if "p&id" in low or "pid" in low or "diagram" in low or "drawing" in low:
+        return "pid"
+    if "hand" in low or "note" in low:
+        return "handwriting"
+    if "gauge" in low or "reading" in low or "meter" in low:
+        return "gauge"
+    if "photo" in low:
+        return "photo"
+    return "general"
+
+
 def ingest_upload(orch, session_key: str, path: Path, note: str = "", *, owner: str = "",
                   owner_role: str = "", persist: bool = False) -> dict:
     """Entry point used by the API. Images are described synchronously; PDFs are indexed in a thread.
@@ -121,14 +134,49 @@ def ingest_upload(orch, session_key: str, path: Path, note: str = "", *, owner: 
     session = orch.sessions.load(session_key, owner=owner, owner_role=owner_role)
     suffix = path.suffix.lower()
     if suffix in IMAGE_SUFFIXES:
+        # Multimodal intake: on-device OCR first (every line with a confidence), then the vision
+        # model for what OCR cannot read (a P&ID's topology, a gauge, handwriting). Lines under the
+        # confidence threshold are flagged and land in a review draft rather than being passed
+        # through as fact.
+        from workbench.intake.pipeline import intake_file, intake_to_chunks
+
+        threshold = getattr(getattr(orch.cfg, "review", None), "ocr_confidence_threshold", 0.6)
         try:
-            desc = orch.resources.describe_image(str(path), "Describe this image for a refinery engineer: equipment, tags, readings, warnings. Be literal; do not guess values that are not visible.")
+            result = intake_file(path, llm_or_resources=(orch.resources if orch.llm.available() else None), threshold=threshold,
+                                 run_vision=True, max_vision_calls=1, purpose=_purpose_from_note(note))
+            desc = result.text.strip()[:2000] or "(nothing recognised)"
+            vision_text = " ".join(v.text for v in result.vision if v.ok)[:1500]
+            session.notes.append(f"Image {path.name} (OCR, {len(result.ocr.lines) if result.ocr else 0} lines"
+                                 f", mean confidence {result.ocr.mean_confidence:.2f}): {desc}" if result.ocr else f"Image {path.name}: {desc}")
+            if vision_text:
+                session.notes.append(f"Image {path.name} (vision): {vision_text}")
+            draft = None
+            if getattr(orch, "drafts", None) is not None:
+                from workbench.review.drafts import figures_from_intake
+
+                figures = figures_from_intake(result, threshold=threshold)
+                if figures:
+                    draft = orch.drafts.create("intake", f"Intake: {path.name}", path=str(path), figures=figures,
+                                               session_id=session_key.partition("__")[2] or session_key, owner=owner,
+                                               owner_role=owner_role, classification=None)
+            payload = {"status": "described", "kind": "image", "description": (vision_text or desc),
+                       "intake": {"kind": result.kind, "flagged": [f.model_dump() for f in result.flagged][:50],
+                                  "ocr_lines": len(result.ocr.lines) if result.ocr else 0,
+                                  "ocr_mean_confidence": result.ocr.mean_confidence if result.ocr else None,
+                                  "vision_calls": len(result.vision), "chunks": len(intake_to_chunks(result)),
+                                  "duration_ms": result.duration_ms},
+                       "draft": draft.public() if draft is not None else None}
         except Exception as exc:
-            desc = f"(image could not be described: {exc})"
-        session.notes.append(f"Image {path.name}: {desc}")
+            logger.exception("intake failed; falling back to a plain description")
+            try:
+                desc = orch.resources.describe_image(str(path), "Describe this image for a refinery engineer: equipment, tags, readings, warnings. Be literal; do not guess values that are not visible.")
+            except Exception as exc2:
+                desc = f"(image could not be described: {exc2})"
+            session.notes.append(f"Image {path.name}: {desc}")
+            payload = {"status": "described", "kind": "image", "description": desc, "intake_error": str(exc)}
         session.uploaded_documents.append({"document_id": path.name, "name": path.name, "kind": "image", "added": time.time(), "note": note})
         orch.sessions.save(session)
-        return {"status": "described", "kind": "image", "description": desc}
+        return payload
     if suffix != ".pdf":
         return {"status": "unsupported", "detail": f"{suffix} is not supported; upload a PDF or an image"}
     rs = orch.runs.create(session_key, f"[upload] {path.name}")

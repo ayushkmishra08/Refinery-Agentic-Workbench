@@ -21,6 +21,11 @@ from workbench.llm.client import BaseLLM, OllamaClient
 logger = logging.getLogger(__name__)
 
 
+def _is_ollama(llm) -> bool:
+    """True for the real client and for the routing facade over it (never for Null/Fake)."""
+    return isinstance(llm, OllamaClient) or isinstance(getattr(llm, "client", None), OllamaClient)
+
+
 class ResourceManager:
     def __init__(self, llm: BaseLLM, store, idle_unload_seconds: int = 45, keep_warm: bool | None = None) -> None:
         self.llm = llm
@@ -59,7 +64,7 @@ class ResourceManager:
             if self._active > 0:
                 return
         freed: list[str] = []
-        if isinstance(self.llm, OllamaClient) and self.llm_loaded:
+        if _is_ollama(self.llm) and self.llm_loaded:
             self.llm.unload()
             self.llm_loaded = False
             freed.append(f"llm:{self.llm.model}")
@@ -95,14 +100,16 @@ class ResourceManager:
 
     # ------------------------------------------------------------------ vision (load, use, free)
     def describe_image(self, image_path: str, prompt: str, max_tokens: int = 600) -> str:
-        if not isinstance(self.llm, OllamaClient):
+        if not _is_ollama(self.llm):
             raise RuntimeError("vision requires the Ollama client")
-        model = self.llm.vision_model or self.llm.model
+        text_model = getattr(self.llm, "default_model", None) or self.llm.model
         text = self.llm.describe_image(image_path, prompt, max_tokens=max_tokens)
-        if model != self.llm.model:
+        # the model that actually answered (the router may have picked it); free it if it is not the text model
+        used = getattr(self.llm, "last_model", None) or self.llm.vision_model or text_model
+        if used != text_model:
             try:  # free the vision model straight away; the text model comes back on the next call
-                self.llm._client.post("/api/generate", json={"model": model, "keep_alive": 0})
-                self.events.append({"ts": time.time(), "released": [f"vision:{model}"]})
+                self.llm._client.post("/api/generate", json={"model": used, "keep_alive": 0})
+                self.events.append({"ts": time.time(), "released": [f"vision:{used}"]})
             except Exception:
                 pass
         return text

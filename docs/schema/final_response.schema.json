@@ -53,6 +53,35 @@
           "default": "",
           "title": "Backend",
           "type": "string"
+        },
+        "models_used": {
+          "description": "Every model that handled part of this run",
+          "items": {
+            "type": "string"
+          },
+          "title": "Models Used",
+          "type": "array"
+        },
+        "routing": {
+          "description": "Per-call routing decisions, in order",
+          "items": {
+            "$ref": "#/$defs/RoutingRow"
+          },
+          "title": "Routing",
+          "type": "array"
+        },
+        "chained_audit_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Head hash of the session's audit chain after this run was written",
+          "title": "Chained Audit Hash"
         }
       },
       "required": [
@@ -1539,6 +1568,42 @@
       "title": "PlanTask",
       "type": "object"
     },
+    "RoutingRow": {
+      "description": "One model-routing decision made during the run: which model handled which sub-task, and why.",
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "purpose": {
+          "default": "",
+          "title": "Purpose",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "RoutingRow",
+      "type": "object"
+    },
     "SafetyBlock": {
       "properties": {
         "id": {
@@ -1660,6 +1725,144 @@
         "message"
       ],
       "title": "SafetyFlagItem",
+      "type": "object"
+    },
+    "SecurityEnvelope": {
+      "description": "What this answer was built from, who it went to, and what was kept back.\n\nThe same facts the classification footer and the escalation note state in prose, as fields a\nfrontend can render as a banner, a chip and a button. Populated by the orchestrator on every\nresponse while access control is on; a client that ignores it still sees everything in\n``answer_markdown``, which is why the prose is not removed when this is filled in.",
+      "properties": {
+        "access_control": {
+          "default": false,
+          "title": "Access Control",
+          "type": "boolean"
+        },
+        "principal": {
+          "default": "guest",
+          "title": "Principal",
+          "type": "string"
+        },
+        "role": {
+          "default": "guest",
+          "title": "Role",
+          "type": "string"
+        },
+        "authenticated": {
+          "default": false,
+          "title": "Authenticated",
+          "type": "boolean"
+        },
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "source_documents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Documents",
+          "type": "array"
+        },
+        "readable_documents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Readable Documents",
+          "type": "array"
+        },
+        "withheld_documents": {
+          "description": "Documents that bear on the question but sit above this role",
+          "items": {
+            "type": "string"
+          },
+          "title": "Withheld Documents",
+          "type": "array"
+        },
+        "withheld_summary": {
+          "default": "",
+          "title": "Withheld Summary",
+          "type": "string"
+        },
+        "withheld_records": {
+          "default": 0,
+          "title": "Withheld Records",
+          "type": "integer"
+        },
+        "escalation_target": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Escalation Target"
+        },
+        "access_request_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Access Request Id"
+        },
+        "attached_documents": {
+          "description": "Documents uploaded into this conversation. Readable by the person who uploaded them and by nobody else; never part of the knowledge layer.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Attached Documents",
+          "type": "array"
+        },
+        "grant_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Grant Id"
+        },
+        "access_key_error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Why a supplied access key was refused. The run still happens at the caller's own role, but they are told the key did not apply rather than left to read a thin answer and guess why.",
+          "title": "Access Key Error"
+        },
+        "released_records": {
+          "default": 0,
+          "title": "Released Records",
+          "type": "integer"
+        },
+        "release_blocked": {
+          "default": false,
+          "title": "Release Blocked",
+          "type": "boolean"
+        }
+      },
+      "title": "SecurityEnvelope",
       "type": "object"
     },
     "StepItem": {
@@ -1970,6 +2173,7 @@
         "planning",
         "report",
         "cross_document",
+        "inventory",
         "ambiguous"
       ],
       "title": "TaskType",
@@ -2207,6 +2411,9 @@
       },
       "title": "Warnings",
       "type": "array"
+    },
+    "security": {
+      "$ref": "#/$defs/SecurityEnvelope"
     }
   },
   "required": [

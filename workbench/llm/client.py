@@ -190,7 +190,7 @@ class OllamaClient(BaseLLM):
         return data
 
     def structured(self, system: str, user: str, schema: type[T], *, max_tokens: int | None = None,
-                   temperature: float | None = None, purpose: str = "") -> T:
+                   temperature: float | None = None, purpose: str = "", model: str | None = None) -> T:
         if not self.available():
             raise LLMUnavailable("Ollama is not reachable")
         num_predict = max_tokens or self.num_predict_short
@@ -201,7 +201,8 @@ class OllamaClient(BaseLLM):
         for attempt in range(self.max_retries + 1):
             try:
                 data = self._chat(messages, fmt=json_schema, num_predict=num_predict,
-                                  temperature=self.temperature if temperature is None else temperature, purpose=purpose)
+                                  temperature=self.temperature if temperature is None else temperature, purpose=purpose,
+                                  model=model)
                 content = data.get("message", {}).get("content", "")
                 if data.get("done_reason") == "length":
                     logger.warning("llm output truncated at num_predict=%s (%s)", num_predict, purpose)
@@ -222,7 +223,7 @@ class OllamaClient(BaseLLM):
         raise LLMOutputError(f"structured call failed ({purpose}): {last_error}")
 
     def complete(self, system: str, user: str, *, max_tokens: int | None = None,
-                 temperature: float | None = None, purpose: str = "") -> str:
+                 temperature: float | None = None, purpose: str = "", model: str | None = None) -> str:
         if not self.available():
             raise LLMUnavailable("Ollama is not reachable")
         num_predict = max_tokens or self.num_predict_long
@@ -230,18 +231,19 @@ class OllamaClient(BaseLLM):
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         try:
             data = self._chat(messages, fmt=None, num_predict=num_predict,
-                              temperature=self.temperature if temperature is None else temperature, purpose=purpose)
+                              temperature=self.temperature if temperature is None else temperature, purpose=purpose,
+                              model=model)
         except httpx.HTTPError as exc:
             self.stats.failures += 1
             self._avail_cache = (0.0, False)
             raise LLMOutputError(f"completion failed ({purpose}): {exc}") from exc
         return data.get("message", {}).get("content", "").strip()
 
-    def describe_image(self, image_path: str, prompt: str, *, max_tokens: int = 600) -> str:
+    def describe_image(self, image_path: str, prompt: str, *, max_tokens: int = 600, model: str | None = None) -> str:
         import base64
         from pathlib import Path
 
-        model = self.vision_model or self.model
+        model = model or self.vision_model or self.model
         if not self.available():
             raise LLMUnavailable("Ollama is not reachable")
         b64 = base64.b64encode(Path(image_path).read_bytes()).decode("ascii")
@@ -249,12 +251,16 @@ class OllamaClient(BaseLLM):
         data = self._chat(messages, fmt=None, num_predict=max_tokens, temperature=0.1, model=model, purpose="vision")
         return data.get("message", {}).get("content", "").strip()
 
-    def unload(self) -> None:
+    def unload(self, model: str | None = None) -> None:
         """Ask Ollama to free the model immediately (useful before the knowledge layer runs)."""
         try:
-            self._client.post("/api/generate", json={"model": self.model, "keep_alive": 0})
+            self._client.post("/api/generate", json={"model": model or self.model, "keep_alive": 0})
         except Exception:
             pass
+
+    def installed_models(self) -> list[str]:
+        self.available()
+        return list(self._models_cache)
 
 
 def build_llm(cfg) -> BaseLLM:
@@ -276,4 +282,17 @@ def build_llm(cfg) -> BaseLLM:
     if not client.has_model(cfg.llm.model):
         logger.warning("Model %s not pulled; run `ollama pull %s`. Running in LLM-free mode.", cfg.llm.model, cfg.llm.model)
         return NullLLM()
+    if getattr(cfg, "models", None) is not None and cfg.models.routing_enabled:
+        try:
+            from workbench.models.registry import load_registry
+            from workbench.models.router import ModelRouter
+            from workbench.models.routed import RoutedLLM
+
+            registry = load_registry(cfg.models.local_registry)
+            router = ModelRouter(registry, installed=client.installed_models(), vram_mb=cfg.models.vram_mb,
+                                 default_model=cfg.llm.model, vision_default=cfg.llm.vision_model,
+                                 log_path=cfg.models.routing_log, swap_margin=cfg.models.swap_margin)
+            return RoutedLLM(client, router, budget=cfg.models.budget)
+        except Exception as exc:
+            logger.warning("model routing disabled (%s); using %s for everything", exc, cfg.llm.model)
     return client

@@ -9,14 +9,19 @@ Every event carries the principal, their role, the outcome, and enough identifie
 thread: a request id, a grant id, the documents involved. Nothing it writes is itself sensitive —
 record ids are opaque and no document text is ever logged — so the log can be read by a reviewer
 who is not cleared for the material the events concern.
+
+The file is **hash-chained** (``workbench.sovereignty.hashchain``): every line carries the hash
+of the line before it, so an entry that is edited, dropped or reordered after the fact is
+detectable by ``verify()`` — the tamper-evidence a ledger gives, without a ledger.
 """
 from __future__ import annotations
 
-import json
 import logging
 import time
 from pathlib import Path
 from typing import Any
+
+from workbench.sovereignty.hashchain import ChainVerification, HashChainedLog
 
 logger = logging.getLogger(__name__)
 
@@ -39,28 +44,34 @@ EVENTS = {
     "grant_revoked": "a grant was revoked before it was spent",
     "release_blocked": "a finished answer failed the release check and was withheld",
     "classification_changed": "a document's tag was reassigned",
+    "conversation_viewed": "a supervisor read a lower rank's conversation",
+    "key_rotated": "a role's wrapping key was rotated; old sessions can no longer unwrap",
+    "branch_sealed": "a knowledge branch was envelope-encrypted into the vault",
+    "branch_opened": "a session unwrapped a branch's content key",
+    "sandbox_run": "code ran in the sandbox",
+    "draft_signed_off": "a reviewer signed off a draft after resolving every flag",
+    "signoff_blocked": "a sign-off was refused because flags were still open",
+    "model_package_verified": "a signed model package passed checksum and signature checks",
+    "model_package_rejected": "a model package failed verification and was not loaded",
+    "egress_blocked": "an outbound connection to a non-local address was refused in-process",
 }
 
 
 class SecurityAudit:
-    """Append-only JSONL under ``data/workbench/security/security.jsonl``."""
+    """Append-only, hash-chained JSONL under ``data/workbench/security/security.jsonl``."""
 
     def __init__(self, security_dir: Path) -> None:
         self.dir = Path(security_dir)
         self.dir.mkdir(parents=True, exist_ok=True)
         self.path = self.dir / "security.jsonl"
+        self.chain = HashChainedLog(self.path, name="security")
 
     def write(self, event: str, *, principal: str = "guest", role: str = "guest", outcome: str = "",
               **fields: Any) -> dict:
-        record = {"ts": time.time(), "iso": time.strftime("%Y-%m-%dT%H:%M:%S"), "event": event,
+        record = {"iso": time.strftime("%Y-%m-%dT%H:%M:%S"), "event": event,
                   "principal": principal, "role": role, "outcome": outcome, **fields}
         try:
-            with self.path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
-            try:
-                self.path.chmod(0o600)
-            except OSError:
-                pass
+            record = self.chain.append(record)
         except Exception as exc:                    # logging must never break a request
             logger.warning("security audit write failed: %s", exc)
         if event in ("access_denied", "key_rejected", "release_blocked", "lockout", "login_failed"):
@@ -68,22 +79,16 @@ class SecurityAudit:
         return record
 
     def read(self, *, event: str | None = None, principal: str | None = None, limit: int = 200) -> list[dict]:
-        if not self.path.exists():
-            return []
-        rows = []
-        for line in self.path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if event and row.get("event") != event:
-                continue
-            if principal and row.get("principal") != principal:
-                continue
-            rows.append(row)
+        rows = self.chain.read()
+        if event:
+            rows = [r for r in rows if r.get("event") == event]
+        if principal:
+            rows = [r for r in rows if r.get("principal") == principal]
         return rows[-limit:]
+
+    def verify(self) -> ChainVerification:
+        """Walk the whole chain and say whether any past entry was altered."""
+        return self.chain.verify()
 
     def counts(self) -> dict[str, int]:
         out: dict[str, int] = {}

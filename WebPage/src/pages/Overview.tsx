@@ -9,7 +9,7 @@
  * Nothing about the host machine is shown — no GPU, no memory, no disk. This describes the
  * corpus, the queue and the answering configuration, which is what an engineer can act on.
  */
-import { FileText, Inbox, KeyRound, Layers, MessageSquare, ShieldCheck } from "lucide-react";
+import { ClipboardCheck, FileText, Inbox, KeyRound, Layers, MessageSquare, Radar, ShieldCheck, Wrench } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
@@ -142,6 +142,25 @@ export default function Overview() {
         </div>
       </div>
 
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Link to="/sovereignty" className="group">
+          <Stat label="Air gap" value={health.airgap_enforced ? "enforced" : "off"} tone={health.airgap_enforced ? "primary" : "warning"}
+                hint={health.network_monitor ? `${health.workbench_external_connections ?? 0} external connection${health.workbench_external_connections === 1 ? "" : "s"} by the workbench` : "monitor not running"} />
+        </Link>
+        <Link to="/models" className="group">
+          <Stat label="Model routing" value={health.routing ? "on" : "off"} hint={health.resident_model ? `resident: ${health.resident_model}` : `default: ${health.llm}`} />
+        </Link>
+        <Link to="/vault" className="group">
+          <Stat label="Vault" value={health.vault ? "on" : "sealed only"} hint={health.vault ? "branches decrypt per session" : "plaintext cache in use"} />
+        </Link>
+        <Link to="/tools" className="group">
+          <Stat label="Sandbox" value={health.sandbox ? "ready" : "off"} hint="no network, bounded, ephemeral" />
+        </Link>
+        <Link to="/tools" className="group">
+          <Stat label="Local tools" value={health.tools ?? 0} hint="files, code, spreadsheets, search, OCR…" />
+        </Link>
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <QuickLink to="/chat" icon={<MessageSquare className="size-4" />} title="Ask a question"
                    body="Values, procedures, troubleshooting, limits, safety — answered from the documents you may read." />
@@ -149,7 +168,14 @@ export default function Overview() {
                    body="What is loaded, how each is classified, and which role opens it." />
         <QuickLink to="/knowledge" icon={<Layers className="size-4" />} title="Knowledge layer"
                    body="What the workbench extracted: equipment, values, relationships, procedures." />
+        <QuickLink to="/tools" icon={<Wrench className="size-4" />} title="Tools & sandbox"
+                   body="Run named local tools, an agent loop over them, or code in a network-less sandbox." />
+        <QuickLink to="/review" icon={<ClipboardCheck className="size-4" />} title="Review"
+                   body="Word, Excel and PowerPoint drafts with provenance per figure, pending human sign-off." />
+        <QuickLink to="/sovereignty" icon={<Radar className="size-4" />} title="Sovereignty"
+                   body="Live network monitor, egress guard and tamper-evident audit chains." />
       </div>
+
     </div>
   );
 }

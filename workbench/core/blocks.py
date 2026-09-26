@@ -228,12 +228,23 @@ class AuditPhase(BaseModel):
     note: str | None = None
 
 
+class RoutingRow(BaseModel):
+    """One model-routing decision made during the run: which model handled which sub-task, and why."""
+    kind: str
+    purpose: str = ""
+    model: str | None = None
+    reason: str = ""
+
+
 class AuditBlock(_Block):
     type: Literal["audit"] = "audit"
     audit_id: str
     phases: list[AuditPhase]
     llm_calls: int = 0
     backend: str = ""
+    models_used: list[str] = Field(default_factory=list, description="Every model that handled part of this run")
+    routing: list[RoutingRow] = Field(default_factory=list, description="Per-call routing decisions, in order")
+    chained_audit_hash: str | None = Field(default=None, description="Head hash of the session's audit chain after this run was written")
 
 
 Block = Annotated[

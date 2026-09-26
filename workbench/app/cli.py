@@ -550,8 +550,25 @@ def cmd_users(args) -> None:
 def cmd_serve(args) -> None:
     import uvicorn
 
-    os.environ.setdefault("RWB_WARM_START", "1")
-    uvicorn.run("workbench.app.api:app", host=args.host, port=args.port, reload=False, log_level="info")
+    kwargs: dict = {}
+    if args.tls or args.mtls:
+        from workbench.config import load_config
+        from workbench.security.tls import describe, ensure_certificates, uvicorn_ssl_kwargs
+        from workbench.app import api as api_module
+
+        material = ensure_certificates(Path(load_config().vault.tls_dir), hostnames=("localhost", "127.0.0.1", args.host))
+        kwargs.update(uvicorn_ssl_kwargs(material, mtls=args.mtls))
+        api_module.TLS_ACTIVE = True
+        api_module.MTLS_ACTIVE = bool(args.mtls)
+        d = describe(material)
+        print(f"TLS on: server cert {d.get('server_fingerprint', '')[:24]}...  CA {material.ca_cert}")
+        if args.mtls:
+            print(f"mutual TLS: clients must present a certificate signed by the local CA (client bundle {material.client_bundle})")
+        scheme = "https"
+    else:
+        scheme = "http"
+    print(f"serving on {scheme}://{args.host}:{args.port}  (docs at {scheme}://{args.host}:{args.port}/docs)")
+    uvicorn.run("workbench.app.api:app", host=args.host, port=args.port, log_level="info", **kwargs)
 
 
 def cmd_bench(args) -> None:
@@ -671,12 +688,15 @@ def main() -> None:
     sl.add_argument("--event", default=None); sl.add_argument("--principal", default=None)
     sl.add_argument("--limit", type=int, default=50); sl.add_argument("--json", action="store_true")
     sl.set_defaults(fn=cmd_security_log)
-    s = sub.add_parser("serve"); s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port", type=int, default=8000); s.set_defaults(fn=cmd_serve)
+    s = sub.add_parser("serve"); s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port", type=int, default=8000); s.add_argument("--tls", action="store_true", help="serve over local TLS with a self-signed CA under data/workbench/security/tls"); s.add_argument("--mtls", action="store_true", help="TLS plus a required client certificate (mutual TLS)"); s.set_defaults(fn=cmd_serve)
     b = sub.add_parser("bench"); b.add_argument("--category", nargs="*"); b.add_argument("--limit", type=int); b.add_argument("--llm", action="store_true"); b.set_defaults(fn=cmd_bench)
     sc = sub.add_parser("schema"); sc.add_argument("--out", default="docs/schema"); sc.set_defaults(fn=cmd_schema)
     tr = sub.add_parser("trace", help="list or replay saved thinking traces"); tr.add_argument("--limit", type=int, default=10); tr.add_argument("--show", action="store_true", help="print the newest trace in full"); tr.set_defaults(fn=cmd_trace)
     sub.add_parser("agents").set_defaults(fn=cmd_agents)
     sub.add_parser("status").set_defaults(fn=cmd_status)
+    from workbench.app.cli_ext import register as _register_ext
+
+    _register_ext(sub, list(EFFORT_LEVELS))
     args = p.parse_args()
     _setup_logging(args.verbose)
     _quiet_model_loaders()

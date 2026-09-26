@@ -283,6 +283,70 @@ class SecuritySettings(BaseModel):
     )
 
 
+class ModelRoutingSettings(BaseModel):
+    """Multi-model backend: capability-profile routing over every installed open-weight model.
+
+    Models declare what they are good at in ``workbench/models/registry.yaml`` (or the local
+    override file); the router picks the best installed one per call from the call's purpose.
+    ``RWB_ROUTING=off`` pins everything to the profile's text model, as before.
+    """
+    routing_enabled: bool = True
+    local_registry: Path = PROJECT_ROOT / "data" / "workbench" / "models" / "registry.local.yaml"
+    routing_log: Path = PROJECT_ROOT / "data" / "workbench" / "routing" / "routing.jsonl"
+    vram_mb: int = 0                                  # filled from the detected profile
+    budget: str = Field(default="normal", description="normal | fast: fast penalises models that spill off the GPU or think at length")
+    swap_margin: float = Field(default=0.08, description="A better model must beat the resident one by this much before a model swap is worth it")
+
+
+class SovereigntySettings(BaseModel):
+    """Air-gap enforcement and proof.
+
+    ``airgap_enforced`` installs an in-process egress guard (sockets to non-local addresses are
+    refused and logged) and sets the offline flags for the model libraries; the network monitor
+    records every connection the host makes to a hash-chained log for the whole session.
+    ``RWB_AIRGAP=off`` disables the guard (never the monitor).
+    """
+    airgap_enforced: bool = True
+    monitor_enabled: bool = True
+    monitor_interval_seconds: float = 2.0
+    monitor_scope: str = Field(default="host", description="host | process: what the connection log watches")
+    allowed_hosts: list[str] = Field(default_factory=lambda: ["127.0.0.1", "::1", "localhost"])
+    sovereignty_dir: Path = PROJECT_ROOT / "data" / "workbench" / "sovereignty"
+
+
+class SandboxSettings(BaseModel):
+    """Bounds for code run by the ``run_python`` tool."""
+    enabled: bool = True
+    backend: str = Field(default="auto", description="auto | subprocess | docker")
+    timeout_seconds: int = 20
+    memory_mb: int = 512
+    cpu_seconds: int = 20
+    max_disk_write_mb: int = 20
+    root_dir: Path = PROJECT_ROOT / "data" / "workbench" / "sandbox"
+    workspace_dir: Path = PROJECT_ROOT / "data" / "workbench" / "workspace"
+
+
+class VaultSettings(BaseModel):
+    """Envelope encryption of the knowledge branches at rest (``workbench vault seal``)."""
+    enabled: bool = Field(default=False, description="Load the branch indexes from the sealed vault instead of the plaintext cache")
+    vault_dir: Path = PROJECT_ROOT / "data" / "workbench" / "vault"
+    tls_dir: Path = PROJECT_ROOT / "data" / "workbench" / "security" / "tls"
+
+
+class ReviewSettings(BaseModel):
+    """Human sign-off over generated deliverables."""
+    drafts_dir: Path = PROJECT_ROOT / "data" / "workbench" / "drafts"
+    deliverables_dir: Path = PROJECT_ROOT / "data" / "workbench" / "deliverables"
+    ocr_confidence_threshold: float = Field(
+        default=0.6,
+        description="Recognised text below this confidence is flagged for a human rather than used as fact. "
+                    "It is a policy dial, not a constant: 0.6 suits ordinary prose, while a plant reading "
+                    "pressures or tag numbers off a scan sets it far higher (0.95-0.99) so that anything "
+                    "short of certain reaches a reviewer. RWB_OCR_THRESHOLD overrides it.",
+    )
+    flag_llm_derived: bool = True
+
+
 class PresentationSettings(BaseModel):
     """How the released answer is shaped.
 
@@ -311,6 +375,11 @@ class WorkbenchConfig(BaseModel):
     governance: GovernanceSettings = Field(default_factory=GovernanceSettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     presentation: PresentationSettings = Field(default_factory=PresentationSettings)
+    models: ModelRoutingSettings = Field(default_factory=ModelRoutingSettings)
+    sovereignty: SovereigntySettings = Field(default_factory=SovereigntySettings)
+    sandbox: SandboxSettings = Field(default_factory=SandboxSettings)
+    vault: VaultSettings = Field(default_factory=VaultSettings)
+    review: ReviewSettings = Field(default_factory=ReviewSettings)
     effort: EffortSettings = Field(default_factory=select_effort)
     knowledge_backend: str = Field(default="auto", description="auto | files | mock | neo4j")
     document_ids: list[str] = Field(default_factory=list, description="Knowledge-layer documents to load; empty = all found")
@@ -332,6 +401,8 @@ class WorkbenchConfig(BaseModel):
         if p.reranker_model is None:
             self.retrieval.use_reranker = False
         self.llm.use_llm_for_extraction = p.llm_extraction
+        self.models.vram_mb = self.models.vram_mb or (detect_vram_mb() if not os.getenv("RWB_PROFILE") else p.min_vram_mb)
+        self.models.budget = "fast" if p.name in ("cpu", "gpu_4gb") else "normal"
 
     def apply_effort(self, name: str | None = None) -> None:
         """Re-point the retrieval, governance and LLM switches at one effort level.
@@ -412,5 +483,23 @@ def load_config(effort: str | None = None) -> WorkbenchConfig:
         cfg.presentation.style = v.lower()
     if (v := env("RWB_LLM_ANSWER")) is not None and v.lower() in ("0", "off", "false", "no"):
         cfg.llm.use_llm_for_answer = False
+    if (v := env("RWB_ROUTING")) and v.lower() in ("0", "off", "false", "no"):
+        cfg.models.routing_enabled = False
+    if (v := env("RWB_AIRGAP")) and v.lower() in ("0", "off", "false", "no"):
+        cfg.sovereignty.airgap_enforced = False
+    if (v := env("RWB_NETMON")) and v.lower() in ("0", "off", "false", "no"):
+        cfg.sovereignty.monitor_enabled = False
+    if (v := env("RWB_VAULT")) and v.lower() in ("1", "on", "true", "yes"):
+        cfg.vault.enabled = True
+    if v := env("RWB_SANDBOX_BACKEND"):
+        cfg.sandbox.backend = v
+    if v := env("RWB_OCR_THRESHOLD"):
+        try:
+            cfg.review.ocr_confidence_threshold = min(1.0, max(0.0, float(v)))
+        except ValueError:
+            pass
     cfg.paths.ensure_dirs()
+    for d in (cfg.models.routing_log.parent, cfg.sovereignty.sovereignty_dir, cfg.sandbox.root_dir,
+              cfg.sandbox.workspace_dir, cfg.review.drafts_dir, cfg.review.deliverables_dir):
+        d.mkdir(parents=True, exist_ok=True)
     return cfg

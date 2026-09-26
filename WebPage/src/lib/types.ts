@@ -7,6 +7,8 @@
  * authoritative JSON Schema if they ever need checking against it.
  */
 
+export * from "@/lib/types_ext";
+
 export type Role = "guest" | "user" | "manager" | "admin";
 export type Tag = "INTERNAL" | "CONFIDENTIAL" | "SECRET";
 export type Effort = "low" | "medium" | "high" | "ultra";
@@ -352,6 +354,10 @@ export interface Health {
   status: string; backend: string; llm: string; llm_available: boolean;
   profile: string; effort: Effort; documents: string[];
   active_runs: number; access_control: boolean; answer_style: string;
+  compose_answers?: boolean;
+  routing?: boolean; resident_model?: string | null;
+  airgap_enforced?: boolean; network_monitor?: boolean; workbench_external_connections?: number | null;
+  vault?: boolean; sandbox?: boolean; tools?: number; tls?: boolean; mtls?: boolean;
 }
 
 export interface AgentDescription { key: string; class: string; phase: string; description: string }
@@ -372,6 +378,12 @@ export interface ConversationSummary {
   updated: number | null;
   attachments: string[];
   last_status: string;
+}
+
+/** A conversation of someone ranked below the reader, as listed on the Logs page. */
+export interface SupervisedConversation extends ConversationSummary {
+  owner: string;
+  owner_role: Role | string;
 }
 
 /** One exchange as the server remembers it — what is needed to redraw it, no more. */
@@ -405,6 +417,10 @@ export interface UploadResult {
   kind?: "pdf" | "image";
   run_id?: string;
   description?: string;
+  /** For an image: OCR + vision summary and the review draft created for its flagged lines. */
+  intake?: import("@/lib/types_ext").UploadIntakeSummary | null;
+  draft?: import("@/lib/types_ext").Draft | null;
+  intake_error?: string;
 }
 
 /** Just enough of a run to follow an ingest to its end. */

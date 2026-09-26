@@ -39,6 +39,38 @@
       "title": "User Role",
       "type": "string"
     },
+    "auth_token": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Bearer token from POST /auth/login; the role it names is what the access policy uses, not user_role",
+      "title": "Auth Token"
+    },
+    "access_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "An approved one-time key (RGK.\u2026) opening the named records of one approved request, for this question only",
+      "title": "Access Key"
+    },
+    "asked_text": {
+      "default": "",
+      "description": "What the engineer actually typed, when ``text`` is a follow-up the resolver rewrote to stand alone",
+      "title": "Asked Text",
+      "type": "string"
+    },
     "attachments": {
       "items": {
         "$ref": "#/$defs/Attachment"

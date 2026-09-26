@@ -41,6 +41,7 @@ from workbench.orchestration.hitl import HITLRegistry
 from workbench.orchestration.runs import RunRegistry, RunState
 from workbench.orchestration.status_agent import status_reply
 from workbench.services.audit_store import AuditStore
+from workbench.services.response_store import ResponseStore
 from workbench.services.context_builder import ContextBuilder
 from workbench.services.knowledge import build_knowledge_service
 from workbench.services.resources import ResourceManager
@@ -57,6 +58,10 @@ from workbench.security.roles import ROLE_LEVEL, TAG_LEVEL, Role, Tag, schema as
 def _a(word: str) -> str:
     """"an Administrator", "a Manager" — it appears in every refusal, so it should read right."""
     return ("an " if word[:1].upper() in "AEIOU" else "a ") + word
+
+
+def _safe_name(name: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in name)[:80] or "default"
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +107,110 @@ class Orchestrator:
         self.session_uploads: dict[str, object] = {}
         self._threads: dict[str, threading.Thread] = {}
         self._warm_level = warm_start
+        # Released answers kept whole, so a turn can later become a Word / Excel / PowerPoint file.
+        self.responses = ResponseStore(self.cfg.paths.root / "responses")
+        # Sovereignty: the in-process egress guard and the network monitor run for the life of the
+        # process; every chained log is verified from here. The monitor thread is started lazily by
+        # the API/CLI (``start_sovereignty``) so short-lived test orchestrators do not spawn it.
+        self.sovereignty = None
+        self.router = getattr(self.llm, "router", None)
+        # Local tools, sandbox, deliverables, drafts, vault: attached by ``attach_services`` once
+        # their packages are imported, so the core question path has no hard dependency on them.
+        self.tools = None
+        self.sandbox = None
+        self.drafts = None
+        self.kms = None
+        self.vault_store = None
+        self.keyrings = None
+        self.vault = None
+        self.attach_services()
         if warm_start:
             threading.Thread(target=self._warm, daemon=True).start()
+
+    # ------------------------------------------------------------------ optional services
+    def attach_services(self) -> None:
+        """Wire the tool registry, the sandbox, the draft registry and the vault when available."""
+        try:
+            from workbench.sovereignty.service import SovereigntyService
+
+            self.sovereignty = SovereigntyService(self.cfg, start_monitor=False)
+        except Exception as exc:
+            logger.warning("sovereignty service unavailable: %s", exc)
+        try:
+            from workbench.sandbox.runner import SandboxLimits, SandboxRunner
+            from workbench.sandbox.runlog import SandboxRunLog
+
+            sb = self.cfg.sandbox
+            if sb.enabled:
+                self.sandbox = SandboxRunner(
+                    Path(sb.root_dir),
+                    SandboxLimits(timeout_seconds=sb.timeout_seconds, memory_mb=sb.memory_mb, cpu_seconds=sb.cpu_seconds,
+                                  max_disk_write_mb=sb.max_disk_write_mb),
+                    backend=sb.backend, log=SandboxRunLog(Path(sb.root_dir) / "runs.jsonl"))
+        except Exception as exc:
+            logger.warning("sandbox unavailable: %s", exc)
+        try:
+            from workbench.tools.registry import default_registry
+
+            self.tools = default_registry()
+            self._register_extra_tools()
+        except Exception as exc:
+            logger.warning("tool registry unavailable: %s", exc)
+        try:
+            from workbench.review.drafts import DraftRegistry
+
+            self.drafts = DraftRegistry(Path(self.cfg.review.drafts_dir))
+        except Exception as exc:
+            logger.warning("draft registry unavailable: %s", exc)
+        try:
+            from workbench.security.vault import EncryptedBranchStore, LocalKMS, SessionKeyringRegistry, vault_dir_for
+
+            self.kms = LocalKMS(self.cfg.paths.security_dir)
+            self.vault_store = EncryptedBranchStore(vault_dir_for(self.cfg), self.kms)
+            self.keyrings = SessionKeyringRegistry(self.kms, self.vault_store)
+            if self.cfg.vault.enabled:
+                from workbench.security.vault_backend import VaultedBranches
+
+                self.vault = VaultedBranches(self.cfg, self.knowledge, self.kms, self.vault_store, self.keyrings, self.classifications)
+        except Exception as exc:
+            logger.warning("vault unavailable: %s", exc)
+
+    def _register_extra_tools(self) -> None:
+        """Tools that live outside workbench/tools: intake (OCR / vision) and the deliverable builders."""
+        try:
+            from workbench.tools.extra import extra_tools
+
+            for tool in extra_tools():
+                self.tools.register(tool)
+        except Exception as exc:
+            logger.debug("extra tools not registered: %s", exc)
+
+    def start_sovereignty(self) -> None:
+        """Start the network monitor (server and long-lived CLI sessions)."""
+        if self.sovereignty is not None and self.sovereignty.monitor is not None and not self.sovereignty.monitor.running:
+            self.sovereignty.monitor.start()
+
+    def tool_context(self, session_key: str, principal: Principal, knowledge=None):
+        """A ToolContext for one session: its own workspace, the guarded knowledge, the sandbox, the chained tool log."""
+        from workbench.sovereignty.hashchain import HashChainedLog
+        from workbench.tools.base import ToolContext
+
+        ws = Path(self.cfg.sandbox.workspace_dir) / _safe_name(session_key)
+        ws.mkdir(parents=True, exist_ok=True)
+        owner, _, sid = session_key.partition("__")
+        uploads = self.cfg.paths.uploads_dir / owner / (sid or session_key)
+        return ToolContext(session_key=session_key, workspace=ws, knowledge=knowledge, principal=principal,
+                           sandbox=self.sandbox, llm=self.llm, resources=self.resources,
+                           log=HashChainedLog(Path(self.cfg.sandbox.workspace_dir) / "tool_calls.jsonl", name="tool_calls"),
+                           extras={"responses": self.responses, "uploads_dir": str(uploads), "drafts": self.drafts})
+
+    def guarded_knowledge_for(self, token: str | None, session_id: str | None = None):
+        """The knowledge service exactly as a question from this caller would see it."""
+        principal, access = self.access_for(token)
+        session_key = self.sessions.key_for(principal.username, session_id or "tools")
+        uploaded = self.upload_document_ids(session_key)
+        return principal, session_key, GuardedKnowledgeService(self._knowledge_for(session_key), list(access.allowed) + uploaded,
+                                                               enabled=self.cfg.security.enabled)
 
     # ------------------------------------------------------------------ warm-up (server mode)
     def _warm(self) -> None:
@@ -143,6 +250,16 @@ class Orchestrator:
 
     def shutdown(self) -> None:
         self.resources.release_all()
+        if self.sovereignty is not None:
+            try:
+                self.sovereignty.shutdown()
+            except Exception:
+                pass
+        if self.keyrings is not None:
+            try:
+                self.keyrings.wipe_all()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------ access control
     def login(self, username: str, password: str, *, label: str = "", code: str | None = None) -> Principal:
@@ -172,7 +289,22 @@ class Orchestrator:
         self.security_audit.write("login", principal=principal.username, role=principal.role.value,
                                   outcome="signed in", label=label, must_change=principal.must_change_password,
                                   second_factor=principal.mfa_satisfied)
+        self._open_vault_branches(principal.token, principal)
         return principal
+
+    def _open_vault_branches(self, token: str | None, principal: Principal) -> list[str]:
+        """Decrypt into memory the sealed branches this session's role holds a key for."""
+        if self.vault is None:
+            return []
+        try:
+            opened = self.vault.open_for(token, principal)
+        except Exception as exc:
+            logger.warning("vault open failed for %s: %s", principal.username, exc)
+            return []
+        for branch in opened:
+            self.security_audit.write("branch_opened", principal=principal.username, role=principal.role.value,
+                                      outcome="decrypted into process memory", branch=branch)
+        return opened
 
     # ------------------------------------------------------------------ second factor
     def mfa_status(self, token: str | None) -> dict:
@@ -223,6 +355,12 @@ class Orchestrator:
         if revoked:
             self.security_audit.write("logout", principal=principal.username, role=principal.role.value,
                                       outcome="token revoked")
+            if self.keyrings is not None and token:
+                self.keyrings.wipe(token)        # the session's unwrapped branch keys go with the session
+            if self.vault is not None:
+                for branch in self.vault.close_orphans(self.auth.active_roles()):
+                    self.security_audit.write("branch_closed", principal=principal.username, role=principal.role.value,
+                                              outcome="dropped from process memory: no session with a key remains", branch=branch)
         return revoked
 
     def principal(self, token: str | None) -> Principal:
@@ -427,11 +565,31 @@ class Orchestrator:
             else:
                 branch["ask"] = self._lowest_reader(dc, principal)
             branches.append(branch)
+        if self.vault is not None:
+            listed = {b["document_id"] for b in branches}
+            for branch in self.vault.sealed():
+                if branch in listed:
+                    continue
+                manifest = self.vault.store.manifest(branch) if hasattr(self.vault.store, "manifest") else {}
+                dc = self.classifications.entry(branch)
+                branches.append({
+                    "document_id": branch, "title": (dc.title if dc and dc.title else branch),
+                    "tag": dc.tag.value if dc else "SECRET", "reason": (dc.reason if dc else "sealed in the vault"),
+                    "roles": self.vault.readers_of(branch), "compartmented": bool(dc and dc.compartmented),
+                    "readable": False, "assigned_by": dc.assigned_by if dc else "vault",
+                    "sealed": True, "in_memory": False,
+                    "ask": next((r for r in self.vault.readers_of(branch) if r != principal.role.value), None),
+                    "sealed_bytes": manifest.get("bytes_cipher"),
+                })
+            for b in branches:
+                b.setdefault("sealed", self.vault.store.is_sealed(b["document_id"]))
+                b.setdefault("in_memory", b["document_id"] in self.vault.loaded)
         branches.sort(key=lambda b: (not b["readable"], b["document_id"]))
         return {
             "role": principal.role.value,
             "principal": principal.username,
             "access_control": self.cfg.security.enabled,
+            "vault": self.vault is not None,
             "readable": sum(1 for b in branches if b["readable"]),
             "locked": sum(1 for b in branches if not b["readable"]),
             "branches": branches,
@@ -679,6 +837,46 @@ class Orchestrator:
             return []
         return self.sessions.list_sessions(owner=principal.username)
 
+    # ------------------------------------------------------------------ supervision
+    def _supervisable(self, principal: Principal, owner_role: str) -> bool:
+        """A supervisor reads the conversations of ranks strictly below their own — never peers.
+
+        Strictly below is what makes this safe without a second filter: everything released to a
+        lower rank was drawn from documents that rank may read, and the supervisor's own clearance
+        is a superset of it. Nothing in these logs can sit above the reader's line.
+        """
+        if principal.role not in (Role.MANAGER, Role.ADMIN):
+            return False
+        try:
+            return ROLE_LEVEL[Role(owner_role)] < ROLE_LEVEL[principal.role]
+        except (ValueError, KeyError):
+            return False                      # an unknown role is not a lower one
+
+    def supervised_sessions(self, token: str | None) -> list[dict]:
+        """Every conversation held by someone ranked below the caller, newest first."""
+        principal = self.require_principal(token)
+        if principal.role not in (Role.MANAGER, Role.ADMIN):
+            raise PermissionError("Only a Manager or an Administrator can read other people's conversations.")
+        rows = [r for r in self.sessions.list_sessions()
+                if r.get("owner") and r["owner"] != principal.username and self._supervisable(principal, r.get("owner_role", ""))]
+        return rows
+
+    def supervised_session(self, token: str | None, owner: str, session_id: str) -> dict:
+        """One conversation of someone ranked below the caller; every read is logged."""
+        principal = self.require_principal(token)
+        key = self.sessions.key_for(owner, session_id)
+        state = self.sessions.load(key, owner=owner)
+        if not state.turns and not state.uploaded_documents:
+            raise KeyError(f"No conversation {session_id!r} for {owner!r}.")
+        if not self._supervisable(principal, state.owner_role):
+            raise PermissionError("That conversation belongs to someone you do not supervise.")
+        self.security_audit.write("conversation_viewed", principal=principal.username, role=principal.role.value,
+                                  outcome=f"read {len(state.turns)} turn(s) of {owner} ({state.owner_role})",
+                                  session=session_id, owner=owner)
+        out = state.model_dump(mode="json")
+        out["session_id"] = session_id
+        return out
+
     def delete_session(self, token: str | None, session_id: str) -> bool:
         """Forget one of the caller's conversations — its turns, and any attachments it held."""
         principal = self.require_principal(token)
@@ -743,6 +941,9 @@ class Orchestrator:
         # and before the question is even classified. Nothing downstream can widen it.
         principal = self.principal(request.auth_token)
         rs.principal = principal.describe()
+        self._open_vault_branches(request.auth_token, principal)
+        if hasattr(self.llm, "set_context"):
+            self.llm.set_context(session=request.session_id, run_id=rs.run_id)
         grant, key_error = self._redeem_key(request, principal, events)
         principal, access = self.access_for(request.auth_token, grant=grant)
         session_key = self.sessions.key_for(principal.username, request.session_id)
@@ -840,6 +1041,7 @@ class Orchestrator:
 
             services.prior_results["classify"] = clf_res
             services.prior_results["resolve"] = res_res
+            routing_plan = self._route_models(request, req, rs, events)
             phases.append(AuditPhase(name="understanding", agent="task_classifier+context_resolver", status="done", duration_ms=int((time.time() - t0) * 1000), note=f"{classification.task_type.value} ({classification.method}); {res_res.summary}"))
             events.emit("phase_finished", phase="0/1 Understanding", message=f"{req.task_type.value}: {res_res.summary}", data={"task_type": req.task_type.value, "entities": rs.entities, "safety": req.safety_status.value})
             self.audit.write(request.session_id, audit_id, "structured_request", {"request": req.model_dump(mode="json", exclude={"original"})})
@@ -968,6 +1170,7 @@ class Orchestrator:
                         data={"ok": True, "duration_ms": gov_ms, "llm_calls": resp.llm_calls, "blocks": len(resp.blocks), "evidence": len(resp.evidence), "missing": []})
             phases.append(AuditPhase(name="governance", agent="governance", status="done", duration_ms=gov_ms, note=f"status={resp.status}; confidence={resp.confidence.score}; review={resp.requires_human_review}"))
             resp.blocks[-1].phases = phases   # the audit block is last
+            self._stamp_routing(resp, started, routing_plan)
             # ---- security: record the access decision, offer the escalation route, stamp the
             #      classification, then the release gate
             self._fill_security_envelope(resp, principal, access, key_error, uploaded)
@@ -992,8 +1195,15 @@ class Orchestrator:
             else:
                 session.pending_clarification = None
             self.sessions.save(session)
+            self.responses.save(resp, owner=principal.username, role=principal.role.value, question=request.spoken_text)
             self.audit.write(request.session_id, audit_id, "final", {"response_id": resp.response_id, "status": resp.status, "confidence": resp.confidence.score, "review": resp.requires_human_review,
-                                                                      "llm_calls": resp.llm_calls, "timing_ms": resp.timing_ms, "evidence": len(resp.evidence), "resources": self.resources.status()})
+                                                                      "llm_calls": resp.llm_calls, "timing_ms": resp.timing_ms, "evidence": len(resp.evidence), "resources": self.resources.status(),
+                                                                      "models_used": resp.blocks[-1].models_used if resp.blocks and resp.blocks[-1].type == "audit" else []})
+            try:
+                if resp.blocks and resp.blocks[-1].type == "audit":
+                    resp.blocks[-1].chained_audit_hash = self.audit.verify(request.session_id).head
+            except Exception:
+                pass
             rs.final = resp
             rs.final_status = resp.status
             rs.safety_flags = len(resp.safety_flags)
@@ -1015,6 +1225,55 @@ class Orchestrator:
             rs.finished = time.time()
             rs.resources = self.resources.status()
             self.resources.end_request()
+
+    # ------------------------------------------------------------------ model routing
+    def _route_models(self, request: UserRequest, req: StructuredRequest, rs: RunState, events):
+        """Decompose the request into sub-tasks and say which model would take each one.
+
+        This is the traceable part of the multi-model backend: the routing plan is emitted as a
+        thinking step and written to the routing log before any model is called, and every actual
+        call is routed the same way, so the trace and the log agree.
+        """
+        if self.router is None:
+            return None
+        try:
+            plan = self.router.plan(request.text, session=request.session_id, run_id=rs.run_id,
+                                    budget=self.cfg.models.budget)
+        except Exception as exc:
+            logger.warning("model routing plan failed: %s", exc)
+            return None
+        lines = []
+        for sub, dec in zip(plan.subtasks, plan.decisions):
+            worker = f"{sub.deterministic_tool} (deterministic tool)" if sub.deterministic_tool and sub.kind in ("calculation",) else (dec.chosen or "no model")
+            if sub.deterministic_tool and sub.kind not in ("calculation",):
+                worker = f"{dec.chosen or 'no model'} + {sub.deterministic_tool}"
+            top = ", ".join(f"{c.name} {c.score:.2f}" + (f" ({c.note})" if c.note else "") for c in dec.candidates[:3])
+            lines.append(f"{sub.kind}: {sub.description} -> {worker}. Candidates: {top}.")
+        events.emit("agent_finished", phase="0/1 Understanding", agent="model_router", step_id="route",
+                    message=("hybrid request: " if plan.hybrid else "single task: ") + plan.summary(),
+                    thinking="\n".join(lines),
+                    decision=f"{len(plan.subtasks)} sub-task(s); resident model {self.router.resident or 'none'}",
+                    data={"ok": True, "duration_ms": 0, "llm_calls": 0, "blocks": 0, "evidence": 0, "missing": [],
+                          "subtasks": [s.model_dump() for s in plan.subtasks],
+                          "decisions": [{"kind": d.kind, "chosen": d.chosen, "reason": d.reason} for d in plan.decisions]})
+        return plan
+
+    def _stamp_routing(self, resp: FinalResponse, started: float, routing_plan) -> None:
+        """Put the run's routing decisions on the audit block: which model handled which call."""
+        if self.router is None or not resp.blocks or resp.blocks[-1].type != "audit":
+            return
+        from workbench.core.blocks import RoutingRow
+
+        block = resp.blocks[-1]
+        rows: list[RoutingRow] = []
+        for d in self.router.decisions_since(started):
+            if d.purpose.startswith("subtask:") or d.purpose.startswith("probe:"):
+                continue
+            rows.append(RoutingRow(kind=d.kind, purpose=d.purpose, model=d.chosen, reason=d.reason))
+        block.routing = rows[-40:]
+        block.models_used = sorted({r.model for r in rows if r.model})
+        if routing_plan is not None:
+            resp.warnings = [w for w in resp.warnings if w]
 
     # ------------------------------------------------------------------ access keys
     def _redeem_key(self, request: UserRequest, principal: Principal, events) -> tuple[object | None, str | None]:
@@ -1107,6 +1366,19 @@ class Orchestrator:
         env.grant_id = access.grant_id
         env.released_records = len(access.granted_records)
         env.access_key_error = key_error
+        # Vault mode: a branch this role holds no key for is not merely withheld, it was never
+        # decrypted into this process. It is still named, so an access request remains possible.
+        if self.vault is not None:
+            locked = [b for b in self.vault.sealed() if principal.role.value not in self.vault.readers_of(b)]
+            for b in locked:
+                if b not in env.withheld_documents:
+                    env.withheld_documents.append(b)
+            if locked and not env.withheld_summary:
+                env.withheld_summary = (f"{len(locked)} sealed branch(es) your role holds no key for: {', '.join(locked)}; "
+                                        f"they were not decrypted for this session")
+                if not env.escalation_target:
+                    env.escalation_target = next((r for b in locked for r in self.vault.readers_of(b)
+                                                  if r != principal.role.value), None)
 
     def _stamp_classification(self, resp, principal: Principal, access, knowledge) -> None:
         """Say what this answer was built from and who it was released to.

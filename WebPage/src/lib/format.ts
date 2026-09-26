@@ -14,9 +14,13 @@ export function countdown(seconds: number): string {
 }
 
 /** Epoch seconds -> "in 24 minutes" / "3 minutes ago". */
-export function relativeTime(epochSeconds: number): string {
-  if (!epochSeconds) return "—";
-  const delta = epochSeconds * 1000 - Date.now();
+export function relativeTime(epochSeconds: number | string | null | undefined): string {
+  if (epochSeconds === null || epochSeconds === undefined || epochSeconds === "") return "—";
+  // Tolerate the shapes the API emits elsewhere: an ISO string, or milliseconds.
+  let seconds = typeof epochSeconds === "string" ? Date.parse(epochSeconds) / 1000 : Number(epochSeconds);
+  if (!Number.isFinite(seconds) || !seconds) return "—";
+  if (seconds > 1e11) seconds = seconds / 1000;
+  const delta = seconds * 1000 - Date.now();
   const abs = Math.abs(delta);
   const units: [number, Intl.RelativeTimeFormatUnit][] = [
     [60_000, "second"], [3_600_000, "minute"], [86_400_000, "hour"], [Infinity, "day"],

@@ -400,6 +400,16 @@ class AuthService:
             self._save_tokens()
         return removed
 
+    def active_roles(self) -> set[str]:
+        """The roles of every live (unexpired) token — what the vault uses to decide which branches may stay in memory."""
+        self._prune()
+        return {t.role.value if hasattr(t.role, "value") else str(t.role) for t in self._tokens.values()}
+
+    def active_sessions(self) -> list[dict]:
+        self._prune()
+        return [{"username": t.username, "role": t.role.value if hasattr(t.role, "value") else str(t.role),
+                 "issued": t.issued, "expires": t.expires, "label": t.label} for t in self._tokens.values()]
+
     def revoke_all(self, username: str | None = None) -> int:
         before = len(self._tokens)
         self._tokens = {d: t for d, t in self._tokens.items() if username and t.username != username.lower()}

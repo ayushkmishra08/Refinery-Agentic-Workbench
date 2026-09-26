@@ -45,6 +45,17 @@ def _redirect_paths(cfg, root):
     cfg.paths.thinking_dir = root / "thinking"
     cfg.paths.security_dir = root / "security"
     cfg.paths.ensure_dirs()
+    # the subsystems added in September 2026 keep their own state; none of it may land under data/
+    cfg.sovereignty.sovereignty_dir = root / "sovereignty"
+    cfg.sovereignty.monitor_interval_seconds = 0.5
+    cfg.models.routing_log = root / "routing" / "routing.jsonl"
+    cfg.models.local_registry = root / "models" / "registry.local.yaml"
+    cfg.sandbox.root_dir = root / "sandbox"
+    cfg.sandbox.workspace_dir = root / "workspace"
+    cfg.review.drafts_dir = root / "drafts"
+    cfg.review.deliverables_dir = root / "deliverables"
+    cfg.vault.vault_dir = root / "vault"
+    cfg.vault.tls_dir = root / "security" / "tls"
     return cfg
 
 

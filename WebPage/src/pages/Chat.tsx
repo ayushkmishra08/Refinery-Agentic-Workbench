@@ -14,7 +14,7 @@
  * requirement, and it suits a shared terminal — closing the tab ends the conversation.
  */
 import {
-  ArrowUp, FileUp, Gauge, MessageCircleQuestion, Paperclip, RefreshCw, Trash2,
+  ArrowUp, Cpu, FileSpreadsheet, FileText, FileUp, Gauge, MessageCircleQuestion, Paperclip, Presentation, RefreshCw, Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -24,6 +24,8 @@ import { Markdown } from "@/components/Markdown";
 import { ClassificationStrip, KeyRefusedNotice, WithheldNotice } from "@/components/SecurityBanner";
 import { ThinkingTrace } from "@/components/ThinkingTrace";
 import { ApiError, api, streamRun } from "@/lib/api";
+import { exportAndDownload } from "@/pages/Review";
+import type { AuditBlockExtras } from "@/lib/types_ext";
 import { cn } from "@/lib/cn";
 import { ms } from "@/lib/format";
 import { REASONING_BLOCKS, type Block, type Effort, type FinalResponse, type ProgressEvent, type StoredTurn } from "@/lib/types";
@@ -111,6 +113,8 @@ export default function Chat() {
   const [ingest, setIngest] = useState<{ name: string; phase: string; percent: number | null; startedAt: number } | null>(null);
   const [ingestElapsed, setIngestElapsed] = useState(0);
   const [attachments, setAttachments] = useState<string[]>([]);
+  /** What OCR + vision made of the last image attached: line count, confidence, flags, review draft. */
+  const [intakeNote, setIntakeNote] = useState<{ name: string; lines: number; confidence: number | null; vision: number; flagged: number; draftId: string | null } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -297,13 +301,26 @@ export default function Chat() {
 
         setAttachments((prev) => (prev.includes(name) ? prev : [...prev, name]));
         announceConversationsChanged();
-        toast.push({
-          tone: "success",
-          message: `${name} is ready`,
-          detail: out.kind === "image"
-            ? "The image was described and added to this conversation."
-            : "It is readable in this conversation only — ask about it now. It is not added to the knowledge layer.",
-        });
+        if (out.kind === "image" && out.intake) {
+          const flagged = out.intake.flagged?.length ?? 0;
+          setIntakeNote({
+            name, lines: out.intake.ocr_lines, confidence: out.intake.ocr_mean_confidence, vision: out.intake.vision_calls,
+            flagged, draftId: out.draft?.draft_id ?? null,
+          });
+          toast.push({
+            tone: flagged ? "info" : "success",
+            message: `${name} read: ${out.intake.ocr_lines} OCR line${out.intake.ocr_lines === 1 ? "" : "s"}${out.intake.vision_calls ? ", vision described" : ""}`,
+            detail: flagged ? `${flagged} low-confidence line${flagged === 1 ? "" : "s"} flagged for review.` : "Nothing was flagged.",
+          });
+        } else {
+          toast.push({
+            tone: "success",
+            message: `${name} is ready`,
+            detail: out.kind === "image"
+              ? "The image was described and added to this conversation."
+              : "It is readable in this conversation only — ask about it now. It is not added to the knowledge layer.",
+          });
+        }
       } catch (err) {
         toast.push({ tone: "danger", message: "Upload failed", detail: err instanceof ApiError ? err.message : String(err) });
       } finally {
@@ -394,6 +411,18 @@ export default function Chat() {
               <p className="text-[0.68rem] text-muted-foreground">
                 Questions wait until it is read — an answer given now would not include this document.
               </p>
+            </div>
+          ) : null}
+
+          {intakeNote ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-white/60 px-2.5 py-1.5 text-[0.7rem] text-slate-700">
+              <span className="font-medium text-foreground">{intakeNote.name}</span>
+              <span>{intakeNote.lines} OCR line{intakeNote.lines === 1 ? "" : "s"}{intakeNote.confidence !== null ? ` · mean confidence ${intakeNote.confidence.toFixed(2)}` : ""}{intakeNote.vision ? ` · vision ×${intakeNote.vision}` : ""}</span>
+              {intakeNote.flagged ? <Badge tone="warning">{intakeNote.flagged} flagged</Badge> : <Badge tone="success">nothing flagged</Badge>}
+              {intakeNote.draftId ? (
+                <button type="button" onClick={() => navigate("/review")} className="font-medium text-primary underline-offset-2 hover:underline">open in Review</button>
+              ) : null}
+              <button type="button" onClick={() => setIntakeNote(null)} className="ml-auto text-muted-foreground hover:text-foreground" aria-label="Dismiss">×</button>
             </div>
           ) : null}
 
@@ -489,7 +518,7 @@ export default function Chat() {
               />
               <Button size="sm" variant="ghost" loading={uploading} disabled={running || ingesting}
                       onClick={() => fileRef.current?.click()}>
-                <FileUp className="size-3.5" /> Attach PDF
+                <FileUp className="size-3.5" /> Attach PDF / image
               </Button>
               {turns.length ? (
                 <Button size="sm" variant="ghost" disabled={running || ingesting} onClick={() => setTurns([])}>
@@ -514,7 +543,33 @@ function TurnView({
 }) {
   const [keyDraft, setKeyDraft] = useState("");
   const [showEvidence, setShowEvidence] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const toast = useToast();
+  const navigate = useNavigate();
   const response = turn.response;
+
+  // which models handled which calls: on the audit block, the last block of an answered run
+  const audit = useMemo(() => {
+    const last = response?.blocks[response.blocks.length - 1];
+    return last && last.type === "audit" ? (last as unknown as AuditBlockExtras) : null;
+  }, [response]);
+
+  const exportAs = async (fmt: "docx" | "xlsx" | "pptx") => {
+    if (!response) return;
+    setExporting(fmt);
+    try {
+      const out = await exportAndDownload(response.response_id, fmt);
+      toast.push({
+        tone: "success",
+        message: `Draft ${out.draftId ?? ""} created — pending sign-off`,
+        detail: `${out.openFlags ? `${out.openFlags} figure(s) flagged for review. ` : ""}Open Review to check figures and sign off.`,
+      });
+    } catch (err) {
+      toast.push({ tone: "danger", message: "Export failed", detail: err instanceof ApiError ? err.message : String(err) });
+    } finally {
+      setExporting(null);
+    }
+  };
 
   // The backend also states the escalation in prose, worded for a terminal ("release it with
   // `workbench approve AR-…`"). WithheldNotice says the same thing with buttons, so the callout
@@ -618,6 +673,23 @@ function TurnView({
 
             {response.review_reason ? (
               <p className="text-[0.7rem] text-muted-foreground">{response.review_reason}</p>
+            ) : null}
+
+            {audit?.models_used?.length ? (
+              <p className="flex flex-wrap items-center gap-1 text-[0.68rem] text-muted-foreground" title={(audit.routing ?? []).map((r) => `${r.kind}: ${r.model ?? "—"} (${r.reason ?? ""})`).join("\n")}>
+                <Cpu className="size-3" /> Models: {audit.models_used.join(", ")}
+                {audit.routing?.length ? <span>· {audit.routing.length} routed call{audit.routing.length === 1 ? "" : "s"}</span> : null}
+              </p>
+            ) : null}
+
+            {response.status === "answered" && response.response_id && !turn.restored ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[0.68rem] text-muted-foreground">Export:</span>
+                <Button size="sm" variant="ghost" loading={exporting === "docx"} disabled={exporting !== null} onClick={() => void exportAs("docx")}><FileText className="size-3" /> Word</Button>
+                <Button size="sm" variant="ghost" loading={exporting === "xlsx"} disabled={exporting !== null} onClick={() => void exportAs("xlsx")}><FileSpreadsheet className="size-3" /> Excel</Button>
+                <Button size="sm" variant="ghost" loading={exporting === "pptx"} disabled={exporting !== null} onClick={() => void exportAs("pptx")}><Presentation className="size-3" /> PowerPoint</Button>
+                <button type="button" onClick={() => navigate("/review")} className="text-[0.68rem] text-primary underline-offset-2 hover:underline">review drafts</button>
+              </div>
             ) : null}
 
             {showEvidence ? <EvidenceList items={response.evidence} /> : null}

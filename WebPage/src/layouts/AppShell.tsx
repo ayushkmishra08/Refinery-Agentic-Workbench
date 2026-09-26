@@ -10,7 +10,8 @@
  * tool, so it is surfaced before it bites.
  */
 import {
-  FileText, FolderTree, KeyRound, Layers, LogOut, MessageSquare, Menu, ShieldCheck, Timer, UserCircle2, X,
+  ClipboardCheck, Cpu, FileText, FolderTree, KeyRound, Layers, LogOut, MessageSquare, Menu, Radar, ScrollText, ShieldCheck,
+  Timer, UserCircle2, Vault as VaultIcon, Wrench, X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
@@ -30,7 +31,13 @@ const NAV: NavItem[] = [
   { to: "/documents", label: "Documents", icon: <FileText className="size-4" />, hint: "What is loaded and who may read it" },
   { to: "/knowledge", label: "Knowledge", icon: <FolderTree className="size-4" />, hint: "The knowledge layer branch by branch, and your reach into it" },
   { to: "/access", label: "Access", icon: <KeyRound className="size-4" />, hint: "Requests and approvals" },
+  { to: "/tools", label: "Tools", icon: <Wrench className="size-4" />, hint: "Named local tools, the agent loop and the sandbox" },
+  { to: "/review", label: "Review", icon: <ClipboardCheck className="size-4" />, hint: "Deliverables pending human sign-off" },
+  { to: "/models", label: "Models", icon: <Cpu className="size-4" />, hint: "The model registry and how calls are routed" },
+  { to: "/sovereignty", label: "Sovereignty", icon: <Radar className="size-4" />, hint: "Proof that nothing leaves the premises" },
+  { to: "/logs", label: "Logs", icon: <ScrollText className="size-4" />, minRole: "manager", hint: "Recent conversations of the people you supervise" },
   { to: "/security", label: "Security", icon: <ShieldCheck className="size-4" />, minRole: "manager", hint: "The access model in force" },
+  { to: "/vault", label: "Vault", icon: <VaultIcon className="size-4" />, minRole: "manager", hint: "Envelope encryption of the knowledge branches" },
 ];
 
 const ROLE_LEVEL: Record<Role, number> = { guest: 0, user: 1, manager: 2, admin: 3 };

@@ -280,3 +280,70 @@ setting to fall back on if the GPU is busy mid-demo.
 - `python -m workbench bench` — 62 canonical prompts, ~2.5 minutes, deterministic.
 - `python -m workbench agents` — the agent registry with each agent's phase and responsibility.
 - `python -m workbench status` — detected VRAM, chosen profile, model, backend, documents loaded.
+
+## New capabilities demo (September 2026)
+
+Exact commands; the operator manual (`docs/manual/index.html` §12) has the 15-minute running order.
+
+```powershell
+# multi-model routing
+python -m workbench models
+python -m workbench route "Read the scanned P&ID, calculate the margin between 482 and 520 m3/h and write a short note"
+
+# named local tools and the agent loop
+python -m workbench tools
+python -m workbench tool calculate --args '{"expression": "(520-482)/482*100"}'
+python -m workbench tool search_documents --args '{"query": "crude charge pump normal flow", "k": 5}'
+python -m workbench agent "calculate 2*(3+4)"
+
+# the sandbox: no egress, bounded, ephemeral, verified by tests
+@'
+import socket
+try:
+    socket.create_connection(("8.8.8.8", 53), timeout=2)
+except PermissionError as e:
+    print("blocked:", e)
+print(sum(range(10)))
+'@ | Set-Content -Encoding utf8 demo_sandbox.py
+@'
+def test_sum():
+    assert sum(range(10)) == 45
+'@ | Set-Content -Encoding utf8 demo_tests.py
+python -m workbench sandbox-run demo_sandbox.py --tests demo_tests.py
+
+# multimodal intake (OCR on device; one vision call)
+python -m workbench intake "data/sample docs/test.pdf" --max-pages 3 --vision-calls 1
+python -m workbench intake "data/sample docs/test.pdf" --no-vision
+
+# deliverables under human sign-off
+python -m workbench ask "The crude charge pump is operating at 520 m3/h. Is this acceptable?"
+python -m workbench responses
+python -m workbench export <response_id> --format xlsx      # then docx, pptx
+python -m workbench drafts -v
+python -m workbench draft-signoff <draft_id>                  # blocked (exit 2) while any figure is flagged
+python -m workbench draft-resolve <draft_id> <figure_id> corrected --value 24.45 --note "checked p.2"
+python -m workbench draft-signoff <draft_id>
+
+# vault: envelope encryption per branch
+python -m workbench vault seal
+python -m workbench vault status
+python -m workbench vault rotate manager
+python -m workbench vault revoke "Crude desalter" manager
+$env:RWB_VAULT = "on"; python -m workbench serve --port 8077   # branches decrypt per session
+
+# sovereignty: air-gap proof
+python -m workbench sovereignty
+python -m workbench sovereignty --watch 5        # pull the uplink cable; watch DISCONNECTED / interface_down
+python -m workbench audit-verify
+
+# signed model packages
+python -m workbench packages keygen release-2026
+python -m workbench packages sign .\my-model-pkg --private-key data\workbench\security\signers\release-2026.key --key-id release-2026 --name mymodel --version 1
+python -m workbench packages trust data\workbench\security\signers\release-2026.pub release-2026
+python -m workbench packages verify .\my-model-pkg
+python -m workbench packages import .\my-model-pkg --dry-run
+
+# TLS / mutual TLS between components
+python -m workbench serve --port 8077 --mtls
+```
+

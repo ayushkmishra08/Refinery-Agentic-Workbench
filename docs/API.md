@@ -8,10 +8,10 @@ This document describes the HTTP interface of the Refinery Engineering AI Workbe
 
 ```powershell
 # from the repo root, with the .venv active
-python -m workbench serve --host 127.0.0.1 --port 8000
+python -m workbench serve --host 127.0.0.1 --port 8077     # the WebPage dev proxy expects 8077; add --tls or --mtls for local TLS
 ```
 
-- The server is FastAPI + uvicorn. Interactive docs are at `http://127.0.0.1:8000/docs` (OpenAPI).
+- The server is FastAPI + uvicorn. Interactive docs are at `http://127.0.0.1:8077/docs` (OpenAPI).
 - CORS is open (`allow_origins=["*"]`, all methods and headers), so a browser front end on any port can call it directly.
 - On start-up the orchestrator loads the knowledge index (about 3 s from cache) and, because `RWB_WARM_START` defaults to `1`, warms the CPU embedder and reranker in a background thread (the reranker takes roughly 29 s on CPU). Requests are accepted immediately; the first semantic query may simply be slower if the warm-up has not finished.
 - Health check: `GET /health` returns
@@ -61,6 +61,8 @@ Useful environment variables (read in `workbench/config.py`): `RWB_LLM=off` (run
 | GET | `/sessions` | the caller's own conversations, newest first (title, turns, when, attachments) |
 | GET | `/sessions/{session_id}` | one conversation: turns with the full released answer and its security envelope, attachments |
 | DELETE | `/sessions/{session_id}` | forget one of the caller's conversations, attachments included |
+| GET | `/logs/conversations` | conversations of ranks *strictly below* the caller (manager, admin); rows carry `owner`, `owner_role` |
+| GET | `/logs/conversations/{owner}/{session_id}` | one such conversation in full; every read is written to the security audit |
 | POST | `/upload` | attach a PDF or an image to **this conversation** (parsed, indexed, session-only) |
 | DELETE | `/upload?session_id=` | forget everything attached to this conversation |
 | POST | `/knowledge/documents/{id}/promote` | move an attachment into the shared knowledge layer (manager+) |
@@ -405,3 +407,77 @@ models). `GET /schema` serves the first three live. Generate TypeScript types fr
 - Always render `safety` blocks and the human-review callout prominently; never hide them behind a toggle.
 - `status: "restricted"` answers contain no operating instructions by design; show them as they are.
 - `answer_markdown` is a fallback only; the blocks carry more structure (citations per row, gauge markers, DAG edges).
+
+## 9. Extended surface (September 2026) — `workbench/app/api_ext.py`
+
+Same bearer token, same access rules. "Signed in" means any authenticated role; a role in the
+column is the minimum. Every write is recorded in the hash-chained security audit.
+
+### Models and routing
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/models` | anyone | registered models with capability profiles, installed / fits-VRAM flags, resident model, best model per task kind |
+| GET | `/models/routing?limit=&run_id=` | anyone | the chained routing log: chosen model, candidates, reason per call |
+| POST | `/models/route` `{text, budget?}` | anyone | decompose a request into sub-tasks and show which model would take each (no model call) |
+| POST | `/models/register` `{name, capabilities, …}` | admin | plug a model in: written to `data/workbench/models/registry.local.yaml`, routable at once |
+| GET | `/models/packages` | manager | trusted signers and the chained log of package verifications / imports |
+| POST | `/models/packages/verify` `{path}` | manager | verify a signed package (checksums, signature, trusted signer) |
+| POST | `/models/packages/import` `{path, dry_run}` | admin | verify then `ollama create` from local files; refused on any failure |
+
+### Sovereignty
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/sovereignty?deep=false` | anyone | egress-guard state, live network-monitor status (external connections by host vs by workbench, interface state, `physically_disconnected`), chain verification of every log, TLS state; `deep=true` also walks every run audit |
+| GET | `/sovereignty/connections?limit=&event=&external_only=` | anyone | the chained connection log |
+| POST | `/sovereignty/verify` | manager | full verification of every chained log; `intact` |
+| GET | `/sovereignty/egress` | anyone | blocked in-process egress attempts and the guard's allow-list |
+
+### Vault
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/vault` | signed in | sealed branches, role key versions, branches decrypted in memory, session keyrings, `you.can_unwrap`, key events |
+| POST | `/vault/seal` `{shred}` | admin | seal every branch index for exactly the roles that may read it; optionally shred the plaintext cache |
+| POST | `/vault/rotate/{role}` | admin | rotate a role's wrapping key (re-wrap content keys, wipe keyrings; no data re-encrypted) |
+| POST | `/vault/revoke` `{branch, role}` | admin | delete one role's wrapped copy of a branch key |
+| GET | `/vault/tls` | anyone | local CA / server / client certificate fingerprints, whether TLS / mTLS is active |
+
+### Tools and sandbox
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| GET | `/tools` | anyone | the named tools with argument schemas, and the sandbox limits |
+| POST | `/tools/run` `{tool, args, session_id}` | signed in | run one tool in the caller's session workspace over the knowledge the caller may read |
+| POST | `/tools/agent` `{goal, session_id, max_iterations}` | signed in | the agent loop: plan, call tools, iterate; every call chained |
+| GET | `/tools/workspace?session_id=` | signed in | files in the session workspace |
+| GET | `/tools/workspace/file?session_id=&path=` | signed in | download one workspace file (confined) |
+| GET | `/tools/calls?limit=` | signed in | the chained tool-call log (own calls; everything for admin) |
+| POST | `/sandbox/run` `{code, tests?, inputs?, task_id?}` | signed in | run code in the sandbox; `verified`, `limit_hit`, `egress_attempts`, `files_written`, `workdir_destroyed` |
+| GET | `/sandbox/runs?limit=` | signed in | the chained sandbox run log |
+| GET | `/sandbox/manifest` | anyone | stdlib allow-list, banned imports, checksummed vendored files, manifest hash |
+
+### Intake
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| POST | `/intake` (multipart: `file`, `session_id`, `purpose`, `run_vision`, `max_pages`, `create_draft`) | signed in | on-device OCR + vision; flagged low-confidence lines; a review draft of the numbers found |
+
+### Deliverables and review
+
+| Method | Path | Role | Purpose |
+|---|---|---|---|
+| POST | `/deliverables` `{response_id, format: docx\|pptx\|xlsx\|md, title?}` | signed in (owner or admin) | export a released answer; registers a draft `pending_signoff`; returns the download path |
+| GET | `/deliverables/responses` | signed in | released answers that can be exported (own; all for admin) |
+| GET | `/deliverables/{draft_id}/download` | owner / manager+ | the file |
+| GET | `/drafts?status=` | signed in | drafts with open flags and pending state (own; all for manager+), chain verification |
+| GET | `/drafts/{draft_id}` | owner / manager+ | one draft with every provenance-linked figure |
+| POST | `/drafts/{draft_id}/figures/{figure_id}/resolve` `{action: accepted\|corrected\|removed, corrected_value?, note}` | owner / manager+ | resolve one flag |
+| POST | `/drafts/{draft_id}/signoff` `{note}` | manager | sign off; **409** with `open_flags` while any flag is unresolved |
+| POST | `/drafts/{draft_id}/reject` `{note}` | manager | reject |
+
+`GET /health` now also reports `routing`, `resident_model`, `airgap_enforced`, `network_monitor`,
+`workbench_external_connections`, `vault`, `sandbox`, `tools`, `tls`, `mtls`. The audit block on every
+answer carries `models_used`, `routing` rows and `chained_audit_hash`.
+

@@ -13,6 +13,10 @@ POST /upload                   upload a PDF/image; parsed with the knowledge-lay
 GET  /sessions/{id}            session memory (turns, uploads)
 GET  /reviews                  pending human-in-the-loop items;  POST /reviews/{response_id} to decide
 GET  /agents  GET /health  GET /schema   introspection for the frontend
+Extended surface (workbench/app/api_ext.py): /models (registry, routing log, signed packages),
+/sovereignty (egress guard, network monitor, chain verification), /vault (envelope encryption),
+/tools + /sandbox (named local tools, agent loop, sandboxed code), /intake (OCR + vision),
+/deliverables + /drafts (Word/PowerPoint/Excel exports under human sign-off).
 All responses are JSON built from the pydantic models in workbench/core (schemas in docs/schema/).
 
 Authentication is a bearer token: POST /auth/login, then send it back either as an
@@ -49,12 +53,15 @@ logger = logging.getLogger(__name__)
 _orch: Orchestrator | None = None
 _event_queues: dict[str, list[queue.Queue]] = {}
 _lock = threading.Lock()
+TLS_ACTIVE = False
+MTLS_ACTIVE = False
 
 
 def orch() -> Orchestrator:
     global _orch
     if _orch is None:
         _orch = Orchestrator(warm_start="full" if os.getenv("RWB_WARM_START", "1") == "1" else False)
+        _orch.start_sovereignty()          # the network monitor runs for the life of the server
     return _orch
 
 
@@ -66,7 +73,7 @@ async def lifespan(app: FastAPI):
         _orch.shutdown()
 
 
-app = FastAPI(title="Refinery Engineering AI Workbench", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Refinery Engineering AI Workbench", version="0.3.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
@@ -126,10 +133,17 @@ def _fanout(run_id: str):
 @app.get("/health")
 def health() -> dict:
     o = orch()
+    mon = o.sovereignty.monitor if o.sovereignty is not None else None
     return {"status": "ok", "backend": o.backend_name, "llm": getattr(o.llm, "model", o.llm.name), "llm_available": o.llm.available(), "profile": o.cfg.profile.name, "effort": o.cfg.effort.name,
             "documents": [d.document_id for d in o.knowledge.documents()], "resources": o.resources.status(), "active_runs": len(o.runs.active()),
             "access_control": o.cfg.security.enabled, "answer_style": o.cfg.presentation.style,
-            "compose_answers": o.cfg.llm.use_llm_for_answer}
+            "compose_answers": o.cfg.llm.use_llm_for_answer,
+            "routing": bool(o.router is not None), "resident_model": getattr(o.router, "resident", None),
+            "airgap_enforced": bool(o.cfg.sovereignty.airgap_enforced),
+            "network_monitor": bool(mon is not None and mon.running),
+            "workbench_external_connections": (len(mon.own_external) if mon is not None else None),
+            "vault": bool(o.vault is not None), "sandbox": o.sandbox is not None, "tools": (len(o.tools.describe()) if o.tools is not None else 0),
+            "tls": TLS_ACTIVE, "mtls": MTLS_ACTIVE}
 
 
 @app.get("/agents")
@@ -374,6 +388,26 @@ def session(session_id: str, token: str | None = Depends(bearer)) -> dict:
     return out
 
 
+@app.get("/logs/conversations")
+def supervised_conversations(token: str | None = Depends(bearer)) -> list[dict]:
+    """Conversations of people ranked below the caller. Manager and Administrator only."""
+    try:
+        return orch().supervised_sessions(token)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+
+@app.get("/logs/conversations/{owner}/{session_id}")
+def supervised_conversation(owner: str, session_id: str, token: str | None = Depends(bearer)) -> dict:
+    """One such conversation, in full. Reading it is written to the security audit."""
+    try:
+        return orch().supervised_session(token, owner, session_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc).strip("'")) from exc
+
+
 @app.delete("/sessions/{session_id}")
 def delete_session(session_id: str, token: str | None = Depends(bearer)) -> dict:
     """Forget one of the caller's conversations."""
@@ -590,3 +624,10 @@ def security_log(event: str | None = None, principal: str | None = None, limit: 
     if o.cfg.security.enabled and who.role is not Role.ADMIN:
         principal = who.username            # a manager reads their own trail, not everyone's
     return o.security_audit.read(event=event, principal=principal, limit=limit)
+
+
+# --------------------------------------------------------------------------- extended surface
+from workbench.app import api_ext as _ext  # noqa: E402
+
+for _router in _ext.ROUTERS:
+    app.include_router(_router)

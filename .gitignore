@@ -57,3 +57,20 @@ data/workbench/thinking/*
 # credential store: password digests, salts and live session tokens. Never committed.
 data/workbench/security/
 !data/workbench/**/.gitkeep
+
+# September 2026 subsystems: runtime state, key material, generated files. Never committed.
+data/workbench/vault/
+data/workbench/sandbox/
+data/workbench/workspace/
+data/workbench/drafts/
+data/workbench/deliverables/
+data/workbench/responses/
+data/workbench/routing/
+data/workbench/sovereignty/
+data/workbench/models/
+data/workbench/security/kms/
+data/workbench/security/tls/
+data/workbench/security/signers/
+data/workbench/security/trusted_signers/
+data/workbench/security/*.jsonl
+*.lock

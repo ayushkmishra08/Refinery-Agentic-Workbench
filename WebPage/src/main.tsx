@@ -27,6 +27,12 @@ const Access = lazy(() => import("@/pages/Access"));
 const Security = lazy(() => import("@/pages/Security"));
 const Account = lazy(() => import("@/pages/Account"));
 const Knowledge = lazy(() => import("@/pages/Knowledge"));
+const Logs = lazy(() => import("@/pages/Logs"));
+const Models = lazy(() => import("@/pages/Models"));
+const Sovereignty = lazy(() => import("@/pages/Sovereignty"));
+const Tools = lazy(() => import("@/pages/Tools"));
+const Review = lazy(() => import("@/pages/Review"));
+const Vault = lazy(() => import("@/pages/Vault"));
 
 function Loading({ label = "Loading" }: { label?: string }) {
   return (
@@ -74,6 +80,12 @@ function AppShellRoutes() {
         <Route path="knowledge" element={<PageErrorBoundary name="Knowledge"><Suspense fallback={<Loading />}><Knowledge /></Suspense></PageErrorBoundary>} />
         <Route path="access" element={<PageErrorBoundary name="Access"><Suspense fallback={<Loading />}><Access /></Suspense></PageErrorBoundary>} />
         <Route path="security" element={<PageErrorBoundary name="Security"><Suspense fallback={<Loading />}><Security /></Suspense></PageErrorBoundary>} />
+        <Route path="logs" element={<PageErrorBoundary name="Logs"><Suspense fallback={<Loading />}><Logs /></Suspense></PageErrorBoundary>} />
+        <Route path="models" element={<PageErrorBoundary name="Models"><Suspense fallback={<Loading />}><Models /></Suspense></PageErrorBoundary>} />
+        <Route path="sovereignty" element={<PageErrorBoundary name="Sovereignty"><Suspense fallback={<Loading />}><Sovereignty /></Suspense></PageErrorBoundary>} />
+        <Route path="tools" element={<PageErrorBoundary name="Tools"><Suspense fallback={<Loading />}><Tools /></Suspense></PageErrorBoundary>} />
+        <Route path="review" element={<PageErrorBoundary name="Review"><Suspense fallback={<Loading />}><Review /></Suspense></PageErrorBoundary>} />
+        <Route path="vault" element={<PageErrorBoundary name="Vault"><Suspense fallback={<Loading />}><Vault /></Suspense></PageErrorBoundary>} />
         <Route path="account" element={<PageErrorBoundary name="Account"><Suspense fallback={<Loading />}><Account /></Suspense></PageErrorBoundary>} />
         <Route path="*" element={<Navigate to="/chat" replace />} />
       </Route>

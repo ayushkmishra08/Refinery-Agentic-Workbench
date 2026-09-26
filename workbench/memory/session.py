@@ -137,6 +137,8 @@ class SessionStore:
             first = next((t.get("request") for t in turns if t.get("request")), "") or ""
             out.append({
                 "session_id": public,
+                "owner": raw.get("owner") or "",
+                "owner_role": raw.get("owner_role") or "",
                 "title": " ".join(first.split())[:90] or "New conversation",
                 "turns": len(turns),
                 "created": raw.get("created"),

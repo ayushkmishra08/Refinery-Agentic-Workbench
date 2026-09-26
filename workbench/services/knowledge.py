@@ -17,6 +17,15 @@ logger = logging.getLogger(__name__)
 
 def build_knowledge_service(cfg: WorkbenchConfig) -> CompositeKnowledgeService:
     backend = cfg.resolve_backend()
+    if getattr(cfg, "vault", None) is not None and cfg.vault.enabled and backend == "files":
+        # Vault mode: no plaintext branch is loaded at start. Branches are decrypted into memory
+        # per session by workbench.security.vault_backend.VaultedBranches, which adds them here.
+        from workbench.services.index.store import IndexStore
+
+        primary = IndexStore([], None, use_vectors=False, use_reranker=False, rrf_k=cfg.retrieval.rrf_k)
+        primary.name = "vault"
+        logger.info("knowledge backend: vault (branches load per session)")
+        return CompositeKnowledgeService(primary)
     if backend == "neo4j":
         from workbench.services.backends.neo4j_backend import Neo4jKnowledgeBackend
 

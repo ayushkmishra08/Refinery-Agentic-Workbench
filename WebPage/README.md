@@ -36,6 +36,12 @@ Point the client somewhere else with `VITE_WORKBENCH_URL` (see `.env.example`).
 | `/documents` | everyone | Every document, its classification, and who reads it |
 | `/knowledge` | everyone | The knowledge layer branch by branch, with your reach marked on each one |
 | `/access` | everyone | Requests you raised, and — for approvers — the queue waiting on you |
+| `/tools` | everyone | Named local tools (files, sandboxed code, spreadsheets, document search, calculation, OCR, vision, Word/Excel/PowerPoint), the agent loop over them, the sandbox, your workspace and the chained tool log |
+| `/review` | everyone | Deliverables pending human sign-off: every figure with its provenance, flagged items to resolve, sign-off blocked until they are; export recent answers as Word / Excel / PowerPoint |
+| `/models` | everyone | The model capability registry, what is installed, which model wins each task kind, the routing log, "route a request"; admins register models and verify signed model packages |
+| `/sovereignty` | everyone | Live network monitor, egress guard, interface state (pull the cable and watch it), tamper-evident log chains, TLS state |
+| `/logs` | manager, admin | Recent conversations of the people ranked below you, read-only; each view is audited |
+| `/vault` | manager, admin | Envelope encryption of the knowledge branches: sealed branches, roles with keys, what is decrypted in memory, key rotation and revocation (admin) |
 | `/security` | manager, admin | The access model as the running system is enforcing it |
 | `/account` | everyone | Your clearance, and optional authenticator enrolment |
 

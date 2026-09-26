@@ -53,6 +53,35 @@
           "default": "",
           "title": "Backend",
           "type": "string"
+        },
+        "models_used": {
+          "description": "Every model that handled part of this run",
+          "items": {
+            "type": "string"
+          },
+          "title": "Models Used",
+          "type": "array"
+        },
+        "routing": {
+          "description": "Per-call routing decisions, in order",
+          "items": {
+            "$ref": "#/$defs/RoutingRow"
+          },
+          "title": "Routing",
+          "type": "array"
+        },
+        "chained_audit_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Head hash of the session's audit chain after this run was written",
+          "title": "Chained Audit Hash"
         }
       },
       "required": [
@@ -1303,6 +1332,42 @@
         "agent"
       ],
       "title": "PlanTask",
+      "type": "object"
+    },
+    "RoutingRow": {
+      "description": "One model-routing decision made during the run: which model handled which sub-task, and why.",
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "purpose": {
+          "default": "",
+          "title": "Purpose",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "RoutingRow",
       "type": "object"
     },
     "SafetyBlock": {
