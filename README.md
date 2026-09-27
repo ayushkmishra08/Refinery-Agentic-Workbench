@@ -1,5 +1,5 @@
 # Refinery Knowledge Layer
-# MRPL(Mangalore Refinery Petroleum Ltd.) | SIH 2026 
+# MRPL(Mangalore Refinery PetroChemicals Ltd.) | SIH 2026 
 ## What the workbench does now (September 2026)
 
 The operator manual is **[`docs/manual/index.html`](docs/manual/index.html)** (open it in a browser). The table
