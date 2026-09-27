@@ -3,6 +3,37 @@
 Nineteen questions, one per capability, in the order they are best presented. Each shows the full agent trace in
 the terminal and writes a JSON thinking trace to `data/workbench/thinking/`.
 
+## Before you start: sign-in and preparation
+
+Access control is on by default and most of these questions are answered from the CDU operating manual, which
+is tagged `SECRET` (admin only). Signed in as `manager` or `user`, they are refused. Do this once before the demo:
+
+```powershell
+python -m workbench setup-security        # creates admin / manager / user and tags the six documents
+python -m workbench login --user admin    # seeded password Admin#2026 unless you set RWB_ADMIN_PASSWORD first
+python -m workbench whoami                # confirm: admin, reads SECRET
+```
+
+For a rehearsal without accounts, `$env:RWB_AUTH = "off"` removes the gate for that shell.
+
+Models (see `SETUP.md`): on the 4 GB reference machine (`gpu_4gb` profile) pull `qwen3:4b` and `qwen3.5:2b`
+and have Ollama running; the explanation (6), planning (11) and effort (19) demos need them. The model router is
+on by default and picks among whichever of the seven registry models are installed, so the model names shown in
+the trace depend on what you have pulled (`python -m workbench models`; `RWB_ROUTING=off` pins every call to
+the profile's text model). Cache `BAAI/bge-small-en-v1.5` and `BAAI/bge-reranker-base` while still connected:
+the air-gap guard sets the Hugging Face libraries offline, so a missing embedding or reranker model fails
+instead of downloading.
+
+**About the timings in this script.** The default effort (`medium`) *does* call the model: the Answer Composer
+writes the released answer (and the classifier or follow-up rewriter may be asked). With Ollama reachable that
+adds seconds to every question. The millisecond figures quoted below are for the deterministic path, and are
+reproduced with either `--effort low` (index only, no model, no vectors) or `$env:RWB_LLM = "off"` (default
+effort, model disabled; this is how `bench` runs). If Ollama is not running at all, the workbench falls back
+to the same deterministic answer. Times are per request as shown in the trace; starting the command also loads
+the indexes, which takes a few seconds.
+
+## Running
+
 Run them exactly as written:
 
 ```powershell
@@ -13,11 +44,12 @@ Useful flags while presenting:
 
 | flag | effect |
 |---|---|
-| *(none)* | phase-by-phase thinking, then the answer, then the saved trace path |
-| `--effort low` | index only, no model — every question answers in well under a second |
-| `--effort high` | wider retrieval + reranker + model-written narrative |
+| *(none)* | `medium` effort: phase-by-phase thinking, then the answer (written by the Answer Composer through the model when Ollama is up), then the saved trace path |
+| `--effort low` | index only (rules, claims, BM25), no model and no vectors — every question answers in well under a second |
+| `--effort high` | wider retrieval + reranker + model-written narrative + model plan refinement |
 | `--effort ultra` | everything on; minutes per request on a 4 GB card |
 | `--no-thinking` | the answer only |
+| `--detail` | every render block (values, topology, evidence, confidence) instead of the composed answer |
 | `--json` | the raw `FinalResponse`, including the confidence and audit blocks the CLI hides |
 | `python -m workbench trace` | list the saved traces, newest first |
 | `python -m workbench trace --show` | replay the newest trace as text |
@@ -28,7 +60,8 @@ executed DAG and the audit id are in the thinking above it and in the saved JSON
 of them for the frontend.
 
 **If the GPU is busy, run the whole set with `--effort low`.** Every question still answers from the indexes;
-only the model-written prose and the model-refined plan drop out.
+the model-composed answer, the model-written prose, the model-refined plan and vector search drop out, and the
+answer is assembled deterministically from the same evidence.
 
 ---
 
@@ -43,7 +76,8 @@ python -m workbench ask "What is the normal flow rate of the crude charge pump?"
 The cheapest possible path, and the one to open with: rules classify it as `lookup` with no model call, the
 alias index resolves "crude charge pump" to **Crude Feed Pump (11-PM-01)** and shows the three other tags that
 share that name, and the `claims` route answers from the claim index with **no text search at all**. One agent,
-two steps, ~25 ms.
+two steps, ~25-30 ms with the model off (`--effort low` or `RWB_LLM=off`; 29 ms in the latest benchmark run).
+At the default effort the Answer Composer then writes the answer through the model, which adds seconds.
 
 **Talking point:** every value carries its page; the workbench never paraphrases a number.
 
@@ -103,9 +137,14 @@ rated 482, design 520 → **within design, +7.9 % above normal**, with a supervi
 python -m workbench ask "Why is the crude heated before entering the atmospheric column?" --effort high
 ```
 
-The first question in the set that calls the LLM (model prose is a `high`-effort feature; at the default the
-same question returns the quoted passages alone in ~30 ms). The `⟨calling qwen3:4b — why_summary⟩` line appears where the
-call happens, and the step footer reports the model and how long it took (~20 s on a GTX 1650).
+The question in the set that shows the explanation agent's own model call. The agent-written narrative
+(`why_summary`) is a `high`-effort feature; at the default effort the explanation agent returns the quoted
+passages and the Answer Composer writes the released answer from them through the model. Only with the model
+off (`--effort low` or `RWB_LLM=off`) does the question come back as the quoted passages alone in ~30 ms. The
+`⟨calling <model> — why_summary⟩` line appears where the call happens, and the step footer reports the model and
+how long it took (~20 s on a GTX 1650). The model named there is the router's choice for a summarization call
+among the installed models (`python -m workbench models` shows which one wins summarization on your machine);
+with `RWB_ROUTING=off` it is always the profile's text model, `qwen3:4b` on `gpu_4gb`.
 
 **Talking point:** if the model restates the question or narrates the task instead of answering — which small
 local models do — `usable_narrative()` drops its prose and the quoted passages stand alone. The reason appears
@@ -155,8 +194,9 @@ python -m workbench ask "Create a work plan for inspecting the crude charge pump
 The show-piece, and the reason `--effort high` exists. At that level the planner calls the LLM to refine the
 DAG, and the added steps appear in the Execution DAG named after the agent they call (`graph_x`,
 `cross_document_x`) next to the template steps. Nine steps, six agents, then gap analysis and assembly.
-Governance requires human review. At the default effort the same question runs the seven-step template in
-under a second, without the model.
+Governance requires human review. At the default effort the planner does not refine the plan: the same
+question runs the seven-step template, and the only model call is the Answer Composer's. With the model off
+(`--effort low` or `RWB_LLM=off`) the template run takes under a second.
 
 **Talking point:** the template is the floor — the model may add steps, never remove the safety one.
 
@@ -211,8 +251,15 @@ python -m workbench ask "What are all the equipments in the refinery?"
 
 No equipment is named, and that is the point: the question is about the corpus, not about an item. It
 classifies as `inventory`, takes the `inventory` route — which **lists** the entity index rather than searching
-it — and answers in ~30 ms with a class table (516 tagged items across 14 classes), the most-referenced items
-with their tag and page range, then the documents, chapters and standing instructions in scope.
+it — and answers in ~30 ms with the model off (`--effort low` or `RWB_LLM=off`; at the default effort the
+Answer Composer adds a model call) with a class table, the most-referenced items with their tag and page range,
+then the documents, chapters and standing instructions in scope.
+
+The count depends on who is asking, because the entity index is filtered to the documents the caller may read.
+Signed in as `admin`, with the six current documents, it is **520 plant-tagged items across 14 classes**, 516
+of them from the CDU operating manual. `manager` and `user` cannot read the CDU manual (`SECRET`), and the
+other documents carry few plant-numbered tags, so for them the table shows only the 6 tagged items in the
+API560 comparison document.
 
 **Talking point:** this is the question that used to come back "which equipment do you mean?". A survey
 question has no single subject, so asking for one was the wrong move, not a missing detail.
@@ -230,7 +277,7 @@ list and sets it as the subject type instead. The section question filters on th
 uses (11- atmospheric, 12- vacuum).
 
 **Talking point:** the counts and the table come from the same filter, and the filter is the manual's own tag
-convention — plant-numbered tags only. That is why it answers "6 columns" and not "13": `C-1` … `C-6` are rows
+convention — plant-numbered tags only. That is why it answers (as `admin`) "6 columns" and not "13": `C-1` … `C-6` are rows
 of an inspection checklist that happen to match the column tag pattern, and `D-86` is the ASTM distillation
 method, not a drum.
 
@@ -256,8 +303,11 @@ python -m workbench ask "The crude charge pump discharge pressure is dropping. W
 python -m workbench ask "The crude charge pump discharge pressure is dropping. What should I check?" --effort high
 ```
 
-Identical nine-step plan, identical agents. `low` answers from the indexes in ~0.7 s with 10 citations; `high`
-adds vector search, the reranker and a wider net, and returns 20 citations in ~22 s.
+Identical nine-step plan, identical agents. `low` answers from the indexes in ~0.7 s with 10 citations and no
+model call; `high` adds vector search, the reranker, a wider net and the model calls (narrative, composed
+answer), and returns 20 citations in ~22 s on the GTX 1650. The default (`medium`, no flag) sits between them:
+vectors but no reranker, and the Answer Composer's model call. Both timings were measured with Ollama running
+and depend on the model the router picks.
 
 **Talking point:** effort buys evidence and model involvement, not a different pipeline — and `low` is the
 setting to fall back on if the GPU is busy mid-demo.
@@ -266,7 +316,9 @@ setting to fall back on if the GPU is busy mid-demo.
 
 ## Suggested 10-minute running order
 
-1. **16 (inventory)** — "what is in here at all", answered in 30 ms. Sets up the corpus before anything else.
+0. Sign in as `admin` first (see *Before you start*), or the CDU questions are refused.
+1. **16 (inventory)** — "what is in here at all", answered in ~30 ms with the model off (`--effort low`). Sets
+   up the corpus before anything else.
 2. **3 (procedure)** — the full five-phase trace and a real answer.
 3. **5 (limits)** — deterministic arithmetic, four agents, fast.
 4. **4 (troubleshooting)** — the nine-step DAG; explain the dependency arrows here.
@@ -277,13 +329,19 @@ setting to fall back on if the GPU is busy mid-demo.
 ## Follow-ups worth having ready
 
 - `python -m workbench ask "..." --json | ...` — the same run as the contract the web UI consumes.
-- `python -m workbench bench` — 62 canonical prompts, ~2.5 minutes, deterministic.
+- `python -m workbench bench` — 70 canonical prompts in 16 categories, run with the model and access control
+  off, ~30 s, deterministic. The latest run (2026-09-16 20:20, `data/workbench/reports/benchmark-20260916-202058.md`)
+  scored 1.0 on every metric (task accuracy, agents, entities, blocks, safety, answered), mean 434 ms per
+  prompt, 30.6 s total, 0 LLM calls. `--llm` runs it with the model; `--category` / `--limit` run a subset.
 - `python -m workbench agents` — the agent registry with each agent's phase and responsibility.
 - `python -m workbench status` — detected VRAM, chosen profile, model, backend, documents loaded.
 
 ## New capabilities demo (September 2026)
 
-Exact commands; the operator manual (`docs/manual/index.html` §12) has the 15-minute running order.
+Exact commands; the operator manual (`docs/manual/index.html` §12) has the 15-minute running order. These
+commands also need a signed-in account (or `RWB_AUTH=off`); run them as `admin`. The JSON after `--args` is
+written for Windows PowerShell 5.1, which strips unescaped double quotes when it passes an argument to a native
+program: keep the `\"` escapes there (in PowerShell 7.3+ or a POSIX shell, drop the backslashes).
 
 ```powershell
 # multi-model routing
@@ -292,11 +350,14 @@ python -m workbench route "Read the scanned P&ID, calculate the margin between 4
 
 # named local tools and the agent loop
 python -m workbench tools
-python -m workbench tool calculate --args '{"expression": "(520-482)/482*100"}'
-python -m workbench tool search_documents --args '{"query": "crude charge pump normal flow", "k": 5}'
+python -m workbench tool calculate --args '{\"expression\": \"(520-482)/482*100\"}'
+python -m workbench tool search_documents --args '{\"query\": \"crude charge pump normal flow\", \"k\": 5}'
 python -m workbench agent "calculate 2*(3+4)"
 
 # the sandbox: no egress, bounded, ephemeral, verified by tests
+# Caveat for the presenter: without Docker the subprocess backend is used, and its isolation is Python-level
+# patches only. Outbound sockets are refused as shown, but file reads are not confined, so do not present it
+# as protecting data/ from the code it runs.
 @'
 import socket
 try:
@@ -325,11 +386,13 @@ python -m workbench draft-resolve <draft_id> <figure_id> corrected --value 24.45
 python -m workbench draft-signoff <draft_id>
 
 # vault: envelope encryption per branch
+# seal needs an administrator ("sealing needs an administrator" otherwise); rotate and revoke do not
+# currently check the role in the CLI, so run the whole block signed in as admin
 python -m workbench vault seal
 python -m workbench vault status
 python -m workbench vault rotate manager
 python -m workbench vault revoke "Crude desalter" manager
-$env:RWB_VAULT = "on"; python -m workbench serve --port 8077   # branches decrypt per session
+$env:RWB_VAULT = "on"; python -m workbench serve --port 8077   # branches decrypt per session; 8077 is the port the web front end proxies to (serve defaults to 8000)
 
 # sovereignty: air-gap proof
 python -m workbench sovereignty

@@ -232,14 +232,17 @@ cd WebPage &amp;&amp; npm install &amp;&amp; npm run dev       # http://127.0.0.
 <pre><code>$ python -m workbench models
 routing: on  profile gpu_4gb  vram 4095 MB  budget fast  resident -
 model                  inst fits    GB    ctx  capabilities
-deepseek-r1:7b         yes  no     4.7   8192  … reaso=0.88 …
-qwen3.5:2b             yes  yes    2.7   4096  … visio=0.78 …
 qwen3:4b               yes  yes    2.5   4096  … compo=0.82 …
+qwen3.5:2b             yes  yes    2.7   4096  … visio=0.78 …
+deepseek-r1:7b         yes  no     4.7   8192  … reaso=0.88 …
 qwen2.5-coder:7b       no   no     4.7  16384  … code=0.92 …
+qwen3.5:9b             no   no     6.6  16384  …
+gpt-oss:20b            no   no    13.0  32768  …
+qwen3.6:27b            no   no    18.0  32768  …
 best installed model per task kind:
   composition     -> qwen3:4b
   vision          -> qwen3.5:2b</code></pre>
-<p>On this 4 GB card the text model is <code>qwen3:4b</code> and vision goes to <code>qwen3.5:2b</code>; <code>deepseek-r1:7b</code> loses because it spills to CPU. On a 12 GB card the same registry routes reasoning to <code>deepseek-r1:7b</code> and code to <code>qwen2.5-coder:7b</code> (this is what <code>test_bigger_card_prefers_the_specialist</code> checks).</p>
+<p>The registry in <code>workbench/models/registry.yaml</code> lists seven models (qwen3:4b, qwen3.5:2b, deepseek-r1:7b, qwen2.5-coder:7b, qwen3.5:9b, gpt-oss:20b, qwen3.6:27b); the sample above is abridged, and which rows say <code>inst</code> depends on what is pulled into Ollama. On this 4 GB card the text model is <code>qwen3:4b</code> and vision goes to <code>qwen3.5:2b</code>; <code>deepseek-r1:7b</code> loses because it spills to CPU. On a 12 GB card the same registry routes reasoning to <code>deepseek-r1:7b</code> and code to <code>qwen2.5-coder:7b</code> (this is what <code>test_bigger_card_prefers_the_specialist</code> checks).</p>
 
 <h3>Hybrid requests</h3>
 <pre><code>$ python -m workbench route "Read the scanned P&amp;ID, calculate the margin between 482 and 520 m3/h and write a short note"
@@ -389,7 +392,7 @@ $ python -m workbench vault revoke "Crude desalter" manager</code></pre>
 <h2 id="sovereignty">9. Sovereignty: proving the air gap</h2>
 <p>"Nothing leaves the premises" is demonstrated, not claimed, three ways at once.</p>
 <h3>In-process egress guard</h3>
-<p><code>sovereignty/egress.py</code> wraps <code>socket.connect</code>, <code>connect_ex</code> and <code>create_connection</code> in the workbench process. A destination that is not loopback, not a private range and not on the allow-list (the local Ollama and Neo4j hosts) raises <code>EgressBlocked</code> <em>before any packet leaves</em>, and the attempt is chained into <code>egress.jsonl</code>. The model libraries' offline flags (<code>HF_HUB_OFFLINE</code>, <code>TRANSFORMERS_OFFLINE</code>, …) are set, so a missing weight file fails loudly instead of quietly reaching Hugging Face. On by default; <code>RWB_AIRGAP=off</code> disables it.</p>
+<p><code>sovereignty/egress.py</code> wraps <code>socket.connect</code>, <code>connect_ex</code> and <code>create_connection</code> in the workbench process. A destination that is not loopback, not a private range (10/8, 172.16/12, 192.168/16, link-local and IPv6 equivalents) and not on the allow-list raises <code>EgressBlocked</code> <em>before any packet leaves</em>, and the attempt is chained into <code>egress.jsonl</code>. The model libraries' offline flags (<code>HF_HUB_OFFLINE</code>, <code>TRANSFORMERS_OFFLINE</code>, …) are set, so a missing weight file fails loudly instead of quietly reaching Hugging Face. The allow-list is <code>sovereignty.allowed_hosts</code> in <code>workbench/config.py</code> (<code>127.0.0.1</code>, <code>::1</code>, <code>localhost</code>) plus the hosts of the configured Ollama URL and Neo4j URI, which <code>sovereignty/service.py</code> adds at start-up; private ranges pass regardless. On by default; <code>RWB_AIRGAP=off</code> disables it.</p>
 <h3>Live network monitor + immutable connection log</h3>
 <p><code>sovereignty/netmonitor.py</code> samples the host's socket table, interface state and traffic counters every 2 s for the whole session and writes every <em>new</em> connection (process, local and remote address, state, class loopback/private/external), every interface up/down transition and periodic traffic summaries to the chained <code>connections.jsonl</code>. External connections made by the workbench, its children and Ollama are counted separately from other programs on the host.</p>
 <pre><code>$ python -m workbench sovereignty
@@ -443,9 +446,13 @@ $ python -m workbench packages log</code></pre>
 <tr><td><code>RWB_PROFILE</code></td><td><code>cpu | gpu_4gb | gpu_8gb | gpu_12gb | gpu_16gb | gpu_24gb</code> (auto-detected from VRAM)</td></tr>
 <tr><td><code>RWB_LLM=off</code>, <code>RWB_LLM_MODEL</code>, <code>RWB_VISION_MODEL</code>, <code>RWB_OLLAMA_URL</code></td><td>model on/off, names and server</td></tr>
 <tr><td><code>RWB_LLM_ANSWER</code>, <code>RWB_LLM_EXTRACTION</code>, <code>RWB_RERANKER</code>, <code>RWB_EFFORT</code>, <code>RWB_ANSWER_STYLE</code></td><td>answer composition, extraction, reranker, effort level (low/medium/high/ultra), brief/full</td></tr>
-<tr><td><code>RWB_KNOWLEDGE_BACKEND</code>, <code>RWB_DOCS</code></td><td><code>files | mock | neo4j</code>; which documents to load</td></tr>
+<tr><td><code>RWB_KNOWLEDGE_BACKEND</code>, <code>RWB_DOCS</code></td><td><code>auto</code> (default: files when knowledge-layer artefacts exist, else mock) <code>| files | mock | neo4j</code> (neo4j is a stub that raises); which documents to load</td></tr>
 <tr><td><code>RWB_MFA</code>, <code>RWB_OTP_DEMO</code></td><td>TOTP second factor for roles; demo codes (never in deployment)</td></tr>
 <tr><td><code>RWB_ADMIN_PASSWORD</code>, <code>RWB_MANAGER_PASSWORD</code>, <code>RWB_USER_PASSWORD</code></td><td>seed passwords for <code>setup-security</code></td></tr>
+<tr><td><code>RWB_OCR_THRESHOLD</code></td><td>OCR confidence below which a line is flagged for review (default 0.6)</td></tr>
+<tr><td><code>RWB_KEEP_WARM=1</code></td><td>do not unload the model when idle (demo sessions; read by <code>services/resources.py</code>)</td></tr>
+<tr><td><code>RWB_WARM_START</code></td><td>API start-up: <code>1</code> (default) preloads the embedder and reranker when the server starts (~35 s); any other value preloads nothing (read by <code>app/api.py</code>)</td></tr>
+<tr><td><code>RKL_OLLAMA_URL</code>, <code>RKL_OLLAMA_MODEL</code>, <code>RKL_NEO4J_URI</code>, <code>RKL_NEO4J_USER</code>, <code>RKL_NEO4J_PASSWORD</code></td><td>knowledge-layer settings (<code>knowledge_layer/config.py</code>); the workbench also falls back to <code>RKL_OLLAMA_URL</code> when <code>RWB_OLLAMA_URL</code> is unset</td></tr>
 </table>
 <h3>Runtime state on disk</h3>
 <table>
@@ -468,7 +475,7 @@ python -m pytest tests/workbench/test_sandbox.py tests/workbench/test_vault.py t
 <tr><td>Answers are "deterministic" only; <code>/health</code> says <code>llm_available: false</code></td><td>Ollama is down or the model is not pulled. <code>ollama pull qwen3:4b</code>; <code>ollama pull qwen3.5:2b</code> for vision.</td></tr>
 <tr><td><code>EgressBlocked: air-gap: connection to … refused</code></td><td>Working as designed: something tried to leave the host. If it is a legitimate local service on another private host, it is already allowed (private ranges pass); a public address never is. <code>RWB_AIRGAP=off</code> only for diagnosis.</td></tr>
 <tr><td>Vision calls are slow (35–55 s)</td><td>Expected on a 4 GB card: the 2.7 GB vision model swaps in per call. Keep <code>--vision-calls 1</code>; larger cards run text+vision in one model.</td></tr>
-<tr><td>Sandbox run ends with <code>limit_hit: memory</code> or <code>cpu</code></td><td>The job object stopped it. Raise <code>sandbox.memory_mb</code> / <code>cpu_seconds</code> in config if the task is legitimate.</td></tr>
+<tr><td>Sandbox run ends with <code>limit_hit: memory</code> or <code>cpu</code></td><td>The job object stopped it. Raise <code>SandboxSettings.memory_mb</code> (512) / <code>cpu_seconds</code> (20) by editing <code>workbench/config.py</code> if the task is legitimate; there is no environment override for them.</td></tr>
 <tr><td><code>tempfile.gettempdir()</code> fails inside the sandbox</td><td>By design: the sandbox stubs <code>os.unlink</code>; write into the working directory instead.</td></tr>
 <tr><td>Sign-off returns 409</td><td>Flags are still open. Resolve each figure (accept / correct / remove) first.</td></tr>
 <tr><td><code>audit-verify</code> reports a broken chain</td><td>Someone edited a log, or two pre-lock processes wrote the same file. Investigate first; <code>HashChainedLog.repair()</code> re-chains in place and writes a <code>chain_repaired</code> marker recording what was broken — it is a logged administrator action, not a way to hide an edit.</td></tr>
@@ -497,7 +504,7 @@ python -m pytest tests/workbench/test_sandbox.py tests/workbench/test_vault.py t
 <tr><td>Vault scope</td><td>seals the derived branch indexes; the pipeline's own artefacts are not sealed by <code>vault seal</code>.</td></tr>
 <tr><td>Elevated access with biometrics / time-boxed OTP</td><td><span class="tag">partly</span> TOTP MFA per role exists (<code>RWB_MFA</code>); biometric or time-boxed elevation for exceptional access is phase 2.</td></tr>
 <tr><td>Formal compliance mapping (ISO 27001 and similar)</td><td><span class="tag warn">roadmap</span> the controls above map naturally (access control, cryptography, logging, supplier integrity) but the mapping has not been written.</td></tr>
-<tr><td>Web pages for the new subsystems</td><td><span class="tag ok">done</span> <code>/models</code>, <code>/sovereignty</code>, <code>/tools</code>, <code>/review</code> and <code>/vault</code> (manager and above) call exactly the endpoints in this manual; the Chat page adds Word / Excel / PowerPoint export buttons and shows which models handled each answer.</td></tr>
+<tr><td>Web pages for the new subsystems</td><td><span class="tag ok">done</span> <code>/models</code>, <code>/sovereignty</code>, <code>/tools</code>, <code>/review</code> and <code>/vault</code> (manager and above) call the endpoints in this manual, except that no page calls <code>GET /vault/tls</code> (the Sovereignty page takes TLS state from <code>GET /sovereignty</code>), <code>GET /sovereignty/egress</code> or <code>POST /intake</code> (chat image attachments go through <code>POST /upload</code>, which runs intake server-side); those three are used through the API directly (intake also via <code>workbench intake</code>). The Chat page adds Word / Excel / PowerPoint export buttons and shows which models handled each answer.</td></tr>
 </table>
 
 <footer>Refinery Engineering AI Workbench · operator manual · generated from the code as of 25 September 2026. Every command and endpoint above exists in <code>workbench/app/cli_ext.py</code> and <code>workbench/app/api_ext.py</code>; every test named exists under <code>tests/workbench/</code>.</footer>

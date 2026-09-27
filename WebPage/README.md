@@ -1,21 +1,44 @@
 # MRPL AI Workstation — web front end
 
-The browser client for the Refinery Engineering AI Workbench. It talks to the FastAPI service in
-`workbench/app/api.py` and to nothing else: no database, no server of its own, no telemetry.
+The browser client for the Refinery Engineering AI Workbench. It talks to the workbench's FastAPI
+service and to nothing else: no database, no server of its own, no telemetry. That service is one
+app built from two files: `workbench/app/api.py` (auth, runs and SSE, sessions, uploads, access
+requests, knowledge tree, security, reviews) and `workbench/app/api_ext.py`, whose routers `api.py`
+mounts (`/models`, `/sovereignty`, `/vault`, `/tools`, `/sandbox`, `/intake`, `/deliverables`,
+`/drafts`). Roughly half of what the pages call lives in `api_ext.py`.
+
+Naming note: this package calls itself "MRPL AI Workstation" (this title, `package.json` name
+`mrpl-ai-workstation`); the rest of the repository calls the system the "Refinery Engineering AI
+Workbench". Both names refer to the same system.
 
 ```bash
 npm install
 npm run dev          # http://127.0.0.1:5173, proxying /api -> http://127.0.0.1:8077
 ```
 
-The backend has to be running:
+The backend has to be running on port 8077 (`serve` defaults to 8000, which the proxy does not use):
 
 ```bash
 # from the repository root
-.venv/Scripts/python -m uvicorn workbench.app.api:app --host 127.0.0.1 --port 8077
+.venv/Scripts/python -m workbench serve --port 8077
+# or: .venv/Scripts/python -m uvicorn workbench.app.api:app --host 127.0.0.1 --port 8077
 ```
 
-Point the client somewhere else with `VITE_WORKBENCH_URL` (see `.env.example`).
+Where requests go:
+
+- **Default (no `VITE_WORKBENCH_URL`)**: the client calls same-origin `/api/...`
+  (`src/lib/api.ts`), and the Vite dev server proxies `/api` to `http://127.0.0.1:8077`, stripping
+  the `/api` prefix (`vite.config.ts`).
+- **`VITE_WORKBENCH_URL` set** (in `.env` or in the shell) is compiled into the bundle as
+  `import.meta.env.VITE_WORKBENCH_URL`, and the browser then calls that URL **directly**, bypassing
+  the proxy (cross-origin; the API currently allows any origin). It is not a proxy setting:
+  `vite.config.ts` reads the proxy target from `process.env.VITE_WORKBENCH_URL` without calling
+  `loadEnv`, so a value in `.env` never reaches the proxy, and a shell value makes the client skip
+  the proxy anyway.
+- **Production**: `npm run build` emits a static bundle in `dist/`. With `VITE_WORKBENCH_URL` unset
+  it calls `/api/...` on its own origin, so whatever serves `dist/` must reverse-proxy `/api/*` to the
+  workbench **and strip the `/api` prefix** (the API's routes have none). `npm run preview` has no
+  such proxy configured.
 
 | script | what it does |
 | --- | --- |
@@ -23,6 +46,7 @@ Point the client somewhere else with `VITE_WORKBENCH_URL` (see `.env.example`).
 | `npm run build` | typecheck, then a production bundle in `dist/` |
 | `npm run preview` | serve the built bundle |
 | `npm run typecheck` | `tsc -b --noEmit` |
+| `npm run lint` | `eslint .` — **currently fails**: `eslint.config.js` imports `@eslint/js`, `globals`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`, `typescript-eslint` and `eslint-config-prettier`, and none of them (nor `eslint` itself) is in `devDependencies` |
 
 ---
 
@@ -30,15 +54,16 @@ Point the client somewhere else with `VITE_WORKBENCH_URL` (see `.env.example`).
 
 | route | who sees it | what it is |
 | --- | --- | --- |
-| `/` | signed out | Sign in, and an explanation of the access model before you need it |
-| `/chat` | everyone | Ask a question. Thinking, answer blocks, `btw`, PDF upload, effort, access keys |
+| (any URL) | signed out | Sign-in is not a route: while signed out every URL renders the SignIn screen (password, then an authenticator-code step when the server asks for one), with an explanation of the access model before you need it |
+| `/` | everyone | Redirects to `/chat` (so does any unknown path) |
+| `/chat` | everyone | Ask a question. Thinking, answer blocks, `btw`, effort, access keys; attach a PDF or an image; export an answer as Word / Excel / PowerPoint |
 | `/overview` | everyone | Your workspace: what you can read, what is running, what is waiting on you |
 | `/documents` | everyone | Every document, its classification, and who reads it |
 | `/knowledge` | everyone | The knowledge layer branch by branch, with your reach marked on each one |
 | `/access` | everyone | Requests you raised, and — for approvers — the queue waiting on you |
 | `/tools` | everyone | Named local tools (files, sandboxed code, spreadsheets, document search, calculation, OCR, vision, Word/Excel/PowerPoint), the agent loop over them, the sandbox, your workspace and the chained tool log |
-| `/review` | everyone | Deliverables pending human sign-off: every figure with its provenance, flagged items to resolve, sign-off blocked until they are; export recent answers as Word / Excel / PowerPoint |
-| `/models` | everyone | The model capability registry, what is installed, which model wins each task kind, the routing log, "route a request"; admins register models and verify signed model packages |
+| `/review` | everyone | Deliverable drafts pending human sign-off (`/drafts`): every figure with its provenance, flagged items to resolve, sign-off blocked until they are; export recent answers as Word / Excel / PowerPoint. This is **not** the HITL review queue behind `GET /reviews`; no page shows that queue yet |
+| `/models` | everyone | The model capability registry, what is installed, which model wins each task kind, the routing log, "route a request"; managers and admins verify signed model packages; admins also register models and run a dry-run package import |
 | `/sovereignty` | everyone | Live network monitor, egress guard, interface state (pull the cable and watch it), tamper-evident log chains, TLS state |
 | `/logs` | manager, admin | Recent conversations of the people ranked below you, read-only; each view is audited |
 | `/vault` | manager, admin | Envelope encryption of the knowledge branches: sealed branches, roles with keys, what is decrypted in memory, key rotation and revocation (admin) |
@@ -47,6 +72,24 @@ Point the client somewhere else with `VITE_WORKBENCH_URL` (see `.env.example`).
 
 Navigation is filtered by role, but that is a convenience and not a control: the API refuses on
 its own, so typing a URL you are not cleared for gets you an error, not data.
+
+Smaller features worth knowing about:
+
+- **Chat answer footer**: a "human review required" badge when governance flags the answer, a
+  show/hide toggle for its citations, the models used and the number of routed calls, and
+  per-answer Word / Excel / PowerPoint export (which creates a review draft).
+- **Tools**: sample arguments per tool; a sandbox editor with preset attack snippets ("try
+  egress", "try subprocess", "memory bomb", "infinite loop"); the sandbox run log with its
+  chain-integrity chip.
+- **Sovereignty** refreshes itself every three seconds (the live toggle pauses it); the TLS state
+  it shows comes from the `/sovereignty` report.
+- **Knowledge**: administrators can edit a branch's role allowlist in place.
+
+Not wired to any page: the wrappers `reviews` / `decideReview` (the HITL queue), `requestAccess`
+(access requests are raised automatically when an answer is refused), `intake`, `audit`, `agents`
+and `egress` exist in `src/lib/api.ts` but no page calls them, and there is no wrapper for
+`/vault/tls`, `/security-log`, `/schema`, `GET /runs` or the promote route. Image attachments use
+`/upload`, which runs intake server-side, rather than `/intake`.
 
 ---
 
@@ -57,7 +100,8 @@ never a cookie — so a reload or a navigation picks the same signed-in session 
 the tab ends it. On start-up the stored token is presented to the API and dropped the moment the
 server stops recognising it; it decides nothing on its own.
 
-**Conversations live on the server.** Each exchange is written as it lands, with the full answer
+**Conversations live on the server.** (The header comment in `pages/Chat.tsx` still says they are
+held in memory for the life of the tab; that comment is out of date.) Each exchange is written as it lands, with the full answer
 and the security envelope it was released with. The sidebar lists your conversations
 (`GET /sessions`); opening one redraws it from the server (`GET /sessions/{id}`), attachments
 included, and you carry on in it. The browser keeps only *which* conversation a tab has open —
@@ -81,20 +125,28 @@ dependency that can execute or inject markup.
 
 ```
 src/
+  main.tsx          routes: SignIn while signed out, `/` -> `/chat`, each page in an error boundary
   lib/
     api.ts          one request() with the bearer token, ApiError, MfaRequiredError, streamRun()
     types.ts        a mirror of the backend contract — blocks, envelopes, requests, grants
+    types_ext.ts    the September subsystems' contract (mirrors api_ext.py)
     format.ts       ms, countdown, relativeTime, plural, initials
     cn.ts           class merge
-  store/auth.tsx    AuthProvider: sign-in, the two-step challenge, expiry clock, role helpers
+  store/
+    auth.tsx          AuthProvider: sign-in, the two-step challenge, expiry clock, role helpers
+    conversations.tsx the server-side conversation list; which one this tab has open (`?c=`)
   ui/index.tsx      the kit: Panel, Button, Input, OtpInput, Badge, Dialog, Tabs, toasts, Stat
   components/
     Markdown.tsx      the renderer described above
     AnswerBlocks.tsx  one component per block kind the backend can emit
     ThinkingTrace.tsx collapsed "Thinking · <phase>", expanding to the per-agent trace
     SecurityBanner.tsx classification strip, withheld notice, key-refused notice, clearance chip
+    RecentConversations.tsx the sidebar's conversation list and "new conversation"
+    Bits.tsx          chain-integrity chip, key/value list, monospace output box
+    ErrorBoundary.tsx a render error on one page does not blank the whole app
+    LinkButton.tsx    a router link styled as a button
   layouts/AppShell.tsx  sidebar, clearance chips, session expiry
-  pages/            one file per route in the table above
+  pages/            one file per route in the table above, plus SignIn.tsx
 ```
 
 ### Streaming
@@ -126,8 +178,16 @@ as such. Without that, a dead key and a genuinely undocumented value look identi
 
 ### Attaching a document to a conversation
 
-"Attach PDF" in the composer parses the file with the knowledge layer's own pipeline and indexes
-it **for that conversation only**. It is not added to the shared corpus, not classified, and
+The composer's attach button accepts `.pdf`, `.png`, `.jpg` and `.jpeg`. Every file goes to
+`POST /upload` and is stored under `data/workbench/uploads/<username>/<session_id>/`.
+
+**An image** is not parsed as a document: the server runs the intake pipeline on it (on-device OCR
+with a confidence per line, then the local vision model). The OCR and vision text become notes on
+the conversation, lines below the confidence threshold are flagged, and a review draft is created;
+the chat shows the line count, the flags and an "open in Review" link.
+
+**A PDF** is parsed with the knowledge layer's own pipeline and indexed **for that conversation
+only**. It is not added to the shared corpus, not classified, and
 nothing is written into `data/knowledge` — the parse is cached under
 `data/workbench/uploads/_cache/<hash>/` so the same file is never parsed twice.
 
